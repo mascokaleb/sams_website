@@ -887,6 +887,68 @@ ul {
   }
 }
 
+.golf-ball {
+  position: fixed;
+  inset: auto;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  --texture-offset-x: 0px;
+  --texture-offset-y: 0px;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.16) 22%, transparent 24%),
+    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.14) 22%, transparent 24%),
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.98), rgba(226, 233, 245, 0.85) 58%, rgba(170, 184, 208, 0.35) 100%),
+    linear-gradient(150deg, #f9fbff, #dbe3f5);
+  background-size:
+    12px 12px,
+    12px 12px,
+    100% 100%,
+    100% 100%;
+  background-position:
+    var(--texture-offset-x) var(--texture-offset-y),
+    calc(var(--texture-offset-x) + 6px) calc(var(--texture-offset-y) + 6px),
+    0 0,
+    0 0;
+  background-repeat:
+    repeat,
+    repeat,
+    no-repeat,
+    no-repeat;
+  background-blend-mode: multiply, multiply, screen, normal;
+  border: 1px solid rgba(18, 43, 85, 0.15);
+  box-shadow: none;
+  pointer-events: none;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  will-change: transform;
+  transition: box-shadow 160ms ease;
+}
+
+.golf-ball::before {
+  content: "";
+  position: absolute;
+  inset: 8px 10px 12px 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+
+.golf-ball::after {
+  content: "";
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .golf-ball {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .hero {
     margin-top: 5.5rem;
