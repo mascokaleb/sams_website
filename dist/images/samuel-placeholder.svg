@@ -1,0 +1,21 @@
+<svg width="640" height="800" viewBox="0 0 640 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Samuel Masco profile placeholder</title>
+  <desc id="desc">Stylized gradient background with abstract golfer silhouette</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0abf9b" />
+      <stop offset="100%" stop-color="#1168ff" />
+    </linearGradient>
+    <linearGradient id="glow" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.5)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="800" rx="48" fill="url(#bg)" />
+  <rect width="640" height="800" rx="48" fill="url(#glow)" />
+  <g fill="rgba(255,255,255,0.9)">
+    <circle cx="320" cy="210" r="90" />
+    <path d="M160 640c0-132 72-220 160-220s160 88 160 220H160z" />
+    <path d="M320 380c-40 0-76-20-100-52 30 24 64 36 100 36s70-12 100-36c-24 32-60 52-100 52z" opacity="0.4" />
+  </g>
+</svg>

@@ -1034,31 +1034,13 @@ ul {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
   --texture-offset-x: 0px;
   --texture-offset-y: 0px;
-  background-image:
-    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.16) 22%, transparent 24%),
-    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.14) 22%, transparent 24%),
-    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.98), rgba(226, 233, 245, 0.85) 58%, rgba(170, 184, 208, 0.35) 100%),
-    linear-gradient(150deg, #f9fbff, #dbe3f5);
-  background-size:
-    12px 12px,
-    12px 12px,
-    100% 100%,
-    100% 100%;
-  background-position:
-    var(--texture-offset-x) var(--texture-offset-y),
-    calc(var(--texture-offset-x) + 6px) calc(var(--texture-offset-y) + 6px),
-    0 0,
-    0 0;
-  background-repeat:
-    repeat,
-    repeat,
-    no-repeat,
-    no-repeat;
-  background-blend-mode: multiply, multiply, screen, normal;
+  background: #fefefe;
   border: 1px solid rgba(18, 43, 85, 0.15);
-  box-shadow: none;
+  box-shadow: 3px 4px 6px rgba(16, 15, 56, 0.3);
   pointer-events: none;
   z-index: 999;
   display: grid;
@@ -1070,16 +1052,48 @@ ul {
 .golf-ball::before {
   content: "";
   position: absolute;
-  inset: 8px 10px 12px 8px;
+  inset: 1px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
   pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.18) 22%, transparent 25%),
+    radial-gradient(circle at 50% 50%, rgba(126, 142, 170, 0.14) 22%, transparent 25%);
+  background-size:
+    12px 12px,
+    12px 12px;
+  background-position:
+    var(--texture-offset-x) var(--texture-offset-y),
+    calc(var(--texture-offset-x) + 6px) calc(var(--texture-offset-y) + 6px);
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.95) 58%, rgba(0, 0, 0, 0.1) 78%, transparent 90%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.95) 58%, rgba(0, 0, 0, 0.1) 78%, transparent 90%);
 }
 
 
 .golf-ball::after {
   content: "";
-  display: none;
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(85, 104, 140, 0.26) 18%, transparent 28%),
+    radial-gradient(circle at 50% 50%, rgba(85, 104, 140, 0.18) 18%, transparent 28%);
+  background-size:
+    8px 8px,
+    8px 8px;
+  background-position:
+    calc(var(--texture-offset-x) * 0.8) calc(var(--texture-offset-y) * 0.8),
+    calc(var(--texture-offset-x) * 0.8 + 4px) calc(var(--texture-offset-y) * 0.8 + 4px);
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.78;
+  mask-image: radial-gradient(circle at 50% 50%, transparent 0%, transparent 52%, rgba(0, 0, 0, 0.85) 72%, rgba(0, 0, 0, 1) 100%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0%, transparent 52%, rgba(0, 0, 0, 0.85) 72%, rgba(0, 0, 0, 1) 100%);
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
 }
 
 @media (max-width: 900px) {
