@@ -376,6 +376,9 @@ function renderHighlights() {
   timelineEl.innerHTML = limitedEvents
     .map((event, index) => renderHighlightCard(event, index))
     .join("");
+  timelineEl
+    .querySelectorAll("[data-motion]")
+    .forEach((el) => el.classList.add("is-visible"));
 
   if (actionsEl) {
     const shouldShowToggle = events.length > baseLimit;
@@ -431,6 +434,7 @@ function renderVideos() {
   }
 
   gridEl.innerHTML = limitedVideos.map((video, index) => renderVideoCard(video, index)).join("");
+  gridEl.querySelectorAll("[data-motion]").forEach((el) => el.classList.add("is-visible"));
   setupVideoFrames();
 
   if (actionsEl) {
