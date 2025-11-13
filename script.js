@@ -106,6 +106,7 @@ function initInteractiveGolfBall() {
   let lastTime = performance.now();
   let isMoving = false;
 
+  const heroSection = document.querySelector(".site-header");
   const pointerState = {
     x: 0,
     y: 0,
@@ -115,6 +116,8 @@ function initInteractiveGolfBall() {
   const collidableSelectors = [
     ".nav",
     ".hero-copy",
+    ".hero-photo",
+    ".hero-photo-frame",
     ".hero-metrics",
     ".metric-card",
     ".about-card",
@@ -148,11 +151,16 @@ function initInteractiveGolfBall() {
       return;
     }
 
-    const rect = (scrollLabel || heroScroll).getBoundingClientRect();
+    const rect = getDocumentRect(scrollLabel || heroScroll);
+    const bounds = getWorldBounds();
     const initialX = rect.left + rect.width / 2;
     const initialY = rect.bottom + radius + 6;
-    state.x = clamp(initialX, radius + 12, window.innerWidth - radius - 12);
-    state.y = clamp(initialY, radius + 12, window.innerHeight - radius - 12);
+    const minX = bounds.left + radius + 12;
+    const maxX = bounds.right - radius - 12;
+    const minY = bounds.top + radius + 12;
+    const maxY = bounds.bottom - radius - 12;
+    state.x = clamp(initialX, minX, maxX);
+    state.y = clamp(initialY, minY, maxY);
     state.vx = 0;
     state.vy = 0;
     setBallPosition();
@@ -203,20 +211,25 @@ function initInteractiveGolfBall() {
 
   function resolveWorldBounds() {
     const restitution = 0.78;
+    const bounds = getWorldBounds();
+    const minX = bounds.left + radius + 8;
+    const maxX = bounds.right - radius - 8;
+    const minY = bounds.top + radius + 8;
+    const maxY = bounds.bottom - radius - 8;
 
-    if (state.x < radius + 8) {
-      state.x = radius + 8;
+    if (state.x < minX) {
+      state.x = minX;
       state.vx = Math.abs(state.vx) * restitution;
-    } else if (state.x > window.innerWidth - radius - 8) {
-      state.x = window.innerWidth - radius - 8;
+    } else if (state.x > maxX) {
+      state.x = maxX;
       state.vx = -Math.abs(state.vx) * restitution;
     }
 
-    if (state.y < radius + 8) {
-      state.y = radius + 8;
+    if (state.y < minY) {
+      state.y = minY;
       state.vy = Math.abs(state.vy) * restitution;
-    } else if (state.y > window.innerHeight - radius - 8) {
-      state.y = window.innerHeight - radius - 8;
+    } else if (state.y > maxY) {
+      state.y = maxY;
       state.vy = -Math.abs(state.vy) * restitution;
     }
   }
@@ -230,6 +243,14 @@ function initInteractiveGolfBall() {
       }
 
       const rect = element.getBoundingClientRect();
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+      const docRect = {
+        left: rect.left + scrollX,
+        right: rect.right + scrollX,
+        top: rect.top + scrollY,
+        bottom: rect.bottom + scrollY,
+      };
 
       if (
         rect.width === 0 ||
@@ -242,8 +263,8 @@ function initInteractiveGolfBall() {
         continue;
       }
 
-      const closestX = clamp(state.x, rect.left, rect.right);
-      const closestY = clamp(state.y, rect.top, rect.bottom);
+      const closestX = clamp(state.x, docRect.left, docRect.right);
+      const closestY = clamp(state.y, docRect.top, docRect.bottom);
       const diffX = state.x - closestX;
       const diffY = state.y - closestY;
       const distanceSq = diffX * diffX + diffY * diffY;
@@ -267,6 +288,19 @@ function initInteractiveGolfBall() {
       state.vx -= (1 + restitution) * velocityAlongNormal * normalX;
       state.vy -= (1 + restitution) * velocityAlongNormal * normalY;
     }
+  }
+
+  function getWorldBounds() {
+    if (heroSection) {
+      return getDocumentRect(heroSection);
+    }
+
+    return {
+      left: window.scrollX,
+      right: window.scrollX + window.innerWidth,
+      top: window.scrollY,
+      bottom: window.scrollY + window.innerHeight,
+    };
   }
 
   function step() {
@@ -321,22 +355,15 @@ function initInteractiveGolfBall() {
       const previousY = pointerState.y;
       const hadPointer = pointerState.active;
 
-      pointerState.x = event.clientX;
-      pointerState.y = event.clientY;
+      const currentX = event.clientX + window.scrollX;
+      const currentY = event.clientY + window.scrollY;
+
+      pointerState.x = currentX;
+      pointerState.y = currentY;
       pointerState.active = true;
 
-      const moveX =
-        typeof event.movementX === "number"
-          ? event.movementX
-          : hadPointer
-          ? pointerState.x - previousX
-          : 0;
-      const moveY =
-        typeof event.movementY === "number"
-          ? event.movementY
-          : hadPointer
-          ? pointerState.y - previousY
-          : 0;
+      const moveX = hadPointer ? currentX - previousX : 0;
+      const moveY = hadPointer ? currentY - previousY : 0;
 
       if (!hadPointer) {
         return;
@@ -361,9 +388,14 @@ function initInteractiveGolfBall() {
     pointerState.active = false;
   });
 
+  window.addEventListener("scroll", () => {
+    pointerState.active = false;
+  });
+
   window.addEventListener("resize", () => {
-    state.x = clamp(state.x, radius + 8, window.innerWidth - radius - 8);
-    state.y = clamp(state.y, radius + 8, window.innerHeight - radius - 8);
+    const bounds = getWorldBounds();
+    state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
+    state.y = clamp(state.y, bounds.top + radius + 8, bounds.bottom - radius - 8);
     if (heroScroll) {
       positionBallUnderScroll();
     } else {
@@ -381,4 +413,16 @@ function clamp(value, min, max) {
 function wrapTexture(value, size) {
   const wrapped = value % size;
   return wrapped < 0 ? wrapped + size : wrapped;
+}
+
+function getDocumentRect(element) {
+  const rect = element.getBoundingClientRect();
+  return {
+    left: rect.left + window.scrollX,
+    right: rect.right + window.scrollX,
+    top: rect.top + window.scrollY,
+    bottom: rect.bottom + window.scrollY,
+    width: rect.width,
+    height: rect.height,
+  };
 }
