@@ -87,13 +87,13 @@ Because the desk structure forces singleton documents to fixed IDs, the seed fil
 
 ## Front-end Status
 
-- `src/main.js` now runs through Vite and imports `fetchSitePreview` from `src/lib/sanityClient.js`.
-- When `VITE_SANITY_*` variables are set, the client fetches a small slice of CMS data and logs it in dev mode, confirming connectivity before we swap the DOM to fully dynamic rendering in Phase 2.
-- All legacy behavior (navigation toggle, motion effects, video embeds, golf ball interaction) is preserved.
+- `src/main.js` now fetches the full site payload via `fetchSiteContent` and renders **every** section (hero, about, resume, academics, highlights, videos, dual-sport, contact) with CMS data.
+- `index.html` only contains placeholders; users no longer see stale copy and get a loading message while content resolves. Error messages surface if the fetch fails.
+- Video cards, hero CTAs, metrics, and contact details are all hydrated from Sanity. The YouTube frame logic reattaches after each render so autoplay still works.
+- Navigation, scroll animations, and the interactive golf ball remain intact because the rendered markup preserves the existing structure/classes.
 
-## Next Steps (Phase 2 Preview)
+## QA & Deployment Notes
 
-1. Replace the hard-coded HTML blocks with templating functions that consume the Sanity response.
-2. Add loading/error states while CMS data resolves.
-3. Expand the video grid to pull thumbnails + titles from the `videoHighlight` documents and feed the existing YouTube player script via `data-video-id` attributes.
-4. Wire tournament highlights, stats, academics, contact cards, etc., to the new schemas.
+- `npm run dev` (root) requires the `VITE_SANITY_*` env vars; without them, the placeholders persist and a warning banner appears.
+- `npm run build` generates the static bundle that you can deploy to any static host (Netlify, Vercel, etc.). Ensure those hosts receive the same env vars so the Sanity client can query at runtime.
+- Keep the Studio deployed (`npx sanity deploy`) for editors, and rerun `sanity dataset import` only if you want to reset content to the seed state.

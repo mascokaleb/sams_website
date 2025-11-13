@@ -80,6 +80,30 @@ body::after {
   width: 1px;
 }
 
+.placeholder-text {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.btn.subtle.is-disabled {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.notification {
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.notification.error {
+  background: rgba(255, 99, 132, 0.12);
+  border: 1px solid rgba(255, 99, 132, 0.4);
+  color: #a31232;
+}
+
 img {
   max-width: 100%;
   display: block;

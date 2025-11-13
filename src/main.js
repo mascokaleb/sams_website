@@ -1,54 +1,515 @@
-import { fetchSitePreview } from "./lib/sanityClient.js";
+import { toHTML } from "@portabletext/to-html";
+import { fetchSiteContent } from "./lib/sanityClient.js";
+
+const HERO_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
+
+const SELECTORS = {
+  heroCopy: '[data-template="hero-copy"]',
+  heroPhoto: '[data-template="hero-photo"]',
+  heroMetrics: '[data-template="hero-metrics"]',
+  aboutHeading: '[data-template="about-heading"]',
+  aboutGrid: '[data-template="about-grid"]',
+  resumeHeading: '[data-template="resume-heading"]',
+  resumePanels: '[data-template="resume-panels"]',
+  academicsHeading: '[data-template="academics-heading"]',
+  academicsGrid: '[data-template="academics-grid"]',
+  highlightsHeading: '[data-template="highlights-heading"]',
+  highlightsTimeline: '[data-template="timeline"]',
+  videosHeading: '[data-template="videos-heading"]',
+  videoGrid: '[data-template="video-grid"]',
+  dualHeading: '[data-template="dual-heading"]',
+  dualGrid: '[data-template="dual-grid"]',
+  contactHeading: '[data-template="contact-heading"]',
+  contactGrid: '[data-template="contact-grid"]',
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
+  setupNav();
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  await hydratePage();
+
+  setupMotionAnimations(prefersReducedMotion);
+
+  if (!prefersReducedMotion) {
+    initInteractiveGolfBall();
+  }
+});
+
+function setupNav() {
   const navToggle = document.querySelector(".nav-toggle");
   const navLinks = document.querySelector(".nav-links");
 
-  if (navToggle && navLinks) {
-    navToggle.addEventListener("click", () => {
-      const isExpanded =
-        navToggle.getAttribute("aria-expanded") === "true" ? "false" : "true";
-      navToggle.setAttribute("aria-expanded", isExpanded);
-      navLinks.classList.toggle("is-open");
-    });
-
-    navLinks.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        navToggle.setAttribute("aria-expanded", "false");
-        navLinks.classList.remove("is-open");
-      });
-    });
+  if (!navToggle || !navLinks) {
+    return;
   }
 
-  const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
+  navToggle.addEventListener("click", () => {
+    const isExpanded = navToggle.getAttribute("aria-expanded") === "true" ? "false" : "true";
+    navToggle.setAttribute("aria-expanded", isExpanded);
+    navLinks.classList.toggle("is-open");
+  });
 
-  if (!prefersReducedMotion && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.2,
-      }
-    );
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      navToggle.setAttribute("aria-expanded", "false");
+      navLinks.classList.remove("is-open");
+    });
+  });
+}
 
-    document
-      .querySelectorAll("[data-motion]")
-      .forEach((el) => observer.observe(el));
-  } else {
-    document
-      .querySelectorAll("[data-motion]")
-      .forEach((el) => el.classList.add("is-visible"));
+async function hydratePage() {
+  setGlobalLoadingState(true);
+  const data = await fetchSiteContent();
+
+  if (!data) {
+    setPageError("Unable to load the latest content. Please try again shortly.");
+    setGlobalLoadingState(false);
+    return null;
   }
 
+  renderMeta(data.site);
+  renderHero(data.hero, data.site);
+  renderAbout(data.about);
+  renderResume(data.resume);
+  renderAcademics(data.academics);
+  renderHighlights(data.highlightsSection, data.highlightEvents);
+  renderVideos(data.videosSection, data.videos);
+  renderDualSport(data.dualSport);
+  renderContact(data.contact);
+
+  setGlobalLoadingState(false);
+  setupVideoFrames();
+  return data;
+}
+
+function renderMeta(site) {
+  if (!site) {
+    return;
+  }
+
+  if (site.siteTitle) {
+    document.title = site.siteTitle;
+    const brandText = document.querySelector(".brand-text");
+    if (brandText) {
+      brandText.textContent = site.siteTitle;
+    }
+  }
+
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription && site.seoDescription) {
+    metaDescription.setAttribute("content", site.seoDescription);
+  }
+}
+
+function renderHero(hero, site) {
+  const copyEl = select(SELECTORS.heroCopy);
+  const photoEl = select(SELECTORS.heroPhoto);
+  const metricsEl = select(SELECTORS.heroMetrics);
+
+  if (!hero) {
+    if (copyEl) {
+      copyEl.innerHTML = renderPlaceholder("Hero content coming soon.");
+    }
+    return;
+  }
+
+  if (copyEl) {
+    const tagline = hero.tagline ? `<p class="hero-tag">${escapeHtml(hero.tagline)}</p>` : "";
+    const subheadline = hero.subheadline ? `<span>${escapeHtml(hero.subheadline)}</span>` : "";
+    const description = hero.bio ? `<p>${escapeHtml(hero.bio)}</p>` : "";
+    const ctas = [
+      buildCta(hero.primaryCta, "primary", "View Highlights", "#highlights"),
+      buildCta(hero.secondaryCta, "ghost", "Connect", "#contact"),
+    ]
+      .filter(Boolean)
+      .join("");
+
+    copyEl.innerHTML = `
+      ${tagline}
+      <h1>
+        ${escapeHtml(hero.headline || site?.siteTitle || "")}
+        ${subheadline}
+      </h1>
+      ${description}
+      <div class="hero-actions">
+        ${ctas || '<span class="placeholder-text">Actions coming soon.</span>'}
+      </div>
+    `;
+  }
+
+  if (photoEl) {
+    const photoUrl = hero.headshot?.url || HERO_PLACEHOLDER_IMAGE;
+    const alt = hero.headshot?.alt || "Portrait of Samuel Masco";
+    const caption = hero.photoCaption || "Focused on the next shot.";
+
+    photoEl.innerHTML = `
+      <div class="hero-photo-frame">
+        <img src="${photoUrl}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <div class="hero-photo-glow" aria-hidden="true"></div>
+      </div>
+      <figcaption>${escapeHtml(caption)}</figcaption>
+    `;
+  }
+
+  if (metricsEl) {
+    if (Array.isArray(hero.metrics) && hero.metrics.length) {
+      metricsEl.innerHTML = hero.metrics
+        .map(
+          (metric) => `
+            <div class="metric-card" data-motion>
+              <span class="metric-label">${escapeHtml(metric.label || "")}</span>
+              <span class="metric-value">${escapeHtml(metric.value || "")}</span>
+            </div>
+          `
+        )
+        .join("");
+    } else {
+      metricsEl.innerHTML = renderPlaceholder("Metrics coming soon.");
+    }
+  }
+}
+
+function renderAbout(about) {
+  const headingEl = select(SELECTORS.aboutHeading);
+  const gridEl = select(SELECTORS.aboutGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = about
+      ? `
+          <h2>${escapeHtml(about.heading || "About")}</h2>
+          <p>${escapeHtml(about.subheading || "")}</p>
+        `
+      : renderPlaceholder("About section coming soon.");
+  }
+
+  if (gridEl) {
+    if (!about) {
+      gridEl.innerHTML = renderPlaceholder("About details coming soon.");
+      return;
+    }
+
+    gridEl.innerHTML = `
+      <article class="about-card" data-motion="delay-1">
+        <h3>${escapeHtml(about.profileCardTitle || "Profile")}</h3>
+        <ul>
+          ${(about.profileFacts || [])
+            .map(
+              (fact) => `
+                <li><strong>${escapeHtml(fact.label || "")}: </strong>${escapeHtml(fact.value || "")}</li>
+              `
+            )
+            .join("")}
+        </ul>
+      </article>
+      <article class="about-card about-story" data-motion="delay-2">
+        <h3>${escapeHtml(about.mindsetTitle || "Mindset & Goals")}</h3>
+        ${renderPortableText(about.mindsetBody)}
+      </article>
+      <article class="about-card about-highlight" data-motion="delay-3">
+        <h3>${escapeHtml(about.quickHitsTitle || "Quick Hits")}</h3>
+        ${(about.quickHits || [])
+          .map(
+            (hit) => `
+              <div class="highlight-row">
+                <span>${escapeHtml(hit.label || "")}</span>
+                <span>${escapeHtml(hit.value || "")}</span>
+              </div>
+            `
+          )
+          .join("")}
+      </article>
+    `;
+  }
+}
+
+function renderResume(resume) {
+  const headingEl = select(SELECTORS.resumeHeading);
+  const panelsEl = select(SELECTORS.resumePanels);
+
+  if (headingEl) {
+    headingEl.innerHTML = resume
+      ? `
+          <h2>${escapeHtml(resume.heading || "Golf Resume")}</h2>
+          <p>${escapeHtml(resume.subheading || "")}</p>
+        `
+      : renderPlaceholder("Golf resume coming soon.");
+  }
+
+  if (panelsEl) {
+    if (!resume) {
+      panelsEl.innerHTML = renderPlaceholder("Resume details coming soon.");
+      return;
+    }
+
+    panelsEl.innerHTML = `
+      <article class="panel" data-motion="delay-1">
+        <h3>${escapeHtml(resume.performanceTitle || "Performance Snapshot")}</h3>
+        <dl>
+          ${(resume.performanceStats || [])
+            .map(
+              (stat) => `
+                <div>
+                  <dt>${escapeHtml(stat.label || "")}</dt>
+                  <dd>${escapeHtml(stat.value || "")}</dd>
+                </div>
+              `
+            )
+            .join("")}
+        </dl>
+      </article>
+      <article class="panel" data-motion="delay-2">
+        <h3>${escapeHtml(resume.trainingTitle || "Training Routine")}</h3>
+        ${renderPortableText(resume.trainingBody)}
+      </article>
+      <article class="panel" data-motion="delay-3">
+        <h3>${escapeHtml(resume.experienceTitle || "Playing Experience")}</h3>
+        <ul>
+          ${(resume.experienceList || [])
+            .map((item) => `<li>${escapeHtml(item || "")}</li>`)
+            .join("")}
+        </ul>
+      </article>
+    `;
+  }
+}
+
+function renderAcademics(academics) {
+  const headingEl = select(SELECTORS.academicsHeading);
+  const gridEl = select(SELECTORS.academicsGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = academics
+      ? `
+          <h2>${escapeHtml(academics.heading || "Academics")}</h2>
+          <p>${escapeHtml(academics.subheading || "")}</p>
+        `
+      : renderPlaceholder("Academics section coming soon.");
+  }
+
+  if (gridEl) {
+    if (!academics) {
+      gridEl.innerHTML = renderPlaceholder("Academic details coming soon.");
+      return;
+    }
+
+    const transcriptLabel = academics.transcriptLabel || "Transcript";
+    const transcriptButton = academics.transcriptUrl
+      ? `<a class="btn subtle" href="${escapeAttribute(
+          academics.transcriptUrl
+        )}" target="_blank" rel="noopener">${escapeHtml(
+          transcriptLabel
+        )}</a>`
+      : `<span class="btn subtle is-disabled" aria-disabled="true">${escapeHtml(transcriptLabel)}</span>`;
+
+    gridEl.innerHTML = `
+      <article class="academics-card" data-motion="delay-1">
+        <h3>${escapeHtml(academics.schoolCardTitle || "School")}</h3>
+        <ul>
+          ${academics.gpa ? `<li><strong>GPA:</strong> ${escapeHtml(academics.gpa)}</li>` : ""}
+          ${academics.honors ? `<li><strong>Honors:</strong> ${escapeHtml(academics.honors)}</li>` : ""}
+          ${academics.apCourses ? `<li><strong>AP / IB:</strong> ${escapeHtml(academics.apCourses)}</li>` : ""}
+        </ul>
+        ${transcriptButton}
+      </article>
+      <article class="academics-card" data-motion="delay-2">
+        <h3>${escapeHtml(academics.interestsTitle || "Academic Interests")}</h3>
+        ${renderPortableText(academics.interestsBody)}
+      </article>
+    `;
+  }
+}
+
+function renderHighlights(sectionMeta, events = []) {
+  const headingEl = select(SELECTORS.highlightsHeading);
+  const timelineEl = select(SELECTORS.highlightsTimeline);
+
+  if (headingEl) {
+    headingEl.innerHTML = sectionMeta
+      ? `
+          <h2>${escapeHtml(sectionMeta.heading || "Highlights")}</h2>
+          <p>${escapeHtml(sectionMeta.subheading || "")}</p>
+        `
+      : renderPlaceholder("Highlights coming soon.");
+  }
+
+  if (!timelineEl) {
+    return;
+  }
+
+  const limit = sectionMeta?.maxItems || 5;
+  const limitedEvents = (events || []).slice(0, limit);
+
+  if (!limitedEvents.length) {
+    timelineEl.innerHTML = renderPlaceholder("Highlight events coming soon.");
+    return;
+  }
+
+  timelineEl.innerHTML = limitedEvents
+    .map((event, index) => renderHighlightCard(event, index))
+    .join("");
+}
+
+function renderVideos(sectionMeta, videos = []) {
+  const headingEl = select(SELECTORS.videosHeading);
+  const gridEl = select(SELECTORS.videoGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = sectionMeta
+      ? `
+          <h2>${escapeHtml(sectionMeta.heading || "Videos")}</h2>
+          <p>${escapeHtml(sectionMeta.subheading || "")}</p>
+        `
+      : renderPlaceholder("Videos coming soon.");
+  }
+
+  if (!gridEl) {
+    return;
+  }
+
+  const limit = sectionMeta?.maxItems || 3;
+  const limitedVideos = (videos || []).slice(0, limit);
+
+  if (!limitedVideos.length) {
+    gridEl.innerHTML = renderPlaceholder("Video highlights coming soon.");
+    return;
+  }
+
+  gridEl.innerHTML = limitedVideos.map((video, index) => renderVideoCard(video, index)).join("");
+}
+
+function renderDualSport(dual) {
+  const headingEl = select(SELECTORS.dualHeading);
+  const gridEl = select(SELECTORS.dualGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = dual
+      ? `
+          <h2>${escapeHtml(dual.heading || "Dual-Sport Athlete")}</h2>
+          <p>${escapeHtml(dual.subheading || "")}</p>
+        `
+      : renderPlaceholder("Dual-sport content coming soon.");
+  }
+
+  if (gridEl) {
+    if (!dual || !Array.isArray(dual.cards) || !dual.cards.length) {
+      gridEl.innerHTML = renderPlaceholder("Dual-sport cards coming soon.");
+      return;
+    }
+
+    gridEl.innerHTML = dual.cards
+      .map(
+        (card, index) => `
+          <article class="dual-card" data-motion="delay-${index + 1}">
+            <h3>${escapeHtml(card.title || "")}</h3>
+            ${card.body ? `<p>${escapeHtml(card.body)}</p>` : ""}
+            ${Array.isArray(card.bulletPoints) && card.bulletPoints.length
+              ? `<ul>${card.bulletPoints.map((point) => `<li>${escapeHtml(point || "")}</li>`).join("")}</ul>`
+              : ""}
+          </article>
+        `
+      )
+      .join("");
+  }
+}
+
+function renderContact(contact) {
+  const headingEl = select(SELECTORS.contactHeading);
+  const gridEl = select(SELECTORS.contactGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = contact
+      ? `
+          <h2>${escapeHtml(contact.heading || "Let's Connect")}</h2>
+          <p>${escapeHtml(contact.subheading || "")}</p>
+        `
+      : renderPlaceholder("Contact section coming soon.");
+  }
+
+  if (!gridEl) {
+    return;
+  }
+
+  if (!contact || !Array.isArray(contact.cards) || !contact.cards.length) {
+    gridEl.innerHTML = renderPlaceholder("Contact cards coming soon.");
+    return;
+  }
+
+  gridEl.innerHTML = contact.cards
+    .map(
+      (card, index) => `
+        <article class="contact-card" data-motion="delay-${index + 1}">
+          <h3>${escapeHtml(card.title || "")}</h3>
+          <ul>
+            ${(card.entries || [])
+              .map((entry) => `<li>${renderContactEntry(entry)}</li>`)
+              .join("")}
+          </ul>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderContactEntry(entry) {
+  if (!entry) {
+    return "";
+  }
+
+  const label = entry.label ? `<strong>${escapeHtml(entry.label)}:</strong> ` : "";
+  if (entry.link) {
+    const target = entry.link.startsWith("http") ? ' target="_blank" rel="noopener"' : "";
+    return `${label}<a href="${escapeAttribute(entry.link)}"${target}>${escapeHtml(entry.value || entry.link)}</a>`;
+  }
+  return `${label}${escapeHtml(entry.value || "")}`;
+}
+
+function renderHighlightCard(event, index) {
+  const dateLabel = formatEventDate(event);
+  const summary = event.summary ? `<p>${escapeHtml(event.summary)}</p>` : "";
+  const results = Array.isArray(event.results)
+    ? `<ul>${event.results.map((item) => `<li>${escapeHtml(item.description || "")}</li>`).join("")}</ul>`
+    : "";
+
+  return `
+    <article class="timeline-card" data-motion="delay-${index + 1}">
+      <header>
+        <h3>${escapeHtml(event.title || "")}</h3>
+        ${dateLabel ? `<span class="timeline-date">${dateLabel}</span>` : ""}
+      </header>
+      ${summary}
+      ${results}
+    </article>
+  `;
+}
+
+function renderVideoCard(video, index) {
+  const youtubeId = video.youtubeId || "";
+  const thumbnail = video.thumbnailUrl || `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+  const alt = video.thumbnailAlt || video.title || "Video highlight";
+  const buttonLabel = video.ctaLabel || "Play";
+
+  return `
+    <article class="video-card" data-motion="delay-${index + 1}">
+      <div class="video-frame" data-video-id="${escapeHtml(youtubeId)}" data-video-title="${escapeHtml(video.title || "Video highlight")}">
+        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <button class="play-button" type="button" aria-label="Play ${escapeHtml(video.title || "highlight")}">
+          <span class="play-icon" aria-hidden="true"></span>
+          <span>${escapeHtml(buttonLabel)}</span>
+        </button>
+      </div>
+      <h3>${escapeHtml(video.title || "")}</h3>
+      <p>${escapeHtml(video.description || "")}</p>
+    </article>
+  `;
+}
+
+function setupVideoFrames() {
   document.querySelectorAll(".video-frame").forEach((frame) => {
+    if (frame.dataset.playerReady === "true") {
+      return;
+    }
+
     const playButton = frame.querySelector(".play-button");
     const videoId = frame.dataset.videoId;
 
@@ -58,8 +519,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     playButton.addEventListener("click", () => {
       const iframe = document.createElement("iframe");
-      const title =
-        frame.dataset.videoTitle || "Samuel Masco golf video highlight";
+      const title = frame.dataset.videoTitle || "Samuel Masco golf video highlight";
 
       iframe.setAttribute(
         "src",
@@ -76,21 +536,117 @@ document.addEventListener("DOMContentLoaded", async () => {
       frame.classList.add("is-playing");
       frame.replaceChildren(iframe);
     });
+
+    frame.dataset.playerReady = "true";
   });
+}
 
-  if (!prefersReducedMotion) {
-    initInteractiveGolfBall();
+function renderPortableText(value) {
+  if (!Array.isArray(value) || !value.length) {
+    return "";
   }
 
-  try {
-    const preview = await fetchSitePreview();
-    if (preview && import.meta.env.DEV) {
-      console.info("Sanity preview data", preview);
-    }
-  } catch (error) {
-    console.error("Failed to fetch Sanity preview data", error);
+  return toHTML(value);
+}
+
+function select(selector) {
+  return selector ? document.querySelector(selector) : null;
+}
+
+function renderPlaceholder(message) {
+  return `<p class="placeholder-text">${escapeHtml(message)}</p>`;
+}
+
+function setGlobalLoadingState(isLoading) {
+  document.body.dataset.contentLoading = String(isLoading);
+}
+
+function setPageError(message) {
+  const main = document.querySelector("main");
+  if (main) {
+    main.insertAdjacentHTML(
+      "afterbegin",
+      `<div class="notification error">${escapeHtml(message)}</div>`
+    );
   }
-});
+}
+
+function buildCta(cta, style, fallbackLabel, fallbackHref) {
+  if (cta?.label && cta?.href) {
+    return `<a class="btn ${style}" href="${escapeAttribute(cta.href)}">${escapeHtml(cta.label)}</a>`;
+  }
+  if (fallbackLabel && fallbackHref) {
+    return `<a class="btn ${style}" href="${escapeAttribute(fallbackHref)}">${escapeHtml(fallbackLabel)}</a>`;
+  }
+  return "";
+}
+
+function escapeHtml(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
+}
+
+function formatEventDate(event) {
+  if (!event) {
+    return "";
+  }
+
+  if (event.dateLabel) {
+    return escapeHtml(event.dateLabel);
+  }
+
+  if (!event.eventDate) {
+    return "";
+  }
+
+  const date = new Date(event.eventDate);
+  if (Number.isNaN(date.getTime())) {
+    return escapeHtml(event.eventDate);
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function setupMotionAnimations(prefersReducedMotion) {
+  if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+    document
+      .querySelectorAll("[data-motion]")
+      .forEach((el) => el.classList.add("is-visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  document.querySelectorAll("[data-motion]").forEach((el) => observer.observe(el));
+}
+
+/* Existing interactive ball logic remains unchanged below */
 
 function initInteractiveGolfBall() {
   const prefersCoarsePointer = window.matchMedia("(pointer: coarse)").matches;

@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@portabletext/to-html": "^4.0.1",
     "@sanity/client": "^6.21.1"
   },
   "devDependencies": {

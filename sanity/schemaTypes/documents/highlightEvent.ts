@@ -21,6 +21,12 @@ export const highlightEvent = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'dateLabel',
+      type: 'string',
+      title: 'Date Label Override',
+      description: 'Optional custom text such as "Oct 18–19, 2025"; defaults to the formatted event date.',
+    }),
+    defineField({
       name: 'location',
       type: 'string',
       title: 'Location / Course',
