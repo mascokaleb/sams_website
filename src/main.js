@@ -457,10 +457,27 @@ function renderContactEntry(entry) {
   }
 
   const label = entry.label ? `<strong>${escapeHtml(entry.label)}:</strong> ` : "";
-  if (entry.link) {
-    const target = entry.link.startsWith("http") ? ' target="_blank" rel="noopener"' : "";
+  const segments = splitContactValue(entry.value);
+  const target = entry.link?.startsWith("http") ? ' target="_blank" rel="noopener"' : "";
+
+  if (entry.link && segments.length <= 1) {
     return `${label}<a href="${escapeAttribute(entry.link)}"${target}>${escapeHtml(entry.value || entry.link)}</a>`;
   }
+
+  if (segments.length) {
+    return `${label}${segments
+      .map((segment, index) => {
+        const href = index === 0 && entry.link ? entry.link : segment.link;
+        if (href) {
+          const isExternal = href.startsWith("http");
+          const segmentTarget = isExternal ? ' target="_blank" rel="noopener"' : "";
+          return `<a href="${escapeAttribute(href)}"${segmentTarget}>${escapeHtml(segment.text)}</a>`;
+        }
+        return escapeHtml(segment.text);
+      })
+      .join(" · ")}`;
+  }
+
   return `${label}${escapeHtml(entry.value || "")}`;
 }
 
@@ -596,6 +613,43 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value);
+}
+
+function splitContactValue(value) {
+  if (!value) {
+    return [];
+  }
+
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const parts = trimmed.split(/·|\|/g).map((part) => part.trim());
+  return parts
+    .filter(Boolean)
+    .map((part) => ({
+      text: part,
+      link: inferLink(part),
+    }));
+}
+
+function inferLink(text) {
+  if (!text) {
+    return null;
+  }
+
+  const cleaned = text.replace(/\s+/g, "");
+  if (/^\(?\+?\d[\d\-()\s\.]+$/.test(text)) {
+    const digits = cleaned.replace(/[^\d+]/g, "");
+    return `tel:${digits}`;
+  }
+
+  if (/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(text)) {
+    return `mailto:${cleaned}`;
+  }
+
+  return null;
 }
 
 function formatEventDate(event) {
