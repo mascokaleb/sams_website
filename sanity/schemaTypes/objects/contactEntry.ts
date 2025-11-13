@@ -22,6 +22,11 @@ export const contactEntry = defineType({
       type: 'url',
       title: 'Link (optional)',
       description: 'Use for tel:, mailto:, or https links.',
+      validation: (Rule) =>
+        Rule.uri({
+          allowRelative: true,
+          scheme: ['http', 'https', 'mailto', 'tel'],
+        }),
     },
     {
       name: 'type',
