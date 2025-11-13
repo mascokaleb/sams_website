@@ -41,6 +41,7 @@ body {
     sans-serif;
   line-height: 1.6;
   position: relative;
+  overflow-x: hidden;
 }
 
 body::after {
@@ -124,6 +125,13 @@ ul {
   position: relative;
   overflow: hidden;
   padding-bottom: 5rem;
+  background: radial-gradient(circle at 10% 20%, rgba(17, 104, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(10, 191, 155, 0.22), transparent 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(236, 241, 252, 0.92));
+  box-shadow: 0 35px 60px rgba(15, 29, 51, 0.25);
+  border-bottom-left-radius: calc(var(--radius-lg) * 3);
+  border-bottom-right-radius: calc(var(--radius-lg) * 3);
+  z-index: 5;
 }
 
 .hero-gradient {
@@ -167,14 +175,23 @@ ul {
   font-weight: 700;
   font-size: 1.15rem;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .brand-mark.has-image {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0;
+  padding: 0.15rem;
+  background: var(--accent-gradient);
+}
+.brand-mark-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  overflow: hidden;
 }
 
-.brand-mark img {
+.brand-mark-image img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -495,18 +512,32 @@ ul {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: clamp(4rem, 8vw, 6.5rem) clamp(1.5rem, 3vw, 3rem);
-  z-index: 2;
-  border-radius: calc(var(--radius-lg) + 8px);
-  transition: background 240ms ease, box-shadow 240ms ease;
+  z-index: 1;
+  background: transparent;
 }
 
-.section:nth-of-type(odd) {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.section:nth-of-type(even) {
-  background: rgba(255, 255, 255, 0.78);
+.section::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(100vw, 110%, 1400px);
+  top: 0;
+  height: 100%;
+  z-index: -1;
   box-shadow: 0 30px 60px rgba(15, 29, 51, 0.08);
+}
+
+.section:nth-of-type(odd)::before {
+  background: #ffffff;
+}
+
+.section:nth-of-type(even)::before {
+  background: #f2f4f8;
+}
+
+.section + .section {
+  margin-top: 0;
 }
 
 .section-heading {
@@ -578,8 +609,10 @@ ul {
 .contact-card::before {
   content: "";
   position: absolute;
-  inset: -80% 0 auto;
-  height: 130%;
+  inset: -60% -30% auto -30%;
+  height: 200%;
+  width: 160%;
+  transform-origin: center;
   background: linear-gradient(
     140deg,
     rgba(10, 191, 155, 0.12),

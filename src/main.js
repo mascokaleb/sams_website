@@ -125,9 +125,9 @@ function renderMeta(site) {
   const brandMark = document.querySelector(".brand-mark");
   if (brandMark) {
     if (site.brandMarkImage?.url) {
-      brandMark.innerHTML = `<img src="${escapeAttribute(site.brandMarkImage.url)}" alt="${escapeHtml(
-        site.brandMarkImage.alt || site.siteTitle || "Site logo"
-      )}" loading="lazy" />`;
+      brandMark.innerHTML = `<span class="brand-mark-image"><img src="${escapeAttribute(
+        site.brandMarkImage.url
+      )}" alt="${escapeHtml(site.brandMarkImage.alt || site.siteTitle || "Site logo")}" loading="lazy" /></span>`;
       brandMark.classList.add("has-image");
     } else {
       const initials =
