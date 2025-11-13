@@ -166,10 +166,11 @@ ul {
   color: #ffffff;
   font-weight: 700;
   font-size: 1.15rem;
+  overflow: hidden;
 }
 
 .brand-mark.has-image {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   padding: 0;
 }
 
@@ -324,13 +325,7 @@ ul {
 }
 
 .hero-photo-glow {
-  content: "";
-  position: absolute;
-  inset: 22px;
-  border-radius: inherit;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.4), transparent 55%);
-  pointer-events: none;
-  mix-blend-mode: screen;
+  display: none;
 }
 
 .hero-photo figcaption {
@@ -501,6 +496,17 @@ ul {
   margin: 0 auto;
   padding: clamp(4rem, 8vw, 6.5rem) clamp(1.5rem, 3vw, 3rem);
   z-index: 2;
+  border-radius: calc(var(--radius-lg) + 8px);
+  transition: background 240ms ease, box-shadow 240ms ease;
+}
+
+.section:nth-of-type(odd) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.section:nth-of-type(even) {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 30px 60px rgba(15, 29, 51, 0.08);
 }
 
 .section-heading {
