@@ -64,7 +64,7 @@ const siteContentQuery = `{
     interestsBody
   },
   "highlightsSection": *[_type == "highlightsSection"][0]{heading, subheading, maxItems},
-  "highlightEvents": *[_type == "highlightEvent" && (defined(featured) ? featured : true)]|order(coalesce(manualOrder, 9999) asc, eventDate desc){
+  "highlightEvents": *[_type == "highlightEvent" && coalesce(featured, true)]|order(coalesce(manualOrder, 9999) asc, eventDate desc){
     title,
     eventDate,
     dateLabel,
