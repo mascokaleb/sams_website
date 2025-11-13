@@ -1,4 +1,6 @@
-document.addEventListener("DOMContentLoaded", () => {
+import { fetchSitePreview } from "./lib/sanityClient.js";
+
+document.addEventListener("DOMContentLoaded", async () => {
   const navToggle = document.querySelector(".nav-toggle");
   const navLinks = document.querySelector(".nav-links");
 
@@ -78,6 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!prefersReducedMotion) {
     initInteractiveGolfBall();
+  }
+
+  try {
+    const preview = await fetchSitePreview();
+    if (preview && import.meta.env.DEV) {
+      console.info("Sanity preview data", preview);
+    }
+  } catch (error) {
+    console.error("Failed to fetch Sanity preview data", error);
   }
 });
 

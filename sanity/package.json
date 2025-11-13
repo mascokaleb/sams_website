@@ -1,0 +1,34 @@
+{
+  "name": "samuel-masco-sanity",
+  "version": "1.0.0",
+  "description": "Sanity Studio for Samuel Masco recruiting website",
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "graphql": "sanity graphql deploy"
+  },
+  "keywords": [
+    "sanity",
+    "cms",
+    "recruiting"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@sanity/icons": "^3.7.4",
+    "@sanity/image-url": "^1.2.0",
+    "@sanity/vision": "^4.15.0",
+    "dotenv": "^17.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sanity": "^4.15.0",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

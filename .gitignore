@@ -1,0 +1,10 @@
+# General
+.DS_Store
+node_modules
+.env
+
+# Sanity Studio
+sanity/.env
+sanity/.sanity
+sanity/node_modules
+sanity/dist
