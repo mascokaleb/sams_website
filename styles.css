@@ -577,6 +577,7 @@ ul {
   );
   transform: skewY(-12deg);
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--transition);
 }
 
