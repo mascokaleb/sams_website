@@ -671,6 +671,15 @@ ul {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.section-actions {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.section-actions .btn {
+  min-width: 160px;
+}
+
 .video-card h3 {
   margin-top: 1.6rem;
   margin-bottom: 0.6rem;

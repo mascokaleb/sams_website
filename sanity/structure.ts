@@ -6,8 +6,8 @@ const singletonDocs = [
   { title: 'About', type: 'aboutSection', id: 'aboutSection' },
   { title: 'Golf Resume', type: 'resumeSection', id: 'resumeSection' },
   { title: 'Academics', type: 'academicsSection', id: 'academicsSection' },
-  { title: 'Highlights Section Copy', type: 'highlightsSection', id: 'highlightsSection' },
-  { title: 'Videos Section Copy', type: 'videosSection', id: 'videosSection' },
+  { title: 'Highlights Section', type: 'highlightsSection', id: 'highlightsSection' },
+  { title: 'Videos Section', type: 'videosSection', id: 'videosSection' },
   { title: 'Dual-Sport', type: 'dualSportSection', id: 'dualSportSection' },
   { title: 'Contact', type: 'contactSection', id: 'contactSection' },
 ];

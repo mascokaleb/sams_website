@@ -17,10 +17,24 @@ const SELECTORS = {
   highlightsTimeline: '[data-template="timeline"]',
   videosHeading: '[data-template="videos-heading"]',
   videoGrid: '[data-template="video-grid"]',
+  videosActions: '[data-template="videos-actions"]',
   dualHeading: '[data-template="dual-heading"]',
   dualGrid: '[data-template="dual-grid"]',
   contactHeading: '[data-template="contact-heading"]',
   contactGrid: '[data-template="contact-grid"]',
+  highlightsActions: '[data-template="highlights-actions"]',
+};
+
+const highlightsState = {
+  meta: null,
+  items: [],
+  expanded: false,
+};
+
+const videosState = {
+  meta: null,
+  items: [],
+  expanded: false,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -73,8 +87,15 @@ async function hydratePage() {
   renderAbout(data.about);
   renderResume(data.resume);
   renderAcademics(data.academics);
-  renderHighlights(data.highlightsSection, data.highlightEvents);
-  renderVideos(data.videosSection, data.videos);
+  highlightsState.meta = data.highlightsSection;
+  highlightsState.items = data.highlightEvents || [];
+  highlightsState.expanded = false;
+  renderHighlights();
+
+  videosState.meta = data.videosSection;
+  videosState.items = data.videos || [];
+  videosState.expanded = false;
+  renderVideos();
   renderDualSport(data.dualSport);
   renderContact(data.contact);
 
@@ -320,9 +341,12 @@ function renderAcademics(academics) {
   }
 }
 
-function renderHighlights(sectionMeta, events = []) {
+function renderHighlights() {
+  const sectionMeta = highlightsState.meta;
+  const events = highlightsState.items || [];
   const headingEl = select(SELECTORS.highlightsHeading);
   const timelineEl = select(SELECTORS.highlightsTimeline);
+  const actionsEl = select(SELECTORS.highlightsActions);
 
   if (headingEl) {
     headingEl.innerHTML = sectionMeta
@@ -337,22 +361,49 @@ function renderHighlights(sectionMeta, events = []) {
     return;
   }
 
-  const limit = sectionMeta?.maxItems || 5;
-  const limitedEvents = (events || []).slice(0, limit);
+  const baseLimit = sectionMeta?.maxItems || 5;
+  const limit = highlightsState.expanded ? events.length : baseLimit;
+  const limitedEvents = events.slice(0, limit);
 
   if (!limitedEvents.length) {
     timelineEl.innerHTML = renderPlaceholder("Highlight events coming soon.");
+    if (actionsEl) {
+      actionsEl.innerHTML = "";
+    }
     return;
   }
 
   timelineEl.innerHTML = limitedEvents
     .map((event, index) => renderHighlightCard(event, index))
     .join("");
+
+  if (actionsEl) {
+    const shouldShowToggle = events.length > baseLimit;
+    if (!shouldShowToggle) {
+      actionsEl.innerHTML = "";
+    } else {
+      actionsEl.innerHTML = `
+        <button class="btn ghost" type="button" data-action="toggle-highlights">
+          ${highlightsState.expanded ? "Show Less" : "See More"}
+        </button>
+      `;
+      const button = actionsEl.querySelector("button");
+      if (button) {
+        button.addEventListener("click", () => {
+          highlightsState.expanded = !highlightsState.expanded;
+          renderHighlights();
+        });
+      }
+    }
+  }
 }
 
-function renderVideos(sectionMeta, videos = []) {
+function renderVideos() {
+  const sectionMeta = videosState.meta;
+  const videos = videosState.items || [];
   const headingEl = select(SELECTORS.videosHeading);
   const gridEl = select(SELECTORS.videoGrid);
+  const actionsEl = select(SELECTORS.videosActions);
 
   if (headingEl) {
     headingEl.innerHTML = sectionMeta
@@ -367,15 +418,40 @@ function renderVideos(sectionMeta, videos = []) {
     return;
   }
 
-  const limit = sectionMeta?.maxItems || 3;
-  const limitedVideos = (videos || []).slice(0, limit);
+  const baseLimit = sectionMeta?.maxItems || 3;
+  const limit = videosState.expanded ? videos.length : baseLimit;
+  const limitedVideos = videos.slice(0, limit);
 
   if (!limitedVideos.length) {
     gridEl.innerHTML = renderPlaceholder("Video highlights coming soon.");
+    if (actionsEl) {
+      actionsEl.innerHTML = "";
+    }
     return;
   }
 
   gridEl.innerHTML = limitedVideos.map((video, index) => renderVideoCard(video, index)).join("");
+  setupVideoFrames();
+
+  if (actionsEl) {
+    const shouldShowToggle = videos.length > baseLimit;
+    if (!shouldShowToggle) {
+      actionsEl.innerHTML = "";
+    } else {
+      actionsEl.innerHTML = `
+        <button class="btn ghost" type="button" data-action="toggle-videos">
+          ${videosState.expanded ? "Show Less" : "See More"}
+        </button>
+      `;
+      const button = actionsEl.querySelector("button");
+      if (button) {
+        button.addEventListener("click", () => {
+          videosState.expanded = !videosState.expanded;
+          renderVideos();
+        });
+      }
+    }
+  }
 }
 
 function renderDualSport(dual) {
