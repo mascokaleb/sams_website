@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list';
 
 export const videoHighlight = defineType({
   name: 'videoHighlight',
@@ -45,12 +46,9 @@ export const videoHighlight = defineType({
       title: 'Button Label',
       initialValue: 'Play Highlight',
     }),
-    defineField({
-      name: 'manualOrder',
-      type: 'number',
-      title: 'Manual Order (lower = first)',
-    }),
+    orderRankField({ type: 'videoHighlight' }),
   ],
+  orderings: [orderRankOrdering],
   preview: {
     select: {
       title: 'title',

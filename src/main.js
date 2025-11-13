@@ -121,6 +121,24 @@ function renderMeta(site) {
   if (metaDescription && site.seoDescription) {
     metaDescription.setAttribute("content", site.seoDescription);
   }
+
+  const brandMark = document.querySelector(".brand-mark");
+  if (brandMark) {
+    if (site.brandMarkImage?.url) {
+      brandMark.innerHTML = `<img src="${escapeAttribute(site.brandMarkImage.url)}" alt="${escapeHtml(
+        site.brandMarkImage.alt || site.siteTitle || "Site logo"
+      )}" loading="lazy" />`;
+      brandMark.classList.add("has-image");
+    } else {
+      const initials =
+        site.brandMarkInitials ||
+        getInitials(site.siteTitle) ||
+        brandMark.textContent ||
+        "SM";
+      brandMark.textContent = initials;
+      brandMark.classList.remove("has-image");
+    }
+  }
 }
 
 function renderHero(hero, site) {
@@ -693,6 +711,24 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value);
+}
+
+function getInitials(value) {
+  if (!value) {
+    return "";
+  }
+
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) {
+    return "";
+  }
+  return parts
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
 }
 
 function splitContactValue(value) {

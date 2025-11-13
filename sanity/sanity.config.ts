@@ -30,7 +30,12 @@ export default defineConfig({
   title: 'Samuel Masco CMS',
   projectId,
   dataset,
-  plugins: [deskTool({ structure }), visionTool()],
+  plugins: [
+    deskTool({
+      structure: (S, context) => structure(S, context),
+    }),
+    visionTool(),
+  ],
   schema: {
     types: schemaTypes,
   },

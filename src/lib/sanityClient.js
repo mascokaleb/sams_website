@@ -16,7 +16,16 @@ export const sanityClient = projectId
   : null;
 
 const siteContentQuery = `{
-  "site": *[_type == "siteSettings"][0]{siteTitle, tagline, seoDescription},
+  "site": *[_type == "siteSettings"][0]{
+    siteTitle,
+    tagline,
+    seoDescription,
+    brandMarkInitials,
+    "brandMarkImage": brandMarkImage{
+      alt,
+      "url": asset->url
+    }
+  },
   "hero": *[_type == "heroSection"][0]{
     tagline,
     headline,
@@ -64,7 +73,7 @@ const siteContentQuery = `{
     interestsBody
   },
   "highlightsSection": *[_type == "highlightsSection"][0]{heading, subheading, maxItems},
-  "highlightEvents": *[_type == "highlightEvent" && coalesce(featured, true)]|order(coalesce(manualOrder, 9999) asc, eventDate desc){
+  "highlightEvents": *[_type == "highlightEvent" && coalesce(featured, true)]|order(orderRank asc, eventDate desc){
     title,
     eventDate,
     dateLabel,
@@ -72,7 +81,7 @@ const siteContentQuery = `{
     results[]{description}
   },
   "videosSection": *[_type == "videosSection"][0]{heading, subheading, maxItems},
-  "videos": *[_type == "videoHighlight"]|order(coalesce(manualOrder, 9999) asc, _createdAt desc){
+  "videos": *[_type == "videoHighlight"]|order(orderRank asc, _createdAt desc){
     title,
     youtubeId,
     description,

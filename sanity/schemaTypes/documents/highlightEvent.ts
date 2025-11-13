@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list';
 
 export const highlightEvent = defineType({
   name: 'highlightEvent',
@@ -51,12 +52,9 @@ export const highlightEvent = defineType({
       title: 'Featured',
       initialValue: true,
     }),
-    defineField({
-      name: 'manualOrder',
-      type: 'number',
-      title: 'Manual Order (lower = first)',
-    }),
+    orderRankField({ type: 'highlightEvent' }),
   ],
+  orderings: [orderRankOrdering],
   preview: {
     select: {
       title: 'title',

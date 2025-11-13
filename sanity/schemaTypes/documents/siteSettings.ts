@@ -17,6 +17,20 @@ export const siteSettings = defineType({
       title: 'Site Tagline',
     }),
     defineField({
+      name: 'brandMarkInitials',
+      type: 'string',
+      title: 'Brand Mark Initials',
+      description: 'Fallback letters shown in the nav logo when no image is provided.',
+    }),
+    defineField({
+      name: 'brandMarkImage',
+      type: 'image',
+      title: 'Navigation Logo',
+      description: 'Optional logo that replaces the “SM” circle.',
+      options: { hotspot: true },
+      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+    }),
+    defineField({
       name: 'seoDescription',
       type: 'text',
       rows: 3,
