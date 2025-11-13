@@ -537,12 +537,20 @@ ul {
 }
 
 .section + .section {
-  margin-top: clamp(-0.5rem, -1vw, -0.8rem);
+  margin-top: 0;
 }
 
 .section-heading {
   margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
   max-width: 40rem;
+}
+
+.section.golf-resume,
+.section.academics,
+.section.highlights,
+.section.videos,
+.section.dual-sport {
+  padding-bottom: clamp(5.2rem, 9vw, 7.5rem);
 }
 
 .section-heading h2 {
@@ -1108,4 +1116,28 @@ ul {
 .section.about::before {
   top: -4rem;
   bottom: -2rem;
+}
+
+.section.golf-resume::before {
+  bottom: clamp(-4.5rem, -6vw, -3rem);
+}
+
+.section.academics::before {
+  bottom: clamp(-4rem, -5.5vw, -2.8rem);
+}
+
+.section.highlights::before {
+  bottom: clamp(-3.8rem, -5vw, -2.5rem);
+}
+
+.section.videos::before {
+  bottom: clamp(-3.5rem, -4.5vw, -2.3rem);
+}
+
+.section.dual-sport::before {
+  bottom: clamp(-3.2rem, -4.2vw, -2rem);
+}
+
+.section.contact::before {
+  bottom: clamp(-3rem, -4vw, -1.8rem);
 }
