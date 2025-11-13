@@ -625,7 +625,8 @@ function splitContactValue(value) {
     return [];
   }
 
-  const parts = trimmed.split(/·|\|/g).map((part) => part.trim());
+  const normalized = trimmed.replace(/\s[-–—]\s/g, "|");
+  const parts = normalized.split(/·|\|/g).map((part) => part.trim());
   return parts
     .filter(Boolean)
     .map((part) => ({
