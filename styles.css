@@ -713,6 +713,7 @@ ul {
     rgba(5, 12, 35, 0.45)
   );
   mix-blend-mode: multiply;
+  pointer-events: none;
   transition: opacity var(--transition);
 }
 
