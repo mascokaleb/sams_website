@@ -545,6 +545,15 @@ ul {
   max-width: 40rem;
 }
 
+.section.academics,
+.section.highlights,
+.section.videos,
+.section.dual-sport,
+.section.contact {
+  margin-top: 0rem;
+  padding-top: clamp(3rem, 6vw, 4.5rem);
+}
+
 .section.golf-resume,
 .section.academics,
 .section.highlights,
