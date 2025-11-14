@@ -876,6 +876,9 @@ function initInteractiveGolfBall() {
 
   const heroScroll = document.querySelector(".hero-scroll");
   const scrollLabel = heroScroll ? heroScroll.querySelector("span") : null;
+  const heroAnchorOffset = { x: .5, y: -32 };
+  const scrollAnchorOffset = { x: 0, y: 10 };
+  const worldTopOffset = -80;
 
   function setBallPosition() {
     ball.style.transform = `translate3d(${state.x - radius}px, ${state.y - radius}px, 0)`;
@@ -884,33 +887,124 @@ function initInteractiveGolfBall() {
     ball.style.setProperty("--texture-offset-y", `${state.textureOffsetY}px`);
   }
 
-  function positionBallUnderScroll() {
-    if (!heroScroll) {
-      return;
+  function getHeroNameAnchorRect() {
+    const heading = document.querySelector(".hero-copy h1");
+    if (!heading) {
+      return null;
     }
 
-    const rect = getDocumentRect(scrollLabel || heroScroll);
+    const targetWord = "masco";
+    const textContent = heading.textContent || "";
+    const normalized = textContent.toLowerCase();
+    const wordIndex = normalized.lastIndexOf(targetWord);
+    if (wordIndex === -1) {
+      return null;
+    }
+
+    const letterIndex = wordIndex + targetWord.length - 1;
+    const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+    let offset = 0;
+    let currentNode = walker.nextNode();
+
+    while (currentNode) {
+      const value = currentNode.textContent || "";
+      const length = value.length;
+
+      if (letterIndex < offset + length) {
+        const charIndex = letterIndex - offset;
+        if (charIndex < 0 || charIndex >= length) {
+          return null;
+        }
+
+        const character = value.charAt(charIndex);
+        if (!character || !character.trim()) {
+          return null;
+        }
+
+        const range = document.createRange();
+        range.setStart(currentNode, charIndex);
+        range.setEnd(currentNode, Math.min(charIndex + 1, length));
+        const rect = range.getBoundingClientRect();
+        range.detach?.();
+
+        if (!rect || (!rect.width && !rect.height)) {
+          return null;
+        }
+
+        return {
+          left: rect.left + window.scrollX,
+          right: rect.right + window.scrollX,
+          top: rect.top + window.scrollY,
+          bottom: rect.bottom + window.scrollY,
+          width: rect.width,
+          height: rect.height,
+        };
+      }
+
+      offset += length;
+      currentNode = walker.nextNode();
+    }
+
+    return null;
+  }
+
+  function positionBallAtHeroName() {
+    const rect = getHeroNameAnchorRect();
+    if (!rect) {
+      return false;
+    }
+
     const bounds = getWorldBounds();
-    const initialX = rect.left + rect.width / 2;
-    const initialY = rect.bottom + radius + 6;
+    const initialX = rect.left + rect.width / 3 + heroAnchorOffset.x;
+    const initialY = rect.top + rect.height / 30 + heroAnchorOffset.y;
     const minX = bounds.left + radius + 12;
     const maxX = bounds.right - radius - 12;
-    const minY = bounds.top + radius + 12;
+    const minY = bounds.top + radius + worldTopOffset;
     const maxY = bounds.bottom - radius - 12;
     state.x = clamp(initialX, minX, maxX);
     state.y = clamp(initialY, minY, maxY);
     state.vx = 0;
     state.vy = 0;
     setBallPosition();
+    return true;
   }
 
-  if (heroScroll) {
-    positionBallUnderScroll();
-    window.addEventListener("load", positionBallUnderScroll, { once: true });
-    requestAnimationFrame(positionBallUnderScroll);
-  } else {
+  function positionBallUnderScroll() {
+    if (!heroScroll) {
+      return false;
+    }
+
+    const rect = getDocumentRect(scrollLabel || heroScroll);
+    const bounds = getWorldBounds();
+    const initialX = rect.left + rect.width / 2 + scrollAnchorOffset.x;
+    const initialY = rect.bottom + radius + scrollAnchorOffset.y;
+    const minX = bounds.left + radius + 12;
+    const maxX = bounds.right - radius - 12;
+    const minY = bounds.top + radius + worldTopOffset;
+    const maxY = bounds.bottom - radius - 12;
+    state.x = clamp(initialX, minX, maxX);
+    state.y = clamp(initialY, minY, maxY);
+    state.vx = 0;
+    state.vy = 0;
+    setBallPosition();
+    return true;
+  }
+
+  function placeBallAtPreferredAnchor() {
+    if (positionBallAtHeroName()) {
+      return;
+    }
+
+    if (positionBallUnderScroll()) {
+      return;
+    }
+
     setBallPosition();
   }
+
+  placeBallAtPreferredAnchor();
+  window.addEventListener("load", placeBallAtPreferredAnchor, { once: true });
+  requestAnimationFrame(placeBallAtPreferredAnchor);
 
   function applyPointerPush(moveX, moveY) {
     if (!pointerState.active) {
@@ -952,7 +1046,7 @@ function initInteractiveGolfBall() {
     const bounds = getWorldBounds();
     const minX = bounds.left + radius + 8;
     const maxX = bounds.right - radius - 8;
-    const minY = bounds.top + radius + 8;
+    const minY = bounds.top + radius + worldTopOffset;
     const maxY = bounds.bottom - radius - 8;
 
     if (state.x < minX) {
@@ -1133,12 +1227,8 @@ function initInteractiveGolfBall() {
   window.addEventListener("resize", () => {
     const bounds = getWorldBounds();
     state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
-    state.y = clamp(state.y, bounds.top + radius + 8, bounds.bottom - radius - 8);
-    if (heroScroll) {
-      positionBallUnderScroll();
-    } else {
-      setBallPosition();
-    }
+    state.y = clamp(state.y, bounds.top + radius + worldTopOffset, bounds.bottom - radius - 8);
+    placeBallAtPreferredAnchor();
   });
 
   requestAnimationFrame(step);
