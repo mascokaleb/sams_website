@@ -520,8 +520,8 @@ ul {
   content: "";
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  width: clamp(100vw, 110%, 1400px);
+  width: 100vw;
+  margin-left: -50vw;
   top: clamp(0rem, 0vw, 0rem);
   bottom: clamp(-2.5rem, -3vw, -1.8rem);
   z-index: -1;

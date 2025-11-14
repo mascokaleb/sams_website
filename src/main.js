@@ -843,8 +843,10 @@ function initInteractiveGolfBall() {
 
   let lastTime = performance.now();
   let isMoving = false;
+  let ballIsVisible = true;
 
   const heroSection = document.querySelector(".site-header");
+  const heroElement = document.querySelector(".hero");
   const pointerState = {
     x: 0,
     y: 0,
@@ -950,8 +952,26 @@ function initInteractiveGolfBall() {
 
   function getMinYClamp(bounds) {
     const baseMin = bounds.top + radius + worldTopOffset;
-    const viewportMin = window.scrollY + radius + 4;
-    return Math.max(baseMin, viewportMin);
+    const documentMin = radius + 4;
+    return Math.max(baseMin, documentMin);
+  }
+
+  function hasThreeHeroColumns() {
+    if (!heroElement) {
+      return true;
+    }
+
+    const styles = window.getComputedStyle(heroElement);
+    const gapValue =
+      parseFloat(styles.getPropertyValue("column-gap") || styles.getPropertyValue("gap")) || 0;
+    const availableWidth = heroElement.clientWidth;
+    if (!availableWidth) {
+      return false;
+    }
+
+    const minColumnWidth = 280;
+    const minWidthForThreeColumns = minColumnWidth * 3 + gapValue * 2;
+    return availableWidth >= minWidthForThreeColumns - 0.5;
   }
 
   function positionBallAtHeroName() {
@@ -1008,9 +1028,36 @@ function initInteractiveGolfBall() {
     setBallPosition();
   }
 
+  function syncBallVisibility(options = {}) {
+    const { force = false } = options;
+    const shouldBeVisible = hasThreeHeroColumns();
+    if (!force && shouldBeVisible === ballIsVisible) {
+      return;
+    }
+
+    const wasVisible = ballIsVisible;
+    ballIsVisible = shouldBeVisible;
+    ball.style.display = shouldBeVisible ? "" : "none";
+
+    if (shouldBeVisible && (!wasVisible || force)) {
+      placeBallAtPreferredAnchor();
+    }
+  }
+
   placeBallAtPreferredAnchor();
-  window.addEventListener("load", placeBallAtPreferredAnchor, { once: true });
-  requestAnimationFrame(placeBallAtPreferredAnchor);
+  syncBallVisibility({ force: true });
+  window.addEventListener(
+    "load",
+    () => {
+      placeBallAtPreferredAnchor();
+      syncBallVisibility({ force: true });
+    },
+    { once: true }
+  );
+  requestAnimationFrame(() => {
+    placeBallAtPreferredAnchor();
+    syncBallVisibility({ force: true });
+  });
 
   function applyPointerPush(moveX, moveY) {
     if (!pointerState.active) {
@@ -1234,7 +1281,7 @@ function initInteractiveGolfBall() {
     const bounds = getWorldBounds();
     state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
     state.y = clamp(state.y, getMinYClamp(bounds), bounds.bottom - radius - 8);
-    placeBallAtPreferredAnchor();
+    syncBallVisibility();
   });
 
   requestAnimationFrame(step);
