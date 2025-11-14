@@ -876,7 +876,7 @@ function initInteractiveGolfBall() {
 
   const heroScroll = document.querySelector(".hero-scroll");
   const scrollLabel = heroScroll ? heroScroll.querySelector("span") : null;
-  const heroAnchorOffset = { x: .5, y: -32 };
+  const heroAnchorOffset = { x: 0.5, y: -32 };
   const scrollAnchorOffset = { x: 0, y: 10 };
   const worldTopOffset = -80;
 
@@ -948,6 +948,12 @@ function initInteractiveGolfBall() {
     return null;
   }
 
+  function getMinYClamp(bounds) {
+    const baseMin = bounds.top + radius + worldTopOffset;
+    const viewportMin = window.scrollY + radius + 4;
+    return Math.max(baseMin, viewportMin);
+  }
+
   function positionBallAtHeroName() {
     const rect = getHeroNameAnchorRect();
     if (!rect) {
@@ -959,7 +965,7 @@ function initInteractiveGolfBall() {
     const initialY = rect.top + rect.height / 30 + heroAnchorOffset.y;
     const minX = bounds.left + radius + 12;
     const maxX = bounds.right - radius - 12;
-    const minY = bounds.top + radius + worldTopOffset;
+    const minY = getMinYClamp(bounds);
     const maxY = bounds.bottom - radius - 12;
     state.x = clamp(initialX, minX, maxX);
     state.y = clamp(initialY, minY, maxY);
@@ -980,7 +986,7 @@ function initInteractiveGolfBall() {
     const initialY = rect.bottom + radius + scrollAnchorOffset.y;
     const minX = bounds.left + radius + 12;
     const maxX = bounds.right - radius - 12;
-    const minY = bounds.top + radius + worldTopOffset;
+    const minY = getMinYClamp(bounds);
     const maxY = bounds.bottom - radius - 12;
     state.x = clamp(initialX, minX, maxX);
     state.y = clamp(initialY, minY, maxY);
@@ -1046,7 +1052,7 @@ function initInteractiveGolfBall() {
     const bounds = getWorldBounds();
     const minX = bounds.left + radius + 8;
     const maxX = bounds.right - radius - 8;
-    const minY = bounds.top + radius + worldTopOffset;
+    const minY = getMinYClamp(bounds);
     const maxY = bounds.bottom - radius - 8;
 
     if (state.x < minX) {
@@ -1227,7 +1233,7 @@ function initInteractiveGolfBall() {
   window.addEventListener("resize", () => {
     const bounds = getWorldBounds();
     state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
-    state.y = clamp(state.y, bounds.top + radius + worldTopOffset, bounds.bottom - radius - 8);
+    state.y = clamp(state.y, getMinYClamp(bounds), bounds.bottom - radius - 8);
     placeBallAtPreferredAnchor();
   });
 
