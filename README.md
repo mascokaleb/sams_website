@@ -82,8 +82,10 @@ Because the desk structure forces singleton documents to fixed IDs, the seed fil
 - `siteSettings` – global title/SEO copy.
 - `heroSection`, `aboutSection`, `resumeSection`, `academicsSection`, `highlightsSection`, `videosSection`, `dualSportSection`, `contactSection` – singleton docs that map 1:1 to visible sections.
 - `highlightEvent` – repeatable timeline cards with `manualOrder` + date sorting.
-- `videoHighlight` – repeatable video cards (stores the YouTube ID, description, CTA text, optional thumbnail).
+- `videoHighlight` – repeatable video cards (stores the YouTube ID or full link, description, CTA text, optional thumbnail).
 - Object types (`metric`, `cta`, `profileFact`, `quickHit`, `statItem`, `dualCard`, `contactCard`, etc.) mirror the nested pieces of each section, so editors only touch structured inputs instead of raw HTML.
+
+Editors can either paste the 11-character YouTube ID or drop in the full YouTube watch/share link—whichever is easier. The front-end extracts the ID automatically, so no other changes are required for playback.
 
 ## Front-end Status
 

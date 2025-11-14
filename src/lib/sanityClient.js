@@ -84,6 +84,7 @@ const siteContentQuery = `{
   "videos": *[_type == "videoHighlight"]|order(orderRank asc, _createdAt desc){
     title,
     youtubeId,
+    youtubeUrl,
     description,
     ctaLabel,
     "thumbnailUrl": thumbnail.asset->url,

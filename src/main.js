@@ -2,6 +2,7 @@ import { toHTML } from "@portabletext/to-html";
 import { fetchSiteContent } from "./lib/sanityClient.js";
 
 const HERO_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
+const YOUTUBE_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
 const SELECTORS = {
   heroCopy: '[data-template="hero-copy"]',
@@ -599,16 +600,25 @@ function renderHighlightCard(event, index) {
 }
 
 function renderVideoCard(video, index) {
-  const youtubeId = video.youtubeId || "";
-  const thumbnail = video.thumbnailUrl || `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+  const youtubeId = resolveYoutubeVideoId(video);
+  const thumbnail =
+    video.thumbnailUrl ||
+    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : HERO_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
   const buttonLabel = video.ctaLabel || "Play";
+  const videoTitle = video.title || "Video highlight";
+  const isPlayable = Boolean(youtubeId);
+  const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
 
   return `
     <article class="video-card" data-motion="delay-${index + 1}">
-      <div class="video-frame" data-video-id="${escapeHtml(youtubeId)}" data-video-title="${escapeHtml(video.title || "Video highlight")}">
+      <div class="video-frame" data-video-id="${escapeHtml(
+        youtubeId
+      )}" data-video-title="${escapeHtml(videoTitle)}">
         <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
-        <button class="play-button" type="button" aria-label="Play ${escapeHtml(video.title || "highlight")}">
+        <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
+          videoTitle
+        )}">
           <span class="play-icon" aria-hidden="true"></span>
           <span>${escapeHtml(buttonLabel)}</span>
         </button>
@@ -693,6 +703,62 @@ function buildCta(cta, style, fallbackLabel, fallbackHref) {
   if (fallbackLabel && fallbackHref) {
     return `<a class="btn ${style}" href="${escapeAttribute(fallbackHref)}">${escapeHtml(fallbackLabel)}</a>`;
   }
+  return "";
+}
+
+function resolveYoutubeVideoId(video) {
+  if (!video) {
+    return "";
+  }
+
+  return extractYoutubeId(video.youtubeId) || extractYoutubeId(video.youtubeUrl);
+}
+
+function extractYoutubeId(value) {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (YOUTUBE_ID_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    try {
+      parsedUrl = new URL(`https://${trimmed}`);
+    } catch {
+      return "";
+    }
+  }
+
+  const hostname = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+
+  if (hostname === "youtu.be") {
+    const shortId = parsedUrl.pathname.split("/").filter(Boolean)[0];
+    return shortId && YOUTUBE_ID_PATTERN.test(shortId) ? shortId : "";
+  }
+
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
+    const queryId = parsedUrl.searchParams.get("v");
+    if (queryId && YOUTUBE_ID_PATTERN.test(queryId)) {
+      return queryId;
+    }
+
+    const segments = parsedUrl.pathname.split("/").filter(Boolean);
+    if (segments.length >= 2 && (segments[0] === "embed" || segments[0] === "shorts")) {
+      const candidate = segments[1];
+      return candidate && YOUTUBE_ID_PATTERN.test(candidate) ? candidate : "";
+    }
+  }
+
   return "";
 }
 

@@ -16,14 +16,37 @@ export const videoHighlight = defineType({
       name: 'youtubeId',
       type: 'string',
       title: 'YouTube Video ID',
-      description: 'Only paste the ID (e.g., M7lc1UVf-VE).',
+      description: 'Only paste the ID (e.g., M7lc1UVf-VE). Optional if the full link is provided below.',
       validation: (Rule) =>
-        Rule.required()
-          .regex(/^[a-zA-Z0-9_-]{11}$/, {
-            name: 'YouTube ID',
-            invert: false,
-          })
-          .error('Must be a valid 11-character YouTube video ID.'),
+        Rule.custom((value) => {
+          if (!value) {
+            return true;
+          }
+
+          return /^[a-zA-Z0-9_-]{11}$/.test(value)
+            ? true
+            : 'Must be a valid 11-character YouTube video ID.';
+        }),
+    }),
+    defineField({
+      name: 'youtubeUrl',
+      type: 'string',
+      title: 'YouTube Video Link',
+      description: 'Paste the full YouTube URL (https://youtu.be/... or https://youtube.com/watch?v=...).',
+      validation: (Rule) =>
+        Rule.custom((value) => {
+          if (!value) {
+            return true;
+          }
+
+          const trimmed = value.trim();
+          if (!trimmed) {
+            return true;
+          }
+
+          const isYouTubeUrl = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(trimmed);
+          return isYouTubeUrl ? true : 'Enter a valid YouTube URL.';
+        }),
     }),
     defineField({
       name: 'description',
@@ -48,12 +71,28 @@ export const videoHighlight = defineType({
     }),
     orderRankField({ type: 'videoHighlight' }),
   ],
+  validation: (Rule) =>
+    Rule.custom((doc) => {
+      if (doc?.youtubeId || doc?.youtubeUrl) {
+        return true;
+      }
+      return 'Add a YouTube video ID or paste the full link.';
+    }),
   orderings: [orderRankOrdering],
   preview: {
     select: {
       title: 'title',
-      subtitle: 'youtubeId',
+      youtubeId: 'youtubeId',
+      youtubeUrl: 'youtubeUrl',
       media: 'thumbnail',
+    },
+    prepare(selection) {
+      const { title, youtubeId, youtubeUrl, media } = selection;
+      return {
+        title,
+        subtitle: youtubeId || youtubeUrl || 'Missing YouTube reference',
+        media,
+      };
     },
   },
 });
