@@ -29,20 +29,23 @@ const SELECTORS = {
 const highlightsState = {
   meta: null,
   items: [],
-  expanded: false,
 };
 
 const videosState = {
   meta: null,
   items: [],
-  expanded: false,
+  totalCount: 0,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupNav();
+  setupSmoothScroll();
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   await hydratePage();
+  if (window.location.hash) {
+    setTimeout(() => scrollToHash(window.location.hash), 100);
+  }
 
   setupMotionAnimations(prefersReducedMotion);
 
@@ -88,14 +91,16 @@ async function hydratePage() {
   renderAbout(data.about);
   renderResume(data.resume);
   renderAcademics(data.academics);
+
+  const orderedHighlights = sortEntriesChronologically(data.highlightEvents || []);
   highlightsState.meta = data.highlightsSection;
-  highlightsState.items = data.highlightEvents || [];
-  highlightsState.expanded = false;
+  highlightsState.items = orderedHighlights.filter(shouldDisplayOnHome);
   renderHighlights();
 
+  const orderedVideos = sortEntriesChronologically(data.videos || [], "eventDate");
   videosState.meta = data.videosSection;
-  videosState.items = data.videos || [];
-  videosState.expanded = false;
+  videosState.items = orderedVideos.filter(shouldDisplayOnHome);
+  videosState.totalCount = orderedVideos.length;
   renderVideos();
   renderDualSport(data.dualSport);
   renderContact(data.contact);
@@ -160,7 +165,7 @@ function renderHero(hero, site) {
     const description = hero.bio ? `<p>${escapeHtml(hero.bio)}</p>` : "";
     const ctas = [
       buildCta(hero.primaryCta, "primary", "View Highlights", "#highlights"),
-      buildCta(hero.secondaryCta, "ghost", "Connect", "#contact"),
+      buildCta(null, "ghost", "Schedule a Conversation", "#contact"),
     ]
       .filter(Boolean)
       .join("");
@@ -381,8 +386,7 @@ function renderHighlights() {
   }
 
   const baseLimit = sectionMeta?.maxItems || 5;
-  const limit = highlightsState.expanded ? events.length : baseLimit;
-  const limitedEvents = events.slice(0, limit);
+  const limitedEvents = events.slice(0, baseLimit);
 
   if (!limitedEvents.length) {
     timelineEl.innerHTML = renderPlaceholder("Highlight events coming soon.");
@@ -400,23 +404,11 @@ function renderHighlights() {
     .forEach((el) => el.classList.add("is-visible"));
 
   if (actionsEl) {
-    const shouldShowToggle = events.length > baseLimit;
-    if (!shouldShowToggle) {
-      actionsEl.innerHTML = "";
-    } else {
-      actionsEl.innerHTML = `
-        <button class="btn ghost" type="button" data-action="toggle-highlights">
-          ${highlightsState.expanded ? "Show Less" : "See More"}
-        </button>
-      `;
-      const button = actionsEl.querySelector("button");
-      if (button) {
-        button.addEventListener("click", () => {
-          highlightsState.expanded = !highlightsState.expanded;
-          renderHighlights();
-        });
-      }
-    }
+    actionsEl.innerHTML = `
+      <a class="btn ghost" href="tournament-highlights.html">
+        See More
+      </a>
+    `;
   }
 }
 
@@ -441,8 +433,7 @@ function renderVideos() {
   }
 
   const baseLimit = sectionMeta?.maxItems || 3;
-  const limit = videosState.expanded ? videos.length : baseLimit;
-  const limitedVideos = videos.slice(0, limit);
+  const limitedVideos = videos.slice(0, baseLimit);
 
   if (!limitedVideos.length) {
     gridEl.innerHTML = renderPlaceholder("Video highlights coming soon.");
@@ -457,23 +448,11 @@ function renderVideos() {
   setupVideoFrames();
 
   if (actionsEl) {
-    const shouldShowToggle = videos.length > baseLimit;
-    if (!shouldShowToggle) {
-      actionsEl.innerHTML = "";
-    } else {
-      actionsEl.innerHTML = `
-        <button class="btn ghost" type="button" data-action="toggle-videos">
-          ${videosState.expanded ? "Show Less" : "See More"}
-        </button>
-      `;
-      const button = actionsEl.querySelector("button");
-      if (button) {
-        button.addEventListener("click", () => {
-          videosState.expanded = !videosState.expanded;
-          renderVideos();
-        });
-      }
-    }
+    actionsEl.innerHTML = `
+      <a class="btn ghost" href="video-highlights.html">
+        See More
+      </a>
+    `;
   }
 }
 
@@ -637,33 +616,99 @@ function setupVideoFrames() {
 
     const playButton = frame.querySelector(".play-button");
     const videoId = frame.dataset.videoId;
+    const videoTitle = frame.dataset.videoTitle || "Samuel Masco golf video highlight";
 
     if (!playButton || !videoId) {
       return;
     }
 
     playButton.addEventListener("click", () => {
-      const iframe = document.createElement("iframe");
-      const title = frame.dataset.videoTitle || "Samuel Masco golf video highlight";
-
-      iframe.setAttribute(
-        "src",
-        `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
-      );
-      iframe.setAttribute("title", title);
-      iframe.setAttribute(
-        "allow",
-        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      );
-      iframe.setAttribute("allowfullscreen", "");
-      iframe.loading = "lazy";
-
-      frame.classList.add("is-playing");
-      frame.replaceChildren(iframe);
+      openVideoOverlay(videoId, videoTitle);
     });
 
     frame.dataset.playerReady = "true";
   });
+}
+
+let videoOverlayElement = null;
+
+function ensureVideoOverlay() {
+  if (videoOverlayElement) {
+    return videoOverlayElement;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "video-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="video-overlay-backdrop" data-overlay-close></div>
+    <div class="video-overlay-dialog" role="dialog" aria-modal="true">
+      <button class="video-overlay-close" type="button" data-overlay-close>
+        <span class="sr-only">Close video</span>
+        ×
+      </button>
+      <div class="video-overlay-frame"></div>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target.closest("[data-overlay-close]")) {
+      closeVideoOverlay();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-open")) {
+      closeVideoOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  videoOverlayElement = overlay;
+  return overlay;
+}
+
+function openVideoOverlay(videoId, title) {
+  const overlay = ensureVideoOverlay();
+  const frame = overlay.querySelector(".video-overlay-frame");
+
+  if (!frame) {
+    return;
+  }
+
+  frame.innerHTML = "";
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute(
+    "src",
+    `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
+  );
+  iframe.setAttribute("title", title);
+  iframe.setAttribute(
+    "allow",
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  );
+  iframe.setAttribute("allowfullscreen", "");
+  iframe.loading = "lazy";
+  frame.appendChild(iframe);
+
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-showing-video");
+}
+
+function closeVideoOverlay() {
+  if (!videoOverlayElement) {
+    return;
+  }
+
+  const frame = videoOverlayElement.querySelector(".video-overlay-frame");
+  if (frame) {
+    frame.innerHTML = "";
+  }
+
+  videoOverlayElement.classList.remove("is-open");
+  videoOverlayElement.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-showing-video");
 }
 
 function renderPortableText(value) {
@@ -697,13 +742,46 @@ function setPageError(message) {
 }
 
 function buildCta(cta, style, fallbackLabel, fallbackHref) {
-  if (cta?.label && cta?.href) {
-    return `<a class="btn ${style}" href="${escapeAttribute(cta.href)}">${escapeHtml(cta.label)}</a>`;
+  const label = cta?.label || fallbackLabel;
+  const href = cta?.href || fallbackHref;
+
+  if (!label || !href) {
+    return "";
   }
-  if (fallbackLabel && fallbackHref) {
-    return `<a class="btn ${style}" href="${escapeAttribute(fallbackHref)}">${escapeHtml(fallbackLabel)}</a>`;
+
+  const isInternal = href.startsWith("#");
+  const attrs = isInternal ? ' data-scroll="true"' : ' target="_blank" rel="noopener"';
+  return `<a class="btn ${style}" href="${escapeAttribute(href)}"${attrs}>${escapeHtml(label)}</a>`;
+}
+
+function setupSmoothScroll() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[data-scroll="true"]');
+    if (!link) {
+      return;
+    }
+
+    const href = link.getAttribute("href") || "";
+    if (!scrollToHash(href)) {
+      return;
+    }
+
+    event.preventDefault();
+  });
+}
+
+function scrollToHash(hash) {
+  if (!hash || !hash.startsWith("#") || hash.length === 1) {
+    return false;
   }
-  return "";
+
+  const target = document.querySelector(hash);
+  if (!target) {
+    return false;
+  }
+
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  return true;
 }
 
 function resolveYoutubeVideoId(video) {
@@ -858,6 +936,53 @@ function formatEventDate(event) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function sortEntriesChronologically(items, dateField = "eventDate") {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return [...items].sort((a, b) => getDateScore(b, dateField) - getDateScore(a, dateField));
+}
+
+function getDateScore(entry, dateField) {
+  if (!entry) {
+    return 0;
+  }
+
+  const value = entry[dateField];
+  if (value) {
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+
+  if (entry._createdAt) {
+    const fallback = Date.parse(entry._createdAt);
+    if (!Number.isNaN(fallback)) {
+      return fallback;
+    }
+  }
+
+  return 0;
+}
+
+function shouldDisplayOnHome(entry) {
+  if (!entry) {
+    return false;
+  }
+
+  if (typeof entry.showOnHomePage === "boolean") {
+    return entry.showOnHomePage;
+  }
+
+  if (typeof entry.featured === "boolean") {
+    return entry.featured;
+  }
+
+  return true;
 }
 
 function setupMotionAnimations(prefersReducedMotion) {

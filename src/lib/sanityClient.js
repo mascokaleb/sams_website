@@ -73,20 +73,29 @@ const siteContentQuery = `{
     interestsBody
   },
   "highlightsSection": *[_type == "highlightsSection"][0]{heading, subheading, maxItems},
-  "highlightEvents": *[_type == "highlightEvent" && coalesce(featured, true)]|order(orderRank asc, eventDate desc){
+  "highlightEvents": *[_type == "highlightEvent"]|order(eventDate desc, _createdAt desc){
     title,
     eventDate,
     dateLabel,
     summary,
-    results[]{description}
+    results[]{description},
+    featured,
+    showOnHomePage,
+    pinToTop,
+    _createdAt
   },
   "videosSection": *[_type == "videosSection"][0]{heading, subheading, maxItems},
-  "videos": *[_type == "videoHighlight"]|order(orderRank asc, _createdAt desc){
+  "videos": *[_type == "videoHighlight"]|order(eventDate desc, _createdAt desc){
     title,
     youtubeId,
     youtubeUrl,
     description,
     ctaLabel,
+    eventDate,
+    featured,
+    showOnHomePage,
+    pinToTop,
+    _createdAt,
     "thumbnailUrl": thumbnail.asset->url,
     "thumbnailAlt": thumbnail.alt
   },

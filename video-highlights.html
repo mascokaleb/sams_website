@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Samuel Masco | Video Highlights</title>
+    <meta
+      name="description"
+      content="Watch every video highlight from Samuel Masco's tournament journey, curated with context for coaches and recruiters."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="content-page video-page">
+    <div class="noise-overlay" aria-hidden="true"></div>
+    <header class="page-hero">
+      <nav class="page-nav">
+        <a class="brand" href="index.html#top">
+          <span class="brand-mark" data-brand-mark>SM</span>
+          <span class="brand-text" data-brand-text>Samuel Masco</span>
+        </a>
+        <div class="page-nav-actions">
+          <a class="btn ghost" href="tournament-highlights.html">Tournament Highlights</a>
+          <a class="btn subtle" href="index.html#videos">Back to main site</a>
+        </div>
+      </nav>
+      <div class="page-hero-content">
+        <p class="eyebrow">Video Highlights</p>
+        <h1 data-page-heading>Watch every shot in context.</h1>
+        <p data-page-subheading>
+          A film room built for recruiters—complete with notes, round context, and quick filters to find the right clip fast.
+        </p>
+        <div class="page-hero-actions">
+          <a class="btn primary" href="index.html#contact">Schedule a conversation</a>
+          <a class="btn ghost" href="tournament-highlights.html">Explore tournaments</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section video-browser">
+        <div class="browser-layout">
+          <aside class="browser-panel">
+            <div class="video-intro-card">
+              <p class="summary-eyebrow">Video library</p>
+              <h2 data-video-count>0 videos</h2>
+              <p>Search clips by keyword to quickly surface a specific round, shot, or recap.</p>
+              <label class="video-search" for="video-search-input">
+                <span>Search</span>
+                <input
+                  id="video-search-input"
+                  type="search"
+                  placeholder="Search"
+                  data-video-search
+                />
+              </label>
+              <div class="video-filters" data-video-year-filters>
+                <p class="placeholder-text">Loading filters...</p>
+              </div>
+            </div>
+          </aside>
+          <div class="browser-results">
+            <div class="page-message" data-video-message></div>
+            <div class="video-gallery-grid" data-video-grid>
+              <p class="placeholder-text">Loading the video gallery...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Built for the recruiting journey of
+        <strong>Samuel Masco · Class of 2029</strong>.
+      </p>
+    </footer>
+
+    <script type="module" src="/src/video-highlights.js"></script>
+  </body>
+</html>

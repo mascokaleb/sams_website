@@ -1,5 +1,4 @@
 import { defineField, defineType } from 'sanity';
-import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list';
 
 export const videoHighlight = defineType({
   name: 'videoHighlight',
@@ -10,6 +9,16 @@ export const videoHighlight = defineType({
       name: 'title',
       type: 'string',
       title: 'Title',
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'eventDate',
+      type: 'date',
+      title: 'Highlight Date',
+      description: 'Used for chronological sorting and filtering.',
+      options: {
+        dateFormat: 'MMM DD, YYYY',
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -69,7 +78,26 @@ export const videoHighlight = defineType({
       title: 'Button Label',
       initialValue: 'Play Highlight',
     }),
-    orderRankField({ type: 'videoHighlight' }),
+    defineField({
+      name: 'showOnHomePage',
+      type: 'boolean',
+      title: 'Show on home page',
+      description: 'Disable to keep this clip off the homepage video grid.',
+      initialValue: true,
+    }),
+    defineField({
+      name: 'pinToTop',
+      type: 'boolean',
+      title: 'Featured clip',
+      description: 'Featured clips float to the top of the video gallery with an accent treatment.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'orderRank',
+      type: 'string',
+      hidden: true,
+      readOnly: true,
+    }),
   ],
   validation: (Rule) =>
     Rule.custom((doc) => {
@@ -78,7 +106,7 @@ export const videoHighlight = defineType({
       }
       return 'Add a YouTube video ID or paste the full link.';
     }),
-  orderings: [orderRankOrdering],
+  orderings: [],
   preview: {
     select: {
       title: 'title',

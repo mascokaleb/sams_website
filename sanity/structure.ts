@@ -1,5 +1,4 @@
 import type { StructureResolver } from 'sanity/desk';
-import { orderableDocumentListDeskItem } from '@sanity/orderable-document-list';
 
 const singletonDocs = [
   { title: 'Site Settings', type: 'siteSettings', id: 'siteSettings' },
@@ -26,16 +25,12 @@ export const structure: StructureResolver = (S, context) =>
           .child(S.document().schemaType(type).documentId(type))
       ),
       S.divider(),
-      orderableDocumentListDeskItem({
-        S,
-        context,
-        type: 'highlightEvent',
-        title: 'Tournament Highlights',
-      }),
-      orderableDocumentListDeskItem({
-        S,
-        context,
-        type: 'videoHighlight',
-        title: 'Video Highlights',
-      }),
+      S.listItem()
+        .title('Tournament Highlights')
+        .schemaType('highlightEvent')
+        .child(S.documentTypeList('highlightEvent').title('Tournament Highlights')),
+      S.listItem()
+        .title('Video Highlights')
+        .schemaType('videoHighlight')
+        .child(S.documentTypeList('videoHighlight').title('Video Highlights')),
     ]);

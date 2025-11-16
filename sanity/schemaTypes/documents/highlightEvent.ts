@@ -1,5 +1,4 @@
 import { defineField, defineType } from 'sanity';
-import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list';
 
 export const highlightEvent = defineType({
   name: 'highlightEvent',
@@ -47,14 +46,39 @@ export const highlightEvent = defineType({
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
-      name: 'featured',
+      name: 'showOnHomePage',
       type: 'boolean',
-      title: 'Featured',
+      title: 'Show on home page',
+      description: 'Disable to hide this highlight from the main highlights timeline.',
       initialValue: true,
     }),
-    orderRankField({ type: 'highlightEvent' }),
+    defineField({
+      name: 'pinToTop',
+      type: 'boolean',
+      title: 'Featured highlight',
+      description: 'Featured highlights float to the top of the timeline with a special accent.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'featured',
+      type: 'boolean',
+      hidden: true,
+      readOnly: true,
+    }),
+    defineField({
+      name: 'manualOrder',
+      type: 'number',
+      hidden: true,
+      readOnly: true,
+    }),
+    defineField({
+      name: 'orderRank',
+      type: 'string',
+      hidden: true,
+      readOnly: true,
+    }),
   ],
-  orderings: [orderRankOrdering],
+  orderings: [],
   preview: {
     select: {
       title: 'title',
