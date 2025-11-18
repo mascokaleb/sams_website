@@ -4,7 +4,6 @@ const projectId = import.meta.env.VITE_SANITY_PROJECT_ID;
 const dataset = import.meta.env.VITE_SANITY_DATASET || 'production';
 const apiVersion =
   import.meta.env.VITE_SANITY_API_VERSION || new Date().toISOString().split('T')[0];
-
 export const sanityClient = projectId
   ? createClient({
       projectId,
@@ -76,9 +75,16 @@ const siteContentQuery = `{
   "highlightEvents": *[_type == "highlightEvent"]|order(eventDate desc, _createdAt desc){
     title,
     eventDate,
-    dateLabel,
+    endDate,
     summary,
-    results[]{description},
+    days[]{
+      label,
+      score,
+      yardage,
+      rankingPosition,
+      rankingOutOf,
+      notes
+    },
     featured,
     showOnHomePage,
     pinToTop,
@@ -104,6 +110,13 @@ const siteContentQuery = `{
 }`;
 
 export async function fetchSiteContent() {
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    const devData = await fetchViaDevProxy();
+    if (devData) {
+      return devData;
+    }
+  }
+
   if (!sanityClient) {
     console.warn(
       'Sanity client not initialized. Set VITE_SANITY_PROJECT_ID and VITE_SANITY_DATASET to enable CMS data.'
@@ -115,6 +128,28 @@ export async function fetchSiteContent() {
     return await sanityClient.fetch(siteContentQuery);
   } catch (error) {
     console.error('Failed to fetch Sanity content', error);
+    return null;
+  }
+}
+
+async function fetchViaDevProxy() {
+  try {
+    const base = window.location.origin.replace(/\/$/, '');
+    const proxyUrl = `${base}/sanity-proxy/v${apiVersion}/data/query/${dataset}`;
+    const params = new URLSearchParams({
+      perspective: 'published',
+      query: siteContentQuery,
+      returnQuery: 'false',
+    });
+    const response = await fetch(`${proxyUrl}?${params.toString()}`);
+    if (!response.ok) {
+      console.warn('Sanity proxy request failed', response.status, response.statusText);
+      return null;
+    }
+    const payload = await response.json();
+    return payload?.result ?? null;
+  } catch (error) {
+    console.warn('Sanity proxy request error', error);
     return null;
   }
 }

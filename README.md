@@ -81,7 +81,7 @@ Because the desk structure forces singleton documents to fixed IDs, the seed fil
 
 - `siteSettings` – global title/SEO copy.
 - `heroSection`, `aboutSection`, `resumeSection`, `academicsSection`, `highlightsSection`, `videosSection`, `dualSportSection`, `contactSection` – singleton docs that map 1:1 to visible sections.
-- `highlightEvent` – repeatable timeline cards sorted chronologically (with optional featured/pin toggles).
+- `highlightEvent` – repeatable timeline cards sorted chronologically with structured `days[]` entries capturing score, yardage, ranking, and notes for each day (plus optional featured/pin toggles).
 - `videoHighlight` – repeatable video cards (stores the YouTube ID or full link, description, CTA text, optional thumbnail).
 - Object types (`metric`, `cta`, `profileFact`, `quickHit`, `statItem`, `dualCard`, `contactCard`, etc.) mirror the nested pieces of each section, so editors only touch structured inputs instead of raw HTML.
 

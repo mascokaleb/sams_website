@@ -14,11 +14,11 @@ import { contactCard } from './objects/contactCard';
 import { contactEntry } from './objects/contactEntry';
 import { cta } from './objects/cta';
 import { dualCard } from './objects/dualCard';
-import { highlightResult } from './objects/highlightResult';
 import { metric } from './objects/metric';
 import { profileFact } from './objects/profileFact';
 import { quickHit } from './objects/quickHit';
 import { statItem } from './objects/statItem';
+import { tournamentDay } from './objects/tournamentDay';
 
 export const schemaTypes = [
   // documents
@@ -40,7 +40,7 @@ export const schemaTypes = [
   profileFact,
   quickHit,
   statItem,
-  highlightResult,
+  tournamentDay,
   dualCard,
   contactCard,
   contactEntry,

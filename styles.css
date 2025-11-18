@@ -1024,6 +1024,160 @@ body.content-page {
   display: block;
 }
 
+.day-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(0.8rem, 2vw, 1.2rem);
+  margin: 1rem 0;
+}
+
+.day-stats--compact {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-top: 0.5rem;
+}
+
+.day-stats--list {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .day-stats,
+  .day-stats--compact,
+  .day-stats--list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.day-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.day-metric-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.day-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.day-metric-value {
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.day-metric[data-metric="score"] .day-metric-value {
+  color: var(--accent-primary);
+}
+
+.day-metric[data-metric="yards"] .day-metric-value {
+  color: var(--accent-secondary);
+}
+
+.day-metric[data-metric="rank"] .day-metric-value {
+  color: #d3404f;
+}
+
+.day-metric-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.day-metric-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(15, 29, 51, 0.5);
+}
+
+.day-metric-secondary {
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: rgba(15, 29, 51, 0.4);
+  text-transform: uppercase;
+}
+
+.day-metric-lap {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(15, 29, 51, 0.08);
+  color: rgba(15, 29, 51, 0.8);
+  letter-spacing: 0.08em;
+}
+
+.day-stats--compact .day-metric-list {
+  gap: 0.5rem;
+}
+
+.day-stat {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 29, 51, 0.08);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  box-shadow: inset 0 1px 2px rgba(15, 29, 51, 0.04);
+}
+
+.day-stat-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-secondary);
+  margin-bottom: 0.35rem;
+  display: inline-block;
+}
+
+.day-stat-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.day-score {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.day-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.day-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.day-note strong {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-secondary);
+}
+
+.day-note p {
+  margin: 0.25rem 0 0;
+  color: var(--text-dim);
+}
+
 .browser-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);

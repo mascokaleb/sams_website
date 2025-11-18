@@ -562,9 +562,8 @@ function renderContactEntry(entry) {
 function renderHighlightCard(event, index) {
   const dateLabel = formatEventDate(event);
   const summary = event.summary ? `<p>${escapeHtml(event.summary)}</p>` : "";
-  const results = Array.isArray(event.results)
-    ? `<ul>${event.results.map((item) => `<li>${escapeHtml(item.description || "")}</li>`).join("")}</ul>`
-    : "";
+  const days = Array.isArray(event.days) ? event.days : [];
+  const dayStats = renderDayStats(days, { variant: "compact" });
 
   return `
     <article class="timeline-card" data-motion="delay-${index + 1}">
@@ -572,10 +571,229 @@ function renderHighlightCard(event, index) {
         <h3>${escapeHtml(event.title || "")}</h3>
         ${dateLabel ? `<span class="timeline-date">${dateLabel}</span>` : ""}
       </header>
+      ${dayStats}
       ${summary}
-      ${results}
     </article>
   `;
+}
+
+function renderDayStats(days = [], { variant = "default", showLabels } = {}) {
+  if (!Array.isArray(days) || !days.length) {
+    return "";
+  }
+
+  const total = days.length;
+  const labels = typeof showLabels === "boolean" ? showLabels : total > 1;
+  const className = [
+    "day-stats",
+    variant === "compact" ? "day-stats--compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `
+    <div class="${className}">
+      ${days
+        .map((day, index) => renderDayStat(day, index, { showLabels: labels, total }))
+        .join("")}
+    </div>
+  `;
+}
+
+const SCORE_RING_MAX = 120;
+const SCORE_RING_MIN = 57;
+
+function renderDayStat(day, index, { showLabels, total }) {
+  if (!day) {
+    return "";
+  }
+
+  const label = showLabels ? resolveDayLabel(day, index, total) : null;
+  const metricsMarkup = renderDayMetricLayout(day);
+
+  if (!metricsMarkup) {
+    return "";
+  }
+
+  return `
+    <div class="day-stat">
+      ${label ? `<span class="day-stat-label">${escapeHtml(label)}</span>` : ""}
+      ${metricsMarkup}
+    </div>
+  `;
+}
+
+function renderDayMetricLayout(day) {
+  const metrics = buildDayMetricData(day);
+  if (!metrics.length) {
+    return "";
+  }
+
+  return `
+    <div class="day-metrics">
+      ${renderDayMetricList(metrics)}
+    </div>
+  `;
+}
+
+function renderDayMetricList(metrics) {
+  return `
+    <div class="day-metric-list">
+      ${metrics
+        .map((metric) => {
+          const secondary = metric.secondary
+            ? `<span class="day-metric-secondary">${escapeHtml(metric.secondary)}</span>`
+            : "";
+          return `
+            <div class="day-metric" data-metric="${metric.key}">
+              <span class="day-metric-value">${escapeHtml(metric.display)}</span>
+              <div class="day-metric-meta">
+                <span class="day-metric-label">
+                  ${escapeHtml(metric.label)}
+                  ${secondary}
+                </span>
+              </div>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function buildDayMetricData(day) {
+  if (!day) {
+    return [];
+  }
+
+  const metrics = [];
+  const scoreValue = normalizeMetricValue(day.score);
+  const yardageValue = normalizeMetricValue(day.yardage);
+
+  metrics.push(
+    createMetricEntry({
+      key: "score",
+      label: "Score",
+      display: typeof scoreValue === "number" ? String(scoreValue) : "—",
+      progress: computeScoreRingProgress(scoreValue),
+    })
+  );
+
+  metrics.push(
+    createMetricEntry({
+      key: "yards",
+      label: "Yardage",
+      display: typeof yardageValue === "number" ? yardageValue.toLocaleString() : "—",
+      secondary: "",
+      progress: computePositiveProgress(yardageValue, resolveYardageTarget(day, yardageValue)),
+    })
+  );
+
+  const ranking = resolveRankingMetrics(day);
+  metrics.push(
+    createMetricEntry({
+      key: "rank",
+      label: "Rank",
+      display: ranking.display,
+      secondary: ranking.secondary,
+      progress: ranking.progress,
+    })
+  );
+
+  return metrics.filter(Boolean);
+}
+
+function createMetricEntry({ key, label, display, secondary, progress }) {
+  const safeDisplay = display != null && display !== "" ? String(display) : "—";
+  const safeSecondary = secondary ? String(secondary) : "";
+  const numericProgress = typeof progress === "number" && !Number.isNaN(progress) ? progress : 0;
+
+  return {
+    key,
+    label,
+    display: safeDisplay,
+    secondary: safeSecondary,
+    progress: Math.max(0, numericProgress),
+  };
+}
+
+function resolveDayLabel(day, index, total) {
+  if (day.label) {
+    return day.label;
+  }
+  if (total > 1) {
+    return `Day ${index + 1}`;
+  }
+  return null;
+}
+
+function normalizeMetricValue(value) {
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+}
+
+function resolveYardageTarget(day, value) {
+  if (typeof value === "number" && value > 0) {
+    return Math.max(7200, Math.round(value / 50) * 50);
+  }
+  return 7200;
+}
+
+function computeScoreRingProgress(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return 0;
+  }
+
+  const span = SCORE_RING_MAX - SCORE_RING_MIN;
+  if (span <= 0) {
+    return 0;
+  }
+
+  return (SCORE_RING_MAX - value) / span;
+}
+
+function computePositiveProgress(value, target) {
+  if (typeof value !== "number" || Number.isNaN(value) || !target || target <= 0) {
+    return 0;
+  }
+  return value / target;
+}
+
+function computeRankProgress(position, outOf) {
+  if (
+    typeof position !== "number" ||
+    Number.isNaN(position) ||
+    typeof outOf !== "number" ||
+    outOf <= 0
+  ) {
+    return 0;
+  }
+
+  if (outOf === 1) {
+    return 1;
+  }
+
+  const ratio = (outOf - position) / (outOf - 1);
+  return Math.max(0, Math.min(ratio, 1));
+}
+
+function resolveRankingMetrics(day) {
+  const position = normalizeMetricValue(day?.rankingPosition);
+  const outOf = normalizeMetricValue(day?.rankingOutOf);
+  const progress = computeRankProgress(position, outOf);
+
+  if (typeof position === "number") {
+    return {
+      display: String(position),
+      secondary: typeof outOf === "number" ? `of ${outOf}` : "",
+      progress,
+    };
+  }
+
+  return {
+    display: "—",
+    secondary: "",
+    progress: 0,
+  };
 }
 
 function renderVideoCard(video, index) {
@@ -784,6 +1002,45 @@ function scrollToHash(hash) {
   return true;
 }
 
+function formatDateRangeDisplay(startValue, endValue, { month = "short" } = {}) {
+  if (!startValue) {
+    return "";
+  }
+
+  const start = new Date(startValue);
+  if (Number.isNaN(start.getTime())) {
+    return escapeHtml(startValue);
+  }
+
+  if (!endValue) {
+    return start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
+  }
+
+  const end = new Date(endValue);
+  if (Number.isNaN(end.getTime())) {
+    const startText = start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
+    return `${startText} – ${escapeHtml(endValue)}`;
+  }
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+  if (sameYear && sameMonth) {
+    const monthLabel = start.toLocaleDateString("en-US", { month });
+    return `${monthLabel} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`;
+  }
+
+  if (sameYear) {
+    const startText = start.toLocaleDateString("en-US", { month, day: "numeric" });
+    const endText = end.toLocaleDateString("en-US", { month, day: "numeric" });
+    return `${startText} – ${endText}, ${start.getFullYear()}`;
+  }
+
+  const startText = start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
+  const endText = end.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
+  return `${startText} – ${endText}`;
+}
+
 function resolveYoutubeVideoId(video) {
   if (!video) {
     return "";
@@ -918,24 +1175,7 @@ function formatEventDate(event) {
     return "";
   }
 
-  if (event.dateLabel) {
-    return escapeHtml(event.dateLabel);
-  }
-
-  if (!event.eventDate) {
-    return "";
-  }
-
-  const date = new Date(event.eventDate);
-  if (Number.isNaN(date.getTime())) {
-    return escapeHtml(event.eventDate);
-  }
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatDateRangeDisplay(event.eventDate, event.endDate, { month: "short" });
 }
 
 function sortEntriesChronologically(items, dateField = "eventDate") {

@@ -21,10 +21,13 @@ export const highlightEvent = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'dateLabel',
-      type: 'string',
-      title: 'Date Label Override',
-      description: 'Optional custom text such as "Oct 18–19, 2025"; defaults to the formatted event date.',
+      name: 'endDate',
+      type: 'date',
+      title: 'End Date',
+      description: 'Optional end date for multi-day events.',
+      options: {
+        dateFormat: 'MMM DD, YYYY',
+      },
     }),
     defineField({
       name: 'location',
@@ -39,10 +42,10 @@ export const highlightEvent = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'results',
+      name: 'days',
       type: 'array',
-      title: 'Result Details',
-      of: [{ type: 'highlightResult' }],
+      title: 'Tournament Days',
+      of: [{ type: 'tournamentDay' }],
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
