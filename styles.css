@@ -1898,8 +1898,26 @@ body.is-showing-video {
   }
 
   .highlight-date-badge {
-    width: 100%;
-    max-width: 120px;
+    width: auto;
+    max-width: none;
+    min-height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    letter-spacing: 0.1em;
+  }
+
+  .highlight-date-badge .month,
+  .highlight-date-badge .year {
+    font-size: 0.65rem;
+  }
+
+  .highlight-date-badge strong {
+    font-size: 1.25rem;
+    line-height: 1;
   }
 
   .featured-video {
