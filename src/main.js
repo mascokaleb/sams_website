@@ -587,6 +587,8 @@ function renderDayStats(days = [], { variant = "default", showLabels } = {}) {
   const className = [
     "day-stats",
     variant === "compact" ? "day-stats--compact" : "",
+    total === 1 ? "day-stats--single" : "",
+    `day-stats--cols-${Math.min(total, 3)}`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -608,7 +610,8 @@ function renderDayStat(day, index, { showLabels, total }) {
     return "";
   }
 
-  const label = showLabels ? resolveDayLabel(day, index, total) : null;
+  const isSingle = total === 1;
+  const label = !isSingle && showLabels ? resolveDayLabel(day, index, total) : null;
   const metricsMarkup = renderDayMetricLayout(day);
 
   if (!metricsMarkup) {
@@ -616,7 +619,7 @@ function renderDayStat(day, index, { showLabels, total }) {
   }
 
   return `
-    <div class="day-stat">
+    <div class="day-stat${isSingle ? " day-stat--single" : ""}">
       ${label ? `<span class="day-stat-label">${escapeHtml(label)}</span>` : ""}
       ${metricsMarkup}
     </div>

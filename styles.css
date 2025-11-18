@@ -1041,9 +1041,21 @@ body.content-page {
 }
 
 @media (min-width: 768px) {
-  .day-stats,
-  .day-stats--compact,
-  .day-stats--list {
+  .day-stats.day-stats--cols-1,
+  .day-stats--compact.day-stats--cols-1,
+  .day-stats--list.day-stats--cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .day-stats.day-stats--cols-2,
+  .day-stats--compact.day-stats--cols-2,
+  .day-stats--list.day-stats--cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .day-stats.day-stats--cols-3,
+  .day-stats--compact.day-stats--cols-3,
+  .day-stats--list.day-stats--cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -1178,6 +1190,44 @@ body.content-page {
   gap: 0.6rem;
   font-size: 0.9rem;
   color: var(--text-dim);
+}
+
+.day-stats--single {
+  grid-template-columns: 1fr;
+}
+
+.day-stat--single {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.day-stat--single .day-metrics {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.day-stat--single .day-metric-list {
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+.day-stat--single .day-metric {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.day-stat--single .day-metric-value {
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  min-width: 0;
+  text-align: left;
+}
+
+.day-stat--single .day-metric-meta {
+  align-items: flex-start;
 }
 
 .day-notes {
