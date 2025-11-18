@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body id="top">
     <div class="noise-overlay" aria-hidden="true"></div>
     <header class="site-header" data-motion>
       <nav class="nav">
@@ -34,10 +34,11 @@
           <li><a href="#academics">Academics</a></li>
           <li><a href="#highlights">Highlights</a></li>
           <li><a href="#videos">Videos</a></li>
+          <li><a href="#gallery">Gallery</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
-      <div class="hero" id="top">
+      <div class="hero">
         <div class="hero-copy" data-motion="delay-1" data-template="hero-copy">
           <p class="placeholder-text">Loading hero...</p>
         </div>
@@ -97,6 +98,16 @@
         </div>
         <div class="video-grid" data-template="video-grid"></div>
         <div class="section-actions" data-template="videos-actions"></div>
+      </section>
+
+      <section class="section gallery" id="gallery">
+        <div class="section-heading" data-motion data-template="gallery-heading">
+          <p class="placeholder-text">Loading gallery...</p>
+        </div>
+        <div class="gallery-grid" data-template="gallery-grid">
+          <p class="placeholder-text">Loading gallery cards...</p>
+        </div>
+        <div class="section-actions" data-template="gallery-actions"></div>
       </section>
 
       <section class="section dual-sport">

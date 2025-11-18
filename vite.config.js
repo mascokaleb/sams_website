@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
           main: resolve(rootDir, 'index.html'),
           tournaments: resolve(rootDir, 'tournament-highlights.html'),
           videos: resolve(rootDir, 'video-highlights.html'),
+          gallery: resolve(rootDir, 'gallery.html'),
         },
       },
     },

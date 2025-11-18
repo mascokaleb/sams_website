@@ -8,6 +8,7 @@ const singletonDocs = [
   { title: 'Academics', type: 'academicsSection', id: 'academicsSection' },
   { title: 'Highlights Section', type: 'highlightsSection', id: 'highlightsSection' },
   { title: 'Videos Section', type: 'videosSection', id: 'videosSection' },
+  { title: 'Gallery Section', type: 'gallerySection', id: 'gallerySection' },
   { title: 'Dual-Sport', type: 'dualSportSection', id: 'dualSportSection' },
   { title: 'Contact', type: 'contactSection', id: 'contactSection' },
 ];
@@ -33,4 +34,8 @@ export const structure: StructureResolver = (S, context) =>
         .title('Video Highlights')
         .schemaType('videoHighlight')
         .child(S.documentTypeList('videoHighlight').title('Video Highlights')),
+      S.listItem()
+        .title('Photo Gallery')
+        .schemaType('galleryPhoto')
+        .child(S.documentTypeList('galleryPhoto').title('Photo Gallery')),
     ]);

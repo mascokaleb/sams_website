@@ -14,9 +14,9 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/videos-DnyvbuXm.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/sanityClient-D1oloeXP.js">
-    <link rel="stylesheet" crossorigin href="./assets/sanityClient-bpmS-bpd.css">
+    <script type="module" crossorigin src="./assets/videos-DSJf3gS3.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/sanityClient-kAGhWdKW.js">
+    <link rel="stylesheet" crossorigin href="./assets/sanityClient-BuQmHA5k.css">
   </head>
   <body class="content-page video-page">
     <div class="noise-overlay" aria-hidden="true"></div>
@@ -28,6 +28,7 @@
         </a>
         <div class="page-nav-actions">
           <a class="btn ghost" href="tournament-highlights.html">Tournament Highlights</a>
+          <a class="btn ghost" href="gallery.html">Photo Gallery</a>
           <a class="btn subtle" href="index.html#videos">Back to main site</a>
         </div>
       </nav>
@@ -48,11 +49,11 @@
       <section class="section video-browser">
         <div class="browser-layout">
           <aside class="browser-panel">
-            <div class="video-intro-card">
-              <p class="summary-eyebrow">Video library</p>
-              <h2 data-video-count>0 videos</h2>
-              <p>Search clips by keyword to quickly surface a specific round, shot, or recap.</p>
-              <label class="video-search" for="video-search-input">
+          <div class="video-intro-card">
+            <p class="summary-eyebrow">Video library</p>
+            <h2 data-video-count>0 videos</h2>
+            <p>Search clips by keyword to quickly surface a specific round, shot, or recap.</p>
+            <label class="video-search" for="video-search-input">
                 <span>Search</span>
                 <input
                   id="video-search-input"
@@ -60,12 +61,18 @@
                   placeholder="Search"
                   data-video-search
                 />
-              </label>
-              <div class="video-filters" data-video-year-filters>
-                <p class="placeholder-text">Loading filters...</p>
-              </div>
+            </label>
+            <div class="video-filters" data-video-year-filters>
+              <p class="placeholder-text">Loading filters...</p>
             </div>
-          </aside>
+            <div class="video-filters" data-video-tag-filters>
+              <p class="placeholder-text">Loading tags...</p>
+            </div>
+            <div class="video-filters" data-video-tournament-filters>
+              <p class="placeholder-text">Loading tournaments...</p>
+            </div>
+          </div>
+        </aside>
           <div class="browser-results">
             <div class="page-message" data-video-message></div>
             <div class="video-gallery-grid" data-video-grid>

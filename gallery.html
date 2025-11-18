@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Samuel Masco | Tournament Highlights</title>
+    <title>Samuel Masco | Photo Gallery</title>
     <meta
       name="description"
-      content="Dive into the complete catalog of Samuel Masco's tournament highlights, finishes, and round recaps."
+      content="Explore every photo from Samuel Masco's tournament and training sessions in a searchable, filterable gallery."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="content-page highlights-page">
+  <body class="content-page gallery-page">
     <div class="noise-overlay" aria-hidden="true"></div>
     <header class="page-hero">
       <nav class="page-nav">
@@ -26,51 +26,53 @@
         </a>
         <div class="page-nav-actions">
           <a class="btn ghost" href="video-highlights.html">Video Highlights</a>
-          <a class="btn ghost" href="gallery.html">Photo Gallery</a>
-          <a class="btn subtle" href="index.html#highlights">Back to main site</a>
+          <a class="btn ghost" href="tournament-highlights.html">Tournament Highlights</a>
+          <a class="btn subtle" href="index.html#gallery">Back to main site</a>
         </div>
       </nav>
       <div class="page-hero-content">
-        <p class="eyebrow">Tournament Highlights</p>
-        <h1 data-page-heading>The full competitive story.</h1>
+        <p class="eyebrow">Photo Gallery</p>
+        <h1 data-page-heading>Every angle of the grind.</h1>
         <p data-page-subheading>
-          Track every notable round, clutch performance, and leaderboard climb in one curated library.
+          Scroll through the full gallery of tournament action, practice reps, and behind-the-scenes moments—all tagged,
+          searchable, and ready to share.
         </p>
         <div class="page-hero-actions">
           <a class="btn primary" href="index.html#contact">Schedule a conversation</a>
-          <a class="btn ghost" href="gallery.html">Explore the gallery</a>
+          <a class="btn ghost" href="video-highlights.html">Watch video highlights</a>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="section highlight-browser">
+      <section class="section gallery-browser">
         <div class="browser-layout">
           <aside class="browser-panel">
-            <div class="video-intro-card highlight-intro-card">
-              <p class="summary-eyebrow">Tournament library</p>
-              <h2 data-highlight-count>Loading tournament count...</h2>
+            <div class="photo-intro-card">
+              <p class="summary-eyebrow">Photo library</p>
+              <h2 data-photo-count>Loading photos...</h2>
               <p>
-                Browse verified finishes from each season. Search for events, courses, or keywords and use filters to jump into a campaign.
+                Search by keyword, focus on a specific season, or zero in on a type of shot to find the perfect moment.
               </p>
-              <label class="video-search" for="highlight-search-input">
+              <label class="video-search" for="photo-search-input">
                 <span>Search</span>
-                <input
-                  id="highlight-search-input"
-                  type="search"
-                  placeholder="Search"
-                  data-highlight-search
-                />
+                <input id="photo-search-input" type="search" placeholder="Search" data-photo-search />
               </label>
-              <div class="video-filters inline-filters" data-year-filters>
+              <div class="video-filters" data-photo-year-filters>
                 <p class="placeholder-text">Loading filters...</p>
+              </div>
+              <div class="video-filters" data-photo-tag-filters>
+                <p class="placeholder-text">Loading shot types...</p>
+              </div>
+              <div class="video-filters" data-photo-tournament-filters>
+                <p class="placeholder-text">Loading tournaments...</p>
               </div>
             </div>
           </aside>
           <div class="browser-results">
-            <div class="page-message" data-page-message></div>
-            <div class="highlight-year-groups" data-highlights-grid>
-              <p class="placeholder-text">Loading tournament highlights...</p>
+            <div class="page-message" data-gallery-message></div>
+            <div class="photo-gallery-grid" data-photo-grid>
+              <p class="placeholder-text">Loading the gallery...</p>
             </div>
           </div>
         </div>
@@ -84,6 +86,6 @@
       </p>
     </footer>
 
-    <script type="module" src="/src/tournament-highlights.js"></script>
+    <script type="module" src="/src/gallery.js"></script>
   </body>
 </html>

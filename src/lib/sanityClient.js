@@ -73,6 +73,7 @@ const siteContentQuery = `{
   },
   "highlightsSection": *[_type == "highlightsSection"][0]{heading, subheading, maxItems},
   "highlightEvents": *[_type == "highlightEvent"]|order(eventDate desc, _createdAt desc){
+    _id,
     title,
     eventDate,
     endDate,
@@ -97,6 +98,11 @@ const siteContentQuery = `{
     youtubeUrl,
     description,
     ctaLabel,
+    tags,
+    "tournament": tournament->{
+      _id,
+      title
+    },
     eventDate,
     featured,
     showOnHomePage,
@@ -104,6 +110,27 @@ const siteContentQuery = `{
     _createdAt,
     "thumbnailUrl": thumbnail.asset->url,
     "thumbnailAlt": thumbnail.alt
+  },
+  "gallerySection": *[_type == "gallerySection"][0]{heading, subheading, maxItems, ctaLabel, ctaHref},
+  "galleryPhotos": *[_type == "galleryPhoto"]|order(shotDate desc, _createdAt desc){
+    title,
+    description,
+    shotDate,
+    location,
+    "tournament": tournament->{
+      _id,
+      title
+    },
+    photographer,
+    tags,
+    featured,
+    showOnHomePage,
+    pinToTop,
+    _createdAt,
+    "image": photo{
+      alt,
+      "url": asset->url
+    }
   },
   "dualSport": *[_type == "dualSportSection"][0]{heading, subheading, cards},
   "contact": *[_type == "contactSection"][0]{heading, subheading, cards}

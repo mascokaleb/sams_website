@@ -2,6 +2,8 @@ import { aboutSection } from './documents/aboutSection';
 import { academicsSection } from './documents/academicsSection';
 import { contactSection } from './documents/contactSection';
 import { dualSportSection } from './documents/dualSportSection';
+import { galleryPhoto } from './documents/galleryPhoto';
+import { gallerySection } from './documents/gallerySection';
 import { heroSection } from './documents/heroSection';
 import { highlightEvent } from './documents/highlightEvent';
 import { highlightsSection } from './documents/highlightsSection';
@@ -30,7 +32,9 @@ export const schemaTypes = [
   highlightsSection,
   highlightEvent,
   videosSection,
+  gallerySection,
   videoHighlight,
+  galleryPhoto,
   dualSportSection,
   contactSection,
   // objects

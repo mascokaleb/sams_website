@@ -13,12 +13,16 @@ const SELECTORS = {
   search: "[data-video-search]",
   message: "[data-video-message]",
   filters: "[data-video-year-filters]",
+  tagFilters: "[data-video-tag-filters]",
+  tournamentFilters: "[data-video-tournament-filters]",
 };
 
 const videoState = {
   videos: [],
   searchQuery: "",
   activeYear: "all",
+  activeTag: "all",
+  activeTournament: "all",
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -38,6 +42,8 @@ async function loadVideoHighlights() {
   renderSiteIdentity(data.site, "Video Highlights");
   renderPageHeading(data.videosSection, videoState.videos.length);
   renderYearFilters(videoState.videos);
+  renderTagFilters(videoState.videos);
+  renderTournamentFilters(videoState.videos);
   setupVideoSearch();
   renderVideoSections();
   setPageMessage("");
@@ -130,6 +136,119 @@ function renderYearFilters(videos) {
   });
 }
 
+function renderTagFilters(videos) {
+  const filtersEl = select(SELECTORS.tagFilters);
+  if (!filtersEl) {
+    return;
+  }
+
+  const tags = Array.from(
+    new Set(
+      videos.flatMap((video) => getVideoTags(video))
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  if (!tags.length) {
+    filtersEl.innerHTML = "";
+    filtersEl.hidden = true;
+    videoState.activeTag = "all";
+    return;
+  }
+
+  filtersEl.hidden = false;
+  filtersEl.innerHTML = `
+    <div class="filter-heading">Filter by tag</div>
+    <div class="video-filter-chips">
+      ${["all", ...tags]
+        .map((tag) => {
+          const label = tag === "all" ? "All" : tag;
+          const isActive = tag === videoState.activeTag;
+          return `<button class="video-filter-chip${isActive ? " is-active" : ""}" type="button" data-tag="${escapeAttribute(
+            tag
+          )}">${escapeHtml(label)}</button>`;
+        })
+        .join("")}
+    </div>
+  `;
+
+  filtersEl.querySelectorAll("[data-tag]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tag = button.getAttribute("data-tag") || "all";
+      if (tag === videoState.activeTag) {
+        return;
+      }
+      videoState.activeTag = tag;
+      filtersEl.querySelectorAll(".video-filter-chip").forEach((chip) => chip.classList.remove("is-active"));
+      button.classList.add("is-active");
+      renderVideoSections();
+    });
+  });
+}
+
+function renderTournamentFilters(videos) {
+  const filtersEl = select(SELECTORS.tournamentFilters);
+  if (!filtersEl) {
+    return;
+  }
+
+  const tournaments = new Map();
+  videos.forEach((video) => {
+    const tournament = getVideoTournament(video);
+    if (tournament?.title) {
+      const id = tournament.id || tournament.title;
+      if (!tournaments.has(id)) {
+        tournaments.set(id, { id, title: tournament.title });
+      }
+    }
+  });
+
+  if (!tournaments.size) {
+    filtersEl.innerHTML = "";
+    filtersEl.hidden = true;
+    videoState.activeTournament = "all";
+    return;
+  }
+
+  const ordered = Array.from(tournaments.values()).sort((a, b) => a.title.localeCompare(b.title));
+  if (
+    videoState.activeTournament !== "all" &&
+    !ordered.some((item) => item.id === videoState.activeTournament)
+  ) {
+    videoState.activeTournament = "all";
+  }
+
+  filtersEl.hidden = false;
+  filtersEl.innerHTML = `
+    <div class="filter-heading">Filter by tournament</div>
+    <div class="video-filter-chips">
+      ${[
+        { id: "all", title: "All" },
+        ...ordered,
+      ]
+        .map((option) => {
+          const isActive = option.id === videoState.activeTournament;
+          return `<button class="video-filter-chip${isActive ? " is-active" : ""}" type="button" data-tournament="${escapeAttribute(
+            option.id
+          )}">${escapeHtml(option.title)}</button>`;
+        })
+        .join("")}
+    </div>
+  `;
+
+  filtersEl.querySelectorAll("[data-tournament]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const value = button.getAttribute("data-tournament") || "all";
+      if (value === videoState.activeTournament) {
+        return;
+      }
+      videoState.activeTournament = value;
+      filtersEl.querySelectorAll(".video-filter-chip").forEach((chip) => chip.classList.remove("is-active"));
+      button.classList.add("is-active");
+      renderVideoSections();
+    });
+  });
+}
+
 function setupVideoSearch() {
   const searchInput = select(SELECTORS.search);
   if (!searchInput) {
@@ -144,7 +263,9 @@ function setupVideoSearch() {
 
 function renderVideoSections() {
   const byYear = filterVideosByYear(videoState.videos, videoState.activeYear);
-  const filtered = filterVideosBySearch(byYear, videoState.searchQuery);
+  const byTag = filterVideosByTag(byYear, videoState.activeTag);
+  const byTournament = filterVideosByTournament(byTag, videoState.activeTournament);
+  const filtered = filterVideosBySearch(byTournament, videoState.searchQuery);
 
   renderVideoLibrary(filtered);
   setupVideoFrames();
@@ -159,10 +280,14 @@ function renderVideoLibrary(list) {
   updateVideoCount(videoState.videos.length, list.length);
 
   if (!list.length) {
-    const hasFilters = videoState.searchQuery.length || videoState.activeYear !== "all";
+    const hasFilters =
+      videoState.searchQuery.length ||
+      videoState.activeYear !== "all" ||
+      videoState.activeTag !== "all" ||
+      videoState.activeTournament !== "all";
     setPageMessage(
       hasFilters
-        ? "No clips match your current search or year filter."
+        ? "No clips match your current search or filter selection."
         : "No video highlights are available yet.",
       hasFilters ? "info" : "error"
     );
@@ -187,9 +312,12 @@ function renderGalleryVideo(video) {
     : "";
   const isFeatured = isFeaturedVideo(video);
   const badgeParts = getVideoDateParts(video.eventDate);
-  const dateLabel = badgeParts ? formatVideoDate(video) : formatVideoMeta(video);
-  const badge = isFeatured ? `<span class="video-feature-badge">Featured</span>` : "";
+  const primaryDate = badgeParts ? formatVideoDate(video) : formatVideoMeta(video);
+  const tournamentTitle = getVideoTournamentTitle(video);
+  const metaLabel = [primaryDate, tournamentTitle].filter(Boolean).join(" • ") || primaryDate;
+  const badge = isFeatured ? `<span class="highlight-badge">Featured</span>` : "";
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
+  const tagsMarkup = renderVideoTags(video);
 
   return `
     <article class="video-gallery-card${isFeatured ? " is-featured" : ""}">
@@ -208,11 +336,12 @@ function renderGalleryVideo(video) {
       <div class="video-gallery-copy">
         <div class="video-card-top">
           ${badge}
-          <span class="video-meta">${escapeHtml(dateLabel)}</span>
+          <span class="video-meta">${escapeHtml(metaLabel || "—")}</span>
           ${externalLink}
         </div>
         <h3>${escapeHtml(video.title || "Video highlight")}</h3>
         <p>${escapeHtml(video.description || "")}</p>
+        ${tagsMarkup}
       </div>
     </article>
   `;
@@ -278,7 +407,16 @@ function filterVideosBySearch(videos, query) {
 
   const normalized = query.toLowerCase();
   return videos.filter((video) => {
-    const text = `${video.title || ""} ${video.description || ""} ${video.ctaLabel || ""}`.toLowerCase();
+    const text = [
+      video.title,
+      video.description,
+      video.ctaLabel,
+      getVideoTournamentTitle(video),
+      getVideoTags(video).join(" "),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
     return text.includes(normalized);
   });
 }
@@ -289,6 +427,26 @@ function filterVideosByYear(videos, year) {
   }
 
   return videos.filter((video) => getVideoYear(video) === year);
+}
+
+function filterVideosByTag(videos, tag) {
+  if (tag === "all") {
+    return [...videos];
+  }
+
+  return videos.filter((video) => getVideoTags(video).includes(tag));
+}
+
+function filterVideosByTournament(videos, tournamentId) {
+  if (tournamentId === "all") {
+    return [...videos];
+  }
+
+  return videos.filter((video) => {
+    const tournament = getVideoTournament(video);
+    const id = tournament?.id || tournament?.title || "";
+    return id === tournamentId;
+  });
 }
 
 function getVideoYear(video) {
@@ -308,6 +466,33 @@ function isFeaturedVideo(video) {
   return Boolean(video?.pinToTop);
 }
 
+function getVideoTags(video) {
+  if (!video || !Array.isArray(video.tags)) {
+    return [];
+  }
+  return video.tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean);
+}
+
+function getVideoTournament(video) {
+  if (!video) {
+    return null;
+  }
+
+  if (video.tournament && typeof video.tournament === "object" && video.tournament.title) {
+    return {
+      id: video.tournament._id || video.tournament._ref || video.tournament.id || null,
+      title: video.tournament.title,
+    };
+  }
+
+  return null;
+}
+
+function getVideoTournamentTitle(video) {
+  const tournament = getVideoTournament(video);
+  return tournament?.title || "";
+}
+
 function orderFeaturedVideos(videos) {
   if (!Array.isArray(videos)) {
     return [];
@@ -324,6 +509,19 @@ function orderFeaturedVideos(videos) {
   });
 
   return [...featured, ...regular];
+}
+
+function renderVideoTags(video) {
+  const tags = getVideoTags(video);
+  if (!tags.length) {
+    return "";
+  }
+
+  return `
+    <div class="gallery-card-tags video-card-tags">
+      ${tags.map((tag) => `<span class="gallery-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
 }
 
 function sortVideosChronologically(videos) {

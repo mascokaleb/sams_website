@@ -65,6 +65,23 @@ export const videoHighlight = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'tournament',
+      type: 'reference',
+      title: 'Tournament',
+      description: 'Link this clip to a tournament highlight that already exists.',
+      to: [{ type: 'highlightEvent' }],
+      options: {
+        disableNew: true,
+      },
+    }),
+    defineField({
+      name: 'tags',
+      type: 'array',
+      title: 'Tags',
+      of: [{ type: 'string' }],
+      options: { layout: 'tags' },
+    }),
+    defineField({
       name: 'thumbnail',
       type: 'image',
       title: 'Custom Thumbnail',

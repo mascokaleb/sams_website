@@ -19,11 +19,15 @@ const SELECTORS = {
   videosHeading: '[data-template="videos-heading"]',
   videoGrid: '[data-template="video-grid"]',
   videosActions: '[data-template="videos-actions"]',
+  galleryHeading: '[data-template="gallery-heading"]',
+  galleryGrid: '[data-template="gallery-grid"]',
+  galleryActions: '[data-template="gallery-actions"]',
   dualHeading: '[data-template="dual-heading"]',
   dualGrid: '[data-template="dual-grid"]',
   contactHeading: '[data-template="contact-heading"]',
   contactGrid: '[data-template="contact-grid"]',
   highlightsActions: '[data-template="highlights-actions"]',
+  highlightOverlayBody: "[data-highlight-overlay-body]",
 };
 
 const highlightsState = {
@@ -35,6 +39,11 @@ const videosState = {
   meta: null,
   items: [],
   totalCount: 0,
+};
+
+const galleryState = {
+  meta: null,
+  items: [],
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -102,6 +111,10 @@ async function hydratePage() {
   videosState.items = orderedVideos.filter(shouldDisplayOnHome);
   videosState.totalCount = orderedVideos.length;
   renderVideos();
+  const orderedPhotos = sortEntriesChronologically(data.galleryPhotos || [], "shotDate");
+  galleryState.meta = data.gallerySection;
+  galleryState.items = orderedPhotos.filter(shouldDisplayOnHome);
+  renderGallery();
   renderDualSport(data.dualSport);
   renderContact(data.contact);
 
@@ -454,6 +467,125 @@ function renderVideos() {
       </a>
     `;
   }
+}
+
+function renderGallery() {
+  const sectionMeta = galleryState.meta;
+  const photos = galleryState.items || [];
+  const headingEl = select(SELECTORS.galleryHeading);
+  const gridEl = select(SELECTORS.galleryGrid);
+  const actionsEl = select(SELECTORS.galleryActions);
+
+  if (headingEl) {
+    const headingText = sectionMeta?.heading || "Photo Gallery";
+    const subheadingText =
+      sectionMeta?.subheading || "Tournament action and behind-the-scenes moments.";
+    headingEl.innerHTML = `
+      <h2>${escapeHtml(headingText)}</h2>
+      ${subheadingText ? `<p>${escapeHtml(subheadingText)}</p>` : ""}
+    `;
+  }
+
+  if (!gridEl) {
+    return;
+  }
+
+  const limit = Math.max(1, sectionMeta?.maxItems || 6);
+  const limitedPhotos = photos.slice(0, limit);
+
+  if (!limitedPhotos.length) {
+    gridEl.innerHTML = renderPlaceholder("Gallery photos coming soon.");
+    if (actionsEl) {
+      actionsEl.innerHTML = "";
+    }
+    return;
+  }
+
+  gridEl.innerHTML = limitedPhotos.map((photo, index) => renderGalleryCard(photo, index)).join("");
+  gridEl.querySelectorAll("[data-motion]").forEach((el) => el.classList.add("is-visible"));
+  setupPhotoPreviewButtons(gridEl);
+
+  if (actionsEl) {
+    const href = sectionMeta?.ctaHref || "gallery.html";
+    const label = sectionMeta?.ctaLabel || "Explore the full gallery";
+    actionsEl.innerHTML = `<a class="btn ghost" href="${escapeAttribute(href)}">${escapeHtml(label)}</a>`;
+  }
+}
+
+function renderGalleryCard(photo, index = 0) {
+  const imageUrl = photo?.image?.url || HERO_PLACEHOLDER_IMAGE;
+  const altText = photo?.image?.alt || photo?.title || "Gallery highlight";
+  const tournamentName = getPhotoTournamentTitle(photo);
+  const badgeLabel = tournamentName || "";
+  const previewData = photo?.image?.url
+    ? {
+        src: imageUrl,
+        alt: altText,
+        title: photo?.title || "Gallery highlight",
+      }
+    : null;
+  const previewAttributes = previewData
+    ? `data-photo-src="${escapeAttribute(previewData.src)}" data-photo-alt="${escapeAttribute(
+        previewData.alt
+      )}" data-photo-title="${escapeAttribute(previewData.title)}"`
+    : "";
+  const metaParts = [];
+  const shotDate = formatShotDate(photo?.shotDate);
+  if (shotDate) {
+    metaParts.push(shotDate);
+  }
+  if (tournamentName) {
+    metaParts.push(tournamentName);
+  }
+  if (photo?.location) {
+    metaParts.push(photo.location);
+  }
+  const metaLabels = metaParts
+    .map((part) => `<span>${escapeHtml(part)}</span>`)
+    .join('<span class="meta-dot" aria-hidden="true">•</span>');
+  const metaMarkup = metaLabels ? `<div class="gallery-card-meta">${metaLabels}</div>` : "";
+  const descriptionMarkup = photo?.description
+    ? `<p class="gallery-card-description">${escapeHtml(photo.description)}</p>`
+    : "";
+  const photographerText = photo?.photographer
+    ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
+    : "";
+  const footerMarkup = photographerText ? `<div class="gallery-card-footer">${photographerText}</div>` : "";
+
+  const mediaAttributes = previewData ? `data-photo-preview="true" ${previewAttributes}` : "";
+
+  return `
+    <article class="gallery-card" data-motion="delay-${(index % 3) + 1}">
+      <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
+        ${badgeLabel ? `<span class="gallery-card-badge">${escapeHtml(badgeLabel)}</span>` : ""}
+        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" />
+      </div>
+      <div class="gallery-card-body">
+        ${metaMarkup}
+        <h3>${escapeHtml(photo?.title || "Gallery highlight")}</h3>
+        ${descriptionMarkup}
+        ${renderGalleryTags(photo?.tags)}
+        ${footerMarkup}
+      </div>
+    </article>
+  `;
+}
+
+function renderGalleryTags(tags) {
+  if (!Array.isArray(tags) || !tags.length) {
+    return "";
+  }
+
+  const cleaned = tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean);
+  if (!cleaned.length) {
+    return "";
+  }
+
+  return `
+    <div class="gallery-card-tags">
+      ${cleaned.map((tag) => `<span class="gallery-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
 }
 
 function renderDualSport(dual) {
@@ -932,6 +1064,110 @@ function closeVideoOverlay() {
   document.body.classList.remove("is-showing-video");
 }
 
+let photoOverlayElement = null;
+
+function setupPhotoPreviewButtons(scope = document) {
+  if (!scope) {
+    return;
+  }
+
+  const root = scope instanceof Element ? scope : document;
+  root.querySelectorAll("[data-photo-preview]").forEach((media) => {
+    if (media.dataset.photoPreviewReady === "true") {
+      return;
+    }
+    media.addEventListener("click", () => {
+      openPhotoOverlay(
+        media.getAttribute("data-photo-src"),
+        media.getAttribute("data-photo-alt"),
+        media.getAttribute("data-photo-title")
+      );
+    });
+    media.dataset.photoPreviewReady = "true";
+  });
+}
+
+function ensurePhotoOverlay() {
+  if (photoOverlayElement) {
+    return photoOverlayElement;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "photo-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="photo-overlay-backdrop" data-photo-overlay-close></div>
+    <div class="photo-overlay-dialog" role="dialog" aria-modal="true">
+      <button class="photo-overlay-close" type="button" data-photo-overlay-close>
+        <span class="sr-only">Close photo</span>
+        ×
+      </button>
+      <figure class="photo-overlay-frame">
+        <img src="" alt="" loading="lazy" />
+        <figcaption></figcaption>
+      </figure>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target.closest("[data-photo-overlay-close]")) {
+      closePhotoOverlay();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-open")) {
+      closePhotoOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  photoOverlayElement = overlay;
+  return overlay;
+}
+
+function openPhotoOverlay(src, alt, title) {
+  if (!src) {
+    return;
+  }
+
+  const overlay = ensurePhotoOverlay();
+  const image = overlay.querySelector("img");
+  const caption = overlay.querySelector("figcaption");
+
+  if (!image || !caption) {
+    return;
+  }
+
+  image.src = src;
+  image.alt = alt || title || "Gallery photo";
+  caption.textContent = title || alt || "";
+
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-showing-photo");
+}
+
+function closePhotoOverlay() {
+  if (!photoOverlayElement) {
+    return;
+  }
+
+  const image = photoOverlayElement.querySelector("img");
+  const caption = photoOverlayElement.querySelector("figcaption");
+  if (image) {
+    image.src = "";
+    image.alt = "";
+  }
+  if (caption) {
+    caption.textContent = "";
+  }
+
+  photoOverlayElement.classList.remove("is-open");
+  photoOverlayElement.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-showing-photo");
+}
+
 function renderPortableText(value) {
   if (!Array.isArray(value) || !value.length) {
     return "";
@@ -1181,6 +1417,26 @@ function formatEventDate(event) {
   return formatDateRangeDisplay(event.eventDate, event.endDate, { month: "short" });
 }
 
+function formatShotDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function getPhotoTournamentTitle(photo) {
+  if (!photo) {
+    return "";
+  }
+  return photo?.tournament?.title || photo?.tournament || "";
+}
+
 function sortEntriesChronologically(items, dateField = "eventDate") {
   if (!Array.isArray(items)) {
     return [];
@@ -1223,6 +1479,10 @@ function shouldDisplayOnHome(entry) {
 
   if (typeof entry.featured === "boolean") {
     return entry.featured;
+  }
+
+  if (typeof entry.pinToTop === "boolean") {
+    return entry.pinToTop;
   }
 
   return true;

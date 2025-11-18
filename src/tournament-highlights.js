@@ -12,10 +12,14 @@ const SELECTORS = {
   search: "[data-highlight-search]",
 };
 
+const MEDIA_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
+
 const highlightState = {
   events: [],
   activeYear: "all",
   searchQuery: "",
+  videos: [],
+  photos: [],
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,6 +37,8 @@ async function loadTournamentHighlights() {
   }
 
   highlightState.events = sortHighlightsChronologically(data.highlightEvents || []);
+  highlightState.videos = Array.isArray(data.videos) ? data.videos : [];
+  highlightState.photos = Array.isArray(data.galleryPhotos) ? data.galleryPhotos : [];
   highlightState.searchQuery = "";
   renderSiteIdentity(data.site, "Tournament Highlights");
   renderPageHeading(data.highlightsSection, highlightState.events.length);
@@ -195,7 +201,7 @@ function renderHighlightGroups() {
     .join("");
 
   gridEl.innerHTML = sections;
-  setupHighlightToggles(gridEl);
+  setupHighlightModals(gridEl);
   updateHighlightCount(highlightState.events.length, filtered.length, highlightState.activeYear);
 }
 
@@ -255,25 +261,19 @@ function renderHighlightListItem(event, identifier) {
   const readableDate = formatReadableDate(event);
   const fallbackDate = !readableDate && event.eventDate ? escapeHtml(event.eventDate) : "";
   const badgeParts = getDateParts(event.eventDate);
-  const summary = event.summary ? `<p class="highlight-summary">${escapeHtml(event.summary)}</p>` : "";
+  const summaryMarkup = event.summary ? `<p class="highlight-summary">${escapeHtml(event.summary)}</p>` : "";
   const days = Array.isArray(event.days) ? event.days : [];
   const statsMarkup = renderDayStats(days, { variant: "list" });
-  const notesMarkup = renderDayNotes(days);
   const safeIdentifier = (identifier || Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_-]/g, "-");
-  const detailsId = `highlight-details-${safeIdentifier}`;
-  const hasDetails = Boolean(summary || notesMarkup);
+  const eventId = event?._id || safeIdentifier;
   const isFeatured = Boolean(event.pinToTop);
   const featuredBadge = isFeatured ? `<span class="highlight-badge">Featured</span>` : "";
-  const toggleButton = hasDetails
-    ? `<button class="highlight-toggle" type="button" data-highlight-toggle data-target="${detailsId}" aria-expanded="false">View Details</button>`
-    : "";
-  const detailsMarkup = hasDetails
-    ? `<div class="highlight-details" data-highlight-details="${detailsId}" id="${detailsId}" hidden>
-        ${summary}
-        ${notesMarkup}
-      </div>`
-    : "";
-  const actionRow = featuredBadge || toggleButton ? `<div class="highlight-row-actions">${featuredBadge}${toggleButton}</div>` : "";
+  const modalButton = `
+    <button class="highlight-toggle" type="button" data-highlight-modal="${escapeAttribute(eventId)}">
+      View Details
+    </button>
+  `;
+  const actionRow = `<div class="highlight-row-actions">${featuredBadge}${modalButton}</div>`;
 
   return `
     <li class="highlight-list-item${isFeatured ? " is-featured" : ""}">
@@ -288,7 +288,7 @@ function renderHighlightListItem(event, identifier) {
           ${actionRow}
         </div>
         ${statsMarkup}
-        ${detailsMarkup}
+        ${summaryMarkup}
       </div>
     </li>
   `;
@@ -594,36 +594,20 @@ function getEntryTimestamp(entry) {
   return 0;
 }
 
-function setupHighlightToggles(root) {
+function setupHighlightModals(root) {
   if (!root) {
     return;
   }
 
-  root.querySelectorAll("[data-highlight-toggle]").forEach((button) => {
-    if (button.dataset.toggleBound === "true") {
+  root.querySelectorAll("[data-highlight-modal]").forEach((button) => {
+    if (button.dataset.modalBound === "true") {
       return;
     }
 
-    button.dataset.toggleBound = "true";
+    button.dataset.modalBound = "true";
     button.addEventListener("click", () => {
-      const targetId = button.getAttribute("data-target");
-      const container = button.closest(".highlight-list-item");
-      const details = container?.querySelector(`[data-highlight-details="${targetId}"]`);
-
-      if (!details) {
-        return;
-      }
-
-      const isHidden = details.hasAttribute("hidden");
-      if (isHidden) {
-        details.removeAttribute("hidden");
-      } else {
-        details.setAttribute("hidden", "");
-      }
-
-      button.setAttribute("aria-expanded", isHidden ? "true" : "false");
-      button.classList.toggle("is-open", isHidden);
-      button.textContent = isHidden ? "Hide Details" : "View Details";
+      const eventId = button.getAttribute("data-highlight-modal");
+      openHighlightOverlay(eventId);
     });
   });
 }
@@ -636,6 +620,271 @@ function renderDateBadge(parts) {
       <span class="year">${parts.year}</span>
     </div>
   `;
+}
+
+let highlightOverlayElement = null;
+
+function ensureHighlightOverlay() {
+  if (highlightOverlayElement) {
+    return highlightOverlayElement;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "highlight-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="highlight-overlay-backdrop" data-highlight-overlay-close></div>
+    <div class="highlight-overlay-dialog" role="dialog" aria-modal="true">
+      <button class="highlight-overlay-close" type="button" data-highlight-overlay-close>
+        <span class="sr-only">Close tournament details</span>
+        ×
+      </button>
+      <div class="highlight-overlay-body" data-highlight-overlay-body></div>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target.closest("[data-highlight-overlay-close]")) {
+      closeHighlightOverlay();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-open")) {
+      closeHighlightOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  highlightOverlayElement = overlay;
+  return overlay;
+}
+
+function openHighlightOverlay(eventId) {
+  const overlay = ensureHighlightOverlay();
+  const body = overlay.querySelector("[data-highlight-overlay-body]");
+  if (!body) {
+    return;
+  }
+
+  const event = findHighlightEvent(eventId);
+  if (!event) {
+    return;
+  }
+
+  const videos = getVideosForEvent(event);
+  const photos = getPhotosForEvent(event);
+
+  body.innerHTML = renderHighlightOverlayContent(event, videos, photos);
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-showing-highlight-overlay");
+}
+
+function closeHighlightOverlay() {
+  if (!highlightOverlayElement) {
+    return;
+  }
+
+  const body = highlightOverlayElement.querySelector("[data-highlight-overlay-body]");
+  if (body) {
+    body.innerHTML = "";
+  }
+
+  highlightOverlayElement.classList.remove("is-open");
+  highlightOverlayElement.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-showing-highlight-overlay");
+}
+
+function findHighlightEvent(eventId) {
+  if (!eventId) {
+    return highlightState.events[0] || null;
+  }
+
+  return (
+    highlightState.events.find((event) => event?._id === eventId) ||
+    highlightState.events.find((event) => event.title === eventId) ||
+    null
+  );
+}
+
+function renderHighlightOverlayContent(event, videos, photos) {
+  const readableDate = formatReadableDate(event);
+  const metaParts = [readableDate, event.location ? escapeHtml(event.location) : null].filter(Boolean);
+  const metaMarkup = metaParts.length
+    ? `<div class="highlight-overlay-meta">
+        ${metaParts
+          .map((part) => `<span>${part}</span>`)
+          .join('<span class="meta-dot" aria-hidden="true">•</span>')}
+      </div>`
+    : "";
+  const statsMarkup = renderDayStats(event.days || [], { variant: "list" });
+  const notesMarkup = renderDayNotes(event.days || []);
+
+  return `
+    <div class="highlight-overlay-content">
+      <header class="highlight-overlay-header">
+        <p class="eyebrow">Tournament</p>
+        <h2>${escapeHtml(event.title || "Tournament highlight")}</h2>
+        ${metaMarkup}
+        ${event.summary ? `<p class="highlight-overlay-summary">${escapeHtml(event.summary)}</p>` : ""}
+      </header>
+      ${statsMarkup ? `<section class="highlight-overlay-section">${statsMarkup}</section>` : ""}
+      ${notesMarkup ? `<section class="highlight-overlay-section">${notesMarkup}</section>` : ""}
+      <section class="highlight-overlay-section">
+        <h3>Videos</h3>
+        ${renderOverlayVideos(videos)}
+      </section>
+      <section class="highlight-overlay-section">
+        <h3>Photos</h3>
+        ${renderOverlayPhotos(photos)}
+      </section>
+    </div>
+  `;
+}
+
+function renderOverlayVideos(videos) {
+  if (!Array.isArray(videos) || !videos.length) {
+    return `<p class="placeholder-text">No videos linked to this tournament yet.</p>`;
+  }
+
+  return `
+    <div class="overlay-media-grid">
+      ${videos.map(renderOverlayVideoCard).join("")}
+    </div>
+  `;
+}
+
+function renderOverlayVideoCard(video) {
+  const thumbnail = getVideoThumbnail(video);
+  const alt = video.thumbnailAlt || video.title || "Video highlight";
+  const link = getVideoExternalLink(video);
+
+  return `
+    <article class="overlay-media-card">
+      <div class="overlay-media-thumb">
+        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+      </div>
+      <div class="overlay-media-copy">
+        <h4>${escapeHtml(video.title || "Video highlight")}</h4>
+        ${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
+        ${link ? `<a class="btn subtle" href="${escapeAttribute(link)}" target="_blank" rel="noopener">Watch</a>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function renderOverlayPhotos(photos) {
+  if (!Array.isArray(photos) || !photos.length) {
+    return `<p class="placeholder-text">No photos linked to this tournament yet.</p>`;
+  }
+
+  return `
+    <div class="overlay-media-grid overlay-photo-grid">
+      ${photos.map(renderOverlayPhotoCard).join("")}
+    </div>
+  `;
+}
+
+function renderOverlayPhotoCard(photo) {
+  const imageUrl = photo?.image?.url || MEDIA_PLACEHOLDER_IMAGE;
+  const alt = photo?.image?.alt || photo?.title || "Gallery photo";
+  const captionParts = [photo?.title, photo?.description, photo?.photographer ? `Photo: ${photo.photographer}` : ""]
+    .map((part) => (part ? escapeHtml(part) : ""))
+    .filter(Boolean);
+
+  return `
+    <figure class="overlay-photo-card">
+      <div class="overlay-media-thumb">
+        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
+      </div>
+      ${captionParts.length ? `<figcaption>${captionParts.join(" • ")}</figcaption>` : ""}
+    </figure>
+  `;
+}
+
+function getVideosForEvent(event) {
+  if (!event || !Array.isArray(highlightState.videos)) {
+    return [];
+  }
+
+  return highlightState.videos.filter((video) => doesItemBelongToEvent(video, event));
+}
+
+function getPhotosForEvent(event) {
+  if (!event || !Array.isArray(highlightState.photos)) {
+    return [];
+  }
+
+  return highlightState.photos.filter((photo) => doesItemBelongToEvent(photo, event));
+}
+
+function doesItemBelongToEvent(item, event) {
+  const info = getTournamentInfo(item);
+  if (!info) {
+    return false;
+  }
+
+  if (info.id && event?._id && info.id === event._id) {
+    return true;
+  }
+
+  if (info.title && event?.title && info.title === event.title) {
+    return true;
+  }
+
+  return false;
+}
+
+function getTournamentInfo(item) {
+  if (!item) {
+    return null;
+  }
+
+  if (item.tournament && typeof item.tournament === "object" && item.tournament.title) {
+    return {
+      id: item.tournament._id || item.tournament._ref || item.tournament.id || null,
+      title: item.tournament.title,
+    };
+  }
+
+  if (typeof item.tournament === "string" && item.tournament) {
+    return { id: item.tournament, title: item.tournament };
+  }
+
+  return null;
+}
+
+function getVideoThumbnail(video) {
+  if (!video) {
+    return MEDIA_PLACEHOLDER_IMAGE;
+  }
+
+  if (video.thumbnailUrl) {
+    return video.thumbnailUrl;
+  }
+
+  if (video.youtubeId) {
+    return `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+  }
+
+  return MEDIA_PLACEHOLDER_IMAGE;
+}
+
+function getVideoExternalLink(video) {
+  if (!video) {
+    return "";
+  }
+
+  if (video.youtubeUrl) {
+    return video.youtubeUrl;
+  }
+
+  if (video.youtubeId) {
+    return `https://youtu.be/${video.youtubeId}`;
+  }
+
+  return "";
 }
 
 function formatReadableDate(event) {
