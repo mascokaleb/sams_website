@@ -1069,22 +1069,27 @@ body.content-page {
 }
 
 .day-metric-value {
-  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
   font-weight: 600;
-  color: var(--text);
-  line-height: 1.2;
+  line-height: 1;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow:
+    0 4px 12px rgba(15, 29, 51, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .day-metric[data-metric="score"] .day-metric-value {
-  color: var(--accent-primary);
+  background-image: linear-gradient(130deg, #f0d58a, #d3a03f);
 }
 
 .day-metric[data-metric="yards"] .day-metric-value {
-  color: var(--accent-secondary);
+  background-image: linear-gradient(130deg, #8fd7a5, #298f5c);
 }
 
 .day-metric[data-metric="rank"] .day-metric-value {
-  color: #d3404f;
+  background-image: linear-gradient(130deg, #a5c7ff, #2d63c7);
 }
 
 .day-metric-meta {
@@ -1128,17 +1133,32 @@ body.content-page {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(15, 29, 51, 0.08);
   border-radius: var(--radius-md);
-  padding: 0.75rem 0.9rem;
+  padding: 0.85rem 1rem;
   box-shadow: inset 0 1px 2px rgba(15, 29, 51, 0.04);
 }
 
 .day-stat-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent-secondary);
-  margin-bottom: 0.35rem;
-  display: inline-block;
+  color: rgba(19, 74, 142, 0.85);
+  margin-bottom: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  position: relative;
+  padding-left: 1.1rem;
+}
+
+.day-stat-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #5dbbf8, #2965d8);
+  box-shadow: 0 0 12px rgba(41, 101, 216, 0.35);
 }
 
 .day-stat-main {
