@@ -1901,9 +1901,14 @@ function initInteractiveGolfBall() {
   let lastTime = performance.now();
   let isMoving = false;
   let ballIsVisible = true;
+  let homePosition = null;
+  let homePositionSet = false;
+  let isHoleAnimating = false;
+  let holeAnimationTimeout = null;
 
   const heroSection = document.querySelector(".site-header");
   const heroElement = document.querySelector(".hero");
+  const holeElement = document.querySelector("[data-golf-hole]");
   const pointerState = {
     x: 0,
     y: 0,
@@ -2007,6 +2012,53 @@ function initInteractiveGolfBall() {
     return null;
   }
 
+  function captureHomePosition() {
+    if (homePositionSet) {
+      return;
+    }
+    homePosition = { x: state.x, y: state.y };
+    homePositionSet = true;
+  }
+
+  function getHomePosition() {
+    return homePosition || { x: state.x, y: state.y };
+  }
+
+  function getHoleMetrics() {
+    if (!holeElement) {
+      return null;
+    }
+
+    const rect = holeElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const paddingX = radius * 0.5;
+    const paddingY = radius * 0.2;
+
+    return {
+      centerX: rect.left + scrollX + rect.width / 2,
+      centerY: rect.top + scrollY + rect.height * 0.5,
+      radiusX: rect.width / 2 + paddingX,
+      radiusY: rect.height / 2 + paddingY,
+    };
+  }
+
+  function isBallOverHoleArea(hole) {
+    if (!hole) {
+      return false;
+    }
+
+    const dx = state.x - hole.centerX;
+    const dy = state.y - hole.centerY;
+    const normalizedX = dx / hole.radiusX;
+    const normalizedY = dy / hole.radiusY;
+    return normalizedX * normalizedX + normalizedY * normalizedY <= 1;
+  }
+
   function getMinYClamp(bounds) {
     const baseMin = bounds.top + radius + worldTopOffset;
     const documentMin = radius + 4;
@@ -2031,7 +2083,7 @@ function initInteractiveGolfBall() {
     return availableWidth >= minWidthForThreeColumns - 0.5;
   }
 
-  function positionBallAtHeroName() {
+  function positionBallAtHeroName(options = {}) {
     const rect = getHeroNameAnchorRect();
     if (!rect) {
       return false;
@@ -2049,10 +2101,13 @@ function initInteractiveGolfBall() {
     state.vx = 0;
     state.vy = 0;
     setBallPosition();
+    if (options.recordHome) {
+      captureHomePosition();
+    }
     return true;
   }
 
-  function positionBallUnderScroll() {
+  function positionBallUnderScroll(options = {}) {
     if (!heroScroll) {
       return false;
     }
@@ -2070,23 +2125,35 @@ function initInteractiveGolfBall() {
     state.vx = 0;
     state.vy = 0;
     setBallPosition();
+    if (options.recordHome) {
+      captureHomePosition();
+    }
     return true;
   }
 
-  function placeBallAtPreferredAnchor() {
-    if (positionBallAtHeroName()) {
+  function placeBallAtPreferredAnchor(options = {}) {
+    const { recordHome = false } = options;
+
+    if (positionBallAtHeroName({ recordHome })) {
       return;
     }
 
-    if (positionBallUnderScroll()) {
+    if (positionBallUnderScroll({ recordHome })) {
       return;
     }
 
     setBallPosition();
+    if (recordHome) {
+      captureHomePosition();
+    }
   }
 
   function syncBallVisibility(options = {}) {
-    const { force = false } = options;
+    const { force = false, skipReposition = false } = options;
+    if (isHoleAnimating) {
+      return;
+    }
+
     const shouldBeVisible = hasThreeHeroColumns();
     if (!force && shouldBeVisible === ballIsVisible) {
       return;
@@ -2096,12 +2163,12 @@ function initInteractiveGolfBall() {
     ballIsVisible = shouldBeVisible;
     ball.style.display = shouldBeVisible ? "" : "none";
 
-    if (shouldBeVisible && (!wasVisible || force)) {
+    if (shouldBeVisible && (!wasVisible || force) && !skipReposition) {
       placeBallAtPreferredAnchor();
     }
   }
 
-  placeBallAtPreferredAnchor();
+  placeBallAtPreferredAnchor({ recordHome: true });
   syncBallVisibility({ force: true });
   window.addEventListener(
     "load",
@@ -2117,6 +2184,10 @@ function initInteractiveGolfBall() {
   });
 
   function applyPointerPush(moveX, moveY) {
+    if (isHoleAnimating) {
+      return;
+    }
+
     if (!pointerState.active) {
       return;
     }
@@ -2245,7 +2316,75 @@ function initInteractiveGolfBall() {
     };
   }
 
+  // When the ball overlaps the hero hole, run a sink + respawn animation back at home.
+  function animateBallIntoHole(hole) {
+    if (isHoleAnimating) {
+      return;
+    }
+
+    if (!homePosition) {
+      captureHomePosition();
+    }
+
+    isHoleAnimating = true;
+    pointerState.active = false;
+    isMoving = false;
+    state.vx = 0;
+    state.vy = 0;
+    ball.classList.remove("is-moving");
+    ball.classList.add("is-sinking");
+
+    const sinkX = hole.centerX - radius;
+    const sinkY = hole.centerY - radius * 0.6;
+    const sinkScale = 0.6;
+
+    clearTimeout(holeAnimationTimeout);
+    ball.style.transition =
+      "transform 320ms ease-in, opacity 320ms ease-in, box-shadow 320ms ease-in";
+    ball.style.transform = `translate3d(${sinkX}px, ${sinkY}px, 0) scale(${sinkScale})`;
+    ball.style.opacity = "0";
+    ball.style.boxShadow = "0 10px 20px rgba(15, 29, 51, 0.2)";
+
+    holeAnimationTimeout = window.setTimeout(() => {
+      const home = getHomePosition();
+      state.x = home.x;
+      state.y = home.y;
+      state.vx = 0;
+      state.vy = 0;
+
+      ball.style.transition = "none";
+      ball.style.transform = `translate3d(${home.x - radius}px, ${home.y - radius}px, 0) scale(0.35)`;
+      ball.style.opacity = "0";
+
+      requestAnimationFrame(() => {
+        ball.classList.remove("is-sinking");
+        ball.classList.add("is-returning");
+        ball.style.transition =
+          "transform 440ms cubic-bezier(0.18, 0.72, 0.22, 1.08), opacity 380ms ease-out, box-shadow 380ms ease-out";
+        ball.style.opacity = "1";
+        ball.style.boxShadow = "3px 4px 12px rgba(15, 29, 51, 0.25)";
+        ball.style.transform = `translate3d(${home.x - radius}px, ${home.y - radius}px, 0) scale(1)`;
+      });
+
+      holeAnimationTimeout = window.setTimeout(() => {
+        ball.classList.remove("is-returning", "is-sinking");
+        ball.style.transition = "";
+        ball.style.opacity = "";
+        ball.style.boxShadow = "";
+        setBallPosition();
+        isHoleAnimating = false;
+        syncBallVisibility({ force: true, skipReposition: true });
+      }, 520);
+    }, 360);
+  }
+
   function step() {
+    requestAnimationFrame(step);
+
+    if (isHoleAnimating) {
+      return;
+    }
+
     const now = performance.now();
     const delta = Math.min((now - lastTime) / 16.666, 3);
     lastTime = now;
@@ -2268,6 +2407,14 @@ function initInteractiveGolfBall() {
 
     isMoving = Math.hypot(state.vx, state.vy) > 0.35;
 
+    if (ballIsVisible) {
+      const hole = getHoleMetrics();
+      if (hole && isBallOverHoleArea(hole)) {
+        animateBallIntoHole(hole);
+        return;
+      }
+    }
+
     if (isMoving) {
       const textureSpeedFactor = 0.32;
       const patternSize = 12;
@@ -2282,8 +2429,6 @@ function initInteractiveGolfBall() {
     }
 
     setBallPosition();
-
-    requestAnimationFrame(step);
   }
 
   window.addEventListener(
@@ -2335,9 +2480,11 @@ function initInteractiveGolfBall() {
   });
 
   window.addEventListener("resize", () => {
-    const bounds = getWorldBounds();
-    state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
-    state.y = clamp(state.y, getMinYClamp(bounds), bounds.bottom - radius - 8);
+    if (!isHoleAnimating) {
+      const bounds = getWorldBounds();
+      state.x = clamp(state.x, bounds.left + radius + 8, bounds.right - radius - 8);
+      state.y = clamp(state.y, getMinYClamp(bounds), bounds.bottom - radius - 8);
+    }
     syncBallVisibility();
   });
 
