@@ -13,6 +13,7 @@ const SELECTORS = {
 };
 
 const MEDIA_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
+const YOUTUBE_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
 const highlightState = {
   events: [],
@@ -676,6 +677,8 @@ function openHighlightOverlay(eventId) {
   const photos = getPhotosForEvent(event);
 
   body.innerHTML = renderHighlightOverlayContent(event, videos, photos);
+  setupVideoFrames(body);
+  setupPhotoPreviewButtons(body);
   overlay.classList.add("is-open");
   overlay.setAttribute("aria-hidden", "false");
   document.body.classList.add("is-showing-highlight-overlay");
@@ -756,19 +759,32 @@ function renderOverlayVideos(videos) {
 }
 
 function renderOverlayVideoCard(video) {
-  const thumbnail = getVideoThumbnail(video);
+  const youtubeId = resolveYoutubeVideoId(video);
+  const thumbnail =
+    video.thumbnailUrl ||
+    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : MEDIA_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
-  const link = getVideoExternalLink(video);
+  const buttonLabel = video.ctaLabel || "Play";
+  const videoTitle = video.title || "Video highlight";
+  const isPlayable = Boolean(youtubeId);
+  const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
 
   return `
-    <article class="overlay-media-card">
-      <div class="overlay-media-thumb">
+    <article class="overlay-media-card overlay-video-card">
+      <div class="video-frame" data-video-id="${escapeHtml(
+        youtubeId
+      )}" data-video-title="${escapeHtml(videoTitle)}">
         <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
+          videoTitle
+        )}">
+          <span class="play-icon" aria-hidden="true"></span>
+          <span>${escapeHtml(buttonLabel)}</span>
+        </button>
       </div>
       <div class="overlay-media-copy">
         <h4>${escapeHtml(video.title || "Video highlight")}</h4>
         ${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
-        ${link ? `<a class="btn subtle" href="${escapeAttribute(link)}" target="_blank" rel="noopener">Watch</a>` : ""}
       </div>
     </article>
   `;
@@ -792,10 +808,22 @@ function renderOverlayPhotoCard(photo) {
   const captionParts = [photo?.title, photo?.description, photo?.photographer ? `Photo: ${photo.photographer}` : ""]
     .map((part) => (part ? escapeHtml(part) : ""))
     .filter(Boolean);
+  const previewData = photo?.image?.url
+    ? {
+        src: imageUrl,
+        alt,
+        title: photo?.title || "Gallery photo",
+      }
+    : null;
+  const previewAttributes = previewData
+    ? `data-photo-preview="true" data-photo-src="${escapeAttribute(previewData.src)}" data-photo-alt="${escapeAttribute(
+        previewData.alt
+      )}" data-photo-title="${escapeAttribute(previewData.title)}"`
+    : "";
 
   return `
     <figure class="overlay-photo-card">
-      <div class="overlay-media-thumb">
+      <div class="overlay-media-thumb"${previewAttributes ? ` ${previewAttributes}` : ""}>
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
       </div>
       ${captionParts.length ? `<figcaption>${captionParts.join(" • ")}</figcaption>` : ""}
@@ -855,22 +883,6 @@ function getTournamentInfo(item) {
   return null;
 }
 
-function getVideoThumbnail(video) {
-  if (!video) {
-    return MEDIA_PLACEHOLDER_IMAGE;
-  }
-
-  if (video.thumbnailUrl) {
-    return video.thumbnailUrl;
-  }
-
-  if (video.youtubeId) {
-    return `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
-  }
-
-  return MEDIA_PLACEHOLDER_IMAGE;
-}
-
 function getVideoExternalLink(video) {
   if (!video) {
     return "";
@@ -885,6 +897,213 @@ function getVideoExternalLink(video) {
   }
 
   return "";
+}
+
+let videoOverlayElement = null;
+
+function setupVideoFrames(scope = document) {
+  const root = scope instanceof Element ? scope : document;
+  root.querySelectorAll(".video-frame").forEach((frame) => {
+    if (frame.dataset.playerReady === "true") {
+      return;
+    }
+
+    const playButton = frame.querySelector(".play-button");
+    const videoId = frame.dataset.videoId;
+    const videoTitle = frame.dataset.videoTitle || "Samuel Masco golf video highlight";
+
+    if (!playButton || !videoId) {
+      return;
+    }
+
+    playButton.addEventListener("click", () => {
+      openVideoOverlay(videoId, videoTitle);
+    });
+
+    frame.dataset.playerReady = "true";
+  });
+}
+
+function ensureVideoOverlay() {
+  if (videoOverlayElement) {
+    return videoOverlayElement;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "video-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="video-overlay-backdrop" data-overlay-close></div>
+    <div class="video-overlay-dialog" role="dialog" aria-modal="true">
+      <button class="video-overlay-close" type="button" data-overlay-close>
+        <span class="sr-only">Close video</span>
+        ×
+      </button>
+      <div class="video-overlay-frame"></div>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target.closest("[data-overlay-close]")) {
+      closeVideoOverlay();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-open")) {
+      closeVideoOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  videoOverlayElement = overlay;
+  return overlay;
+}
+
+function openVideoOverlay(videoId, videoTitle) {
+  if (!videoId) {
+    return;
+  }
+
+  const overlay = ensureVideoOverlay();
+  const frame = overlay.querySelector(".video-overlay-frame");
+  if (!frame) {
+    return;
+  }
+
+  frame.innerHTML = "";
+
+  const iframe = document.createElement("iframe");
+  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+  iframe.title = videoTitle || "Samuel Masco golf video highlight";
+  iframe.allow =
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+  iframe.allowFullscreen = true;
+
+  frame.appendChild(iframe);
+
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-showing-video");
+}
+
+function closeVideoOverlay() {
+  if (!videoOverlayElement) {
+    return;
+  }
+
+  const frame = videoOverlayElement.querySelector(".video-overlay-frame");
+  if (frame) {
+    frame.innerHTML = "";
+  }
+
+  videoOverlayElement.classList.remove("is-open");
+  videoOverlayElement.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-showing-video");
+}
+
+let photoOverlayElement = null;
+
+function setupPhotoPreviewButtons(scope = document) {
+  if (!scope) {
+    return;
+  }
+
+  const root = scope instanceof Element ? scope : document;
+  root.querySelectorAll("[data-photo-preview]").forEach((media) => {
+    if (media.dataset.photoPreviewReady === "true") {
+      return;
+    }
+    media.addEventListener("click", () => {
+      openPhotoOverlay(
+        media.getAttribute("data-photo-src"),
+        media.getAttribute("data-photo-alt"),
+        media.getAttribute("data-photo-title")
+      );
+    });
+    media.dataset.photoPreviewReady = "true";
+  });
+}
+
+function ensurePhotoOverlay() {
+  if (photoOverlayElement) {
+    return photoOverlayElement;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "photo-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="photo-overlay-backdrop" data-photo-overlay-close></div>
+    <div class="photo-overlay-dialog" role="dialog" aria-modal="true">
+      <button class="photo-overlay-close" type="button" data-photo-overlay-close>
+        <span class="sr-only">Close photo</span>
+        ×
+      </button>
+      <figure class="photo-overlay-frame">
+        <img src="" alt="" loading="lazy" />
+        <figcaption></figcaption>
+      </figure>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target.closest("[data-photo-overlay-close]")) {
+      closePhotoOverlay();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-open")) {
+      closePhotoOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  photoOverlayElement = overlay;
+  return overlay;
+}
+
+function openPhotoOverlay(src, alt, title) {
+  if (!src) {
+    return;
+  }
+
+  const overlay = ensurePhotoOverlay();
+  const image = overlay.querySelector("img");
+  const caption = overlay.querySelector("figcaption");
+
+  if (!image || !caption) {
+    return;
+  }
+
+  image.src = src;
+  image.alt = alt || title || "Gallery photo";
+  caption.textContent = title || alt || "";
+
+  overlay.classList.add("is-open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-showing-photo");
+}
+
+function closePhotoOverlay() {
+  if (!photoOverlayElement) {
+    return;
+  }
+
+  const image = photoOverlayElement.querySelector("img");
+  const caption = photoOverlayElement.querySelector("figcaption");
+  if (image) {
+    image.src = "";
+    image.alt = "";
+  }
+  if (caption) {
+    caption.textContent = "";
+  }
+
+  photoOverlayElement.classList.remove("is-open");
+  photoOverlayElement.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-showing-photo");
 }
 
 function formatReadableDate(event) {
@@ -932,6 +1151,47 @@ function formatDateRangeDisplay(startValue, endValue, { month = "long" } = {}) {
   const startText = start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
   const endText = end.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
   return `${startText} – ${endText}`;
+}
+
+function resolveYoutubeVideoId(video) {
+  if (!video) {
+    return "";
+  }
+
+  return extractYoutubeId(video.youtubeId) || extractYoutubeId(video.youtubeUrl);
+}
+
+function extractYoutubeId(value) {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (YOUTUBE_ID_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname.includes("youtu.be")) {
+      return url.pathname.replace("/", "") || "";
+    }
+
+    if (url.hostname.includes("youtube.com")) {
+      if (url.pathname.startsWith("/embed/")) {
+        return url.pathname.replace("/embed/", "") || "";
+      }
+
+      const id = url.searchParams.get("v");
+      if (id) {
+        return id;
+      }
+    }
+  } catch (error) {
+    return "";
+  }
+
+  return "";
 }
 
 function getDateParts(value) {

@@ -912,6 +912,8 @@ function openHighlightOverlay(eventId) {
   const photos = getPhotosForEvent(event);
 
   body.innerHTML = renderHighlightOverlayContent(event, videos, photos);
+  setupVideoFrames(body);
+  setupPhotoPreviewButtons(body);
   overlay.classList.add("is-open");
   overlay.setAttribute("aria-hidden", "false");
   document.body.classList.add("is-showing-highlight-overlay");
@@ -992,19 +994,32 @@ function renderOverlayVideos(videos) {
 }
 
 function renderOverlayVideoCard(video) {
-  const thumbnail = getVideoThumbnail(video);
+  const youtubeId = resolveYoutubeVideoId(video);
+  const thumbnail =
+    video.thumbnailUrl ||
+    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : MEDIA_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
-  const link = getVideoExternalLink(video);
+  const buttonLabel = video.ctaLabel || "Play";
+  const videoTitle = video.title || "Video highlight";
+  const isPlayable = Boolean(youtubeId);
+  const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
 
   return `
-    <article class="overlay-media-card">
-      <div class="overlay-media-thumb">
+    <article class="overlay-media-card overlay-video-card">
+      <div class="video-frame" data-video-id="${escapeHtml(
+        youtubeId
+      )}" data-video-title="${escapeHtml(videoTitle)}">
         <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
+          videoTitle
+        )}">
+          <span class="play-icon" aria-hidden="true"></span>
+          <span>${escapeHtml(buttonLabel)}</span>
+        </button>
       </div>
       <div class="overlay-media-copy">
         <h4>${escapeHtml(video.title || "Video highlight")}</h4>
         ${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
-        ${link ? `<a class="btn subtle" href="${escapeAttribute(link)}" target="_blank" rel="noopener">Watch</a>` : ""}
       </div>
     </article>
   `;
@@ -1028,10 +1043,22 @@ function renderOverlayPhotoCard(photo) {
   const captionParts = [photo?.title, photo?.description, photo?.photographer ? `Photo: ${photo.photographer}` : ""]
     .map((part) => (part ? escapeHtml(part) : ""))
     .filter(Boolean);
+  const previewData = photo?.image?.url
+    ? {
+        src: imageUrl,
+        alt,
+        title: photo?.title || "Gallery photo",
+      }
+    : null;
+  const previewAttributes = previewData
+    ? `data-photo-preview="true" data-photo-src="${escapeAttribute(previewData.src)}" data-photo-alt="${escapeAttribute(
+        previewData.alt
+      )}" data-photo-title="${escapeAttribute(previewData.title)}"`
+    : "";
 
   return `
     <figure class="overlay-photo-card">
-      <div class="overlay-media-thumb">
+      <div class="overlay-media-thumb"${previewAttributes ? ` ${previewAttributes}` : ""}>
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
       </div>
       ${captionParts.length ? `<figcaption>${captionParts.join(" • ")}</figcaption>` : ""}
@@ -1296,8 +1323,9 @@ function renderVideoCard(video, index) {
   `;
 }
 
-function setupVideoFrames() {
-  document.querySelectorAll(".video-frame").forEach((frame) => {
+function setupVideoFrames(scope = document) {
+  const root = scope instanceof Element ? scope : document;
+  root.querySelectorAll(".video-frame").forEach((frame) => {
     if (frame.dataset.playerReady === "true") {
       return;
     }
