@@ -2089,6 +2089,8 @@ body.is-showing-photo {
   width: 100%;
   padding-top: 56.25%;
   overflow: hidden;
+  background: radial-gradient(circle at 30% 30%, rgba(17, 104, 255, 0.16), transparent 60%),
+    rgba(244, 247, 253, 0.95);
 }
 
 .overlay-media-thumb img {
@@ -2097,6 +2099,8 @@ body.is-showing-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 360ms ease, filter 360ms ease;
 }
 
 .overlay-media-thumb[data-photo-preview] {
@@ -2125,6 +2129,12 @@ body.is-showing-photo {
 .overlay-media-thumb[data-photo-preview]:focus-visible::after {
   opacity: 1;
   transform: translateY(0);
+}
+
+.overlay-media-card:hover .overlay-media-thumb img,
+.overlay-photo-card:hover .overlay-media-thumb img {
+  transform: scale(1.06);
+  filter: saturate(1.05);
 }
 
 .overlay-media-copy {
