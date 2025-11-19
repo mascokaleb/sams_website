@@ -1905,15 +1905,23 @@ function initInteractiveGolfBall() {
   let homePositionSet = false;
   let isHoleAnimating = false;
   let holeAnimationTimeout = null;
+  let scoreHideTimeout = null;
+  let hitCount = 0;
+  let pointerInsideBall = false;
+  let strokeCooldown = false;
+  let strokeCooldownTimeout = null;
 
   const heroSection = document.querySelector(".site-header");
   const heroElement = document.querySelector(".hero");
   const holeElement = document.querySelector("[data-golf-hole]");
+  const scoreboard = document.querySelector("[data-golf-scoreboard]");
+  const scoreboardValue = scoreboard ? scoreboard.querySelector("[data-golf-score-value]") : null;
   const pointerState = {
     x: 0,
     y: 0,
     active: false,
   };
+  const pushRadius = radius + 16;
 
   const collidableSelectors = [
     ".nav",
@@ -2022,6 +2030,54 @@ function initInteractiveGolfBall() {
 
   function getHomePosition() {
     return homePosition || { x: state.x, y: state.y };
+  }
+
+  function resetScore() {
+    hitCount = 0;
+    if (scoreboardValue) {
+      scoreboardValue.textContent = hitCount;
+    }
+  }
+
+  function registerHit() {
+    if (strokeCooldown) {
+      return;
+    }
+
+    hitCount += 1;
+    if (scoreboardValue) {
+      scoreboardValue.textContent = hitCount;
+    }
+
+    strokeCooldown = true;
+    clearTimeout(strokeCooldownTimeout);
+    strokeCooldownTimeout = window.setTimeout(() => {
+      strokeCooldown = false;
+    }, 500);
+  }
+
+  function resetStrokeCooldown() {
+    strokeCooldown = false;
+    clearTimeout(strokeCooldownTimeout);
+  }
+
+  function showScoreboard() {
+    if (!scoreboard) {
+      return;
+    }
+    scoreboard.classList.add("is-visible");
+    scoreboard.setAttribute("aria-hidden", "false");
+    clearTimeout(scoreHideTimeout);
+    scoreHideTimeout = window.setTimeout(() => hideScoreboard(), 3200);
+  }
+
+  function hideScoreboard() {
+    if (!scoreboard) {
+      return;
+    }
+    scoreboard.classList.remove("is-visible");
+    scoreboard.setAttribute("aria-hidden", "true");
+    resetScore();
   }
 
   function getHoleMetrics() {
@@ -2192,15 +2248,6 @@ function initInteractiveGolfBall() {
       return;
     }
 
-    const dx = state.x - pointerState.x;
-    const dy = state.y - pointerState.y;
-    const distance = Math.hypot(dx, dy);
-    const pushRadius = radius + 10;
-
-    if (distance > pushRadius) {
-      return;
-    }
-
     const impulseScale = 0.42;
     state.vx += moveX * impulseScale;
     state.vy += moveY * impulseScale;
@@ -2213,6 +2260,9 @@ function initInteractiveGolfBall() {
       state.vy *= ratio;
     }
 
+    const dx = state.x - pointerState.x;
+    const dy = state.y - pointerState.y;
+    const distance = Math.hypot(dx, dy);
     if (distance < radius) {
       const overlap = radius - distance;
       const nx = dx / (distance || 1);
@@ -2328,11 +2378,14 @@ function initInteractiveGolfBall() {
 
     isHoleAnimating = true;
     pointerState.active = false;
+    pointerInsideBall = false;
+    resetStrokeCooldown();
     isMoving = false;
     state.vx = 0;
     state.vy = 0;
     ball.classList.remove("is-moving");
     ball.classList.add("is-sinking");
+    showScoreboard();
 
     const sinkX = hole.centerX - radius;
     const sinkY = hole.centerY - radius * 0.6;
@@ -2456,27 +2509,55 @@ function initInteractiveGolfBall() {
         return;
       }
 
+      const dx = state.x - pointerState.x;
+      const dy = state.y - pointerState.y;
+      const distance = Math.hypot(dx, dy);
+      const wasInside = pointerInsideBall;
+      pointerInsideBall = distance <= pushRadius;
+
+      if (!pointerInsideBall) {
+        return;
+      }
+
+      const preSpeed = Math.hypot(state.vx, state.vy);
       applyPointerPush(moveX, moveY);
+      const postSpeed = Math.hypot(state.vx, state.vy);
+      const speedGain = postSpeed - preSpeed;
+
+      if (!wasInside && !strokeCooldown) {
+        const movement = Math.hypot(moveX, moveY);
+        if (speedGain > 0.35 || postSpeed > 1 || movement > 1.2) {
+          registerHit();
+        }
+      }
     },
     { passive: true }
   );
 
   window.addEventListener("pointerleave", () => {
     pointerState.active = false;
+    pointerInsideBall = false;
+    resetStrokeCooldown();
   });
 
   window.addEventListener("pointerout", (event) => {
     if (!event.relatedTarget) {
       pointerState.active = false;
+      pointerInsideBall = false;
+      resetStrokeCooldown();
     }
   });
 
   window.addEventListener("blur", () => {
     pointerState.active = false;
+    pointerInsideBall = false;
+    resetStrokeCooldown();
   });
 
   window.addEventListener("scroll", () => {
     pointerState.active = false;
+    pointerInsideBall = false;
+    resetStrokeCooldown();
   });
 
   window.addEventListener("resize", () => {

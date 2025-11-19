@@ -547,6 +547,43 @@ ul {
   opacity: 0.92;
 }
 
+.golf-scoreboard {
+  position: absolute;
+  top: clamp(1.2rem, 3vw, 1.8rem);
+  right: clamp(1.6rem, 6vw, 2.6rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  border: 1px solid rgba(15, 29, 51, 0.08);
+  box-shadow: 0 18px 36px rgba(15, 29, 51, 0.16);
+  opacity: 0;
+  transform: translateY(-12px) scale(0.96);
+  transition: opacity var(--transition), transform var(--transition);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.golf-scoreboard.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.golf-scoreboard .score-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 29, 51, 0.7);
+}
+
+.golf-scoreboard .score-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
 .section {
   position: relative;
   max-width: var(--max-width);
@@ -2358,6 +2395,10 @@ body.is-showing-highlight-overlay {
   }
 
   .hero-hole {
+    display: none;
+  }
+
+  .golf-scoreboard {
     display: none;
   }
 
