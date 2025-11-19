@@ -624,6 +624,7 @@ ul {
 .timeline-card::before,
 .dual-card::before,
 .video-card::before,
+.gallery-card::before,
 .contact-card::before {
   content: "";
   position: absolute;
@@ -648,6 +649,8 @@ ul {
 .academics-card:hover::before,
 .timeline-card:hover::before,
 .dual-card:hover::before,
+.video-card:hover::before,
+.gallery-card:hover::before,
 .contact-card:hover::before {
   opacity: 1;
 }
@@ -740,6 +743,7 @@ ul {
 .gallery-card {
   display: flex;
   flex-direction: column;
+  position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface);
@@ -754,6 +758,17 @@ ul {
   transform: translateY(-8px);
   border-color: rgba(17, 104, 255, 0.35);
   box-shadow: 0 30px 60px rgba(15, 29, 51, 0.16);
+}
+
+.gallery-card::before {
+  inset: -70% -40% auto -40%;
+  background: linear-gradient(
+    140deg,
+    rgba(10, 191, 155, 0.2),
+    rgba(17, 104, 255, 0.18),
+    transparent 70%
+  );
+  transform: skewY(-8deg);
 }
 
 .gallery-card-media {
