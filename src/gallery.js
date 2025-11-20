@@ -352,6 +352,8 @@ function renderGalleryPhoto(photo, index = 0) {
   const featureBadge = isFeatured ? `<span class="highlight-badge">Featured</span>` : "";
   const imageUrl = photo?.image?.url || photo?.photo?.asset?.url || HERO_PLACEHOLDER_IMAGE;
   const altText = photo?.image?.alt || photo?.photo?.alt || photo?.title || "Gallery image";
+  const shotDateParts = getShotDateParts(photo?.shotDate);
+  const dateOverlay = shotDateParts ? renderPhotoDateOverlay(shotDateParts) : "";
   const previewData = imageUrl
     ? {
         src: imageUrl,
@@ -365,10 +367,6 @@ function renderGalleryPhoto(photo, index = 0) {
       )}" data-photo-title="${escapeAttribute(previewData.title)}"`
     : "";
   const metaParts = [];
-  const shotDate = formatShotDate(photo?.shotDate);
-  if (shotDate) {
-    metaParts.push(shotDate);
-  }
   if (photo?.location) {
     metaParts.push(photo.location);
   }
@@ -391,6 +389,7 @@ function renderGalleryPhoto(photo, index = 0) {
   return `
     <article class="gallery-card${isFeatured ? " is-featured" : ""}" data-motion="delay-${(index % 3) + 1}">
       <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
+        ${dateOverlay}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" />
       </div>
       <div class="gallery-card-body">
@@ -660,6 +659,33 @@ function formatShotDate(value) {
   }
 
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function getShotDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate().toString().padStart(2, "0"),
+    year: date.getFullYear(),
+  };
+}
+
+function renderPhotoDateOverlay(parts) {
+  return `
+    <div class="video-date-overlay" aria-label="${parts.month} ${parts.day}, ${parts.year}">
+      <span class="month">${parts.month}</span>
+      <strong>${parts.day}</strong>
+      <span class="year">${parts.year}</span>
+    </div>
+  `;
 }
 
 function setPageMessage(message, tone = "info") {

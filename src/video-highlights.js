@@ -329,7 +329,6 @@ function renderGalleryVideo(video) {
           video.title || "video"
         )}">
           <span class="play-icon" aria-hidden="true"></span>
-          <span>${escapeHtml(video.ctaLabel || "Play")}</span>
         </button>
       </div>
       <div class="video-gallery-copy">

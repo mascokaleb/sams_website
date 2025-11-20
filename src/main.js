@@ -526,6 +526,8 @@ function renderGalleryCard(photo, index = 0) {
   const imageUrl = photo?.image?.url || HERO_PLACEHOLDER_IMAGE;
   const altText = photo?.image?.alt || photo?.title || "Gallery highlight";
   const tournamentBadge = renderTournamentChip(photo, { variant: "card" });
+  const shotDateParts = getShotDateParts(photo?.shotDate);
+  const dateOverlay = shotDateParts ? renderVideoDateOverlay(shotDateParts) : "";
   const previewData = photo?.image?.url
     ? {
         src: imageUrl,
@@ -539,10 +541,6 @@ function renderGalleryCard(photo, index = 0) {
       )}" data-photo-title="${escapeAttribute(previewData.title)}"`
     : "";
   const metaParts = [];
-  const shotDate = formatShotDate(photo?.shotDate);
-  if (shotDate) {
-    metaParts.push(shotDate);
-  }
   if (photo?.location) {
     metaParts.push(photo.location);
   }
@@ -563,6 +561,7 @@ function renderGalleryCard(photo, index = 0) {
   return `
     <article class="gallery-card" data-motion="delay-${(index % 3) + 1}">
       <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
+        ${dateOverlay}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" />
       </div>
       <div class="gallery-card-body">
@@ -1016,7 +1015,6 @@ function renderOverlayVideoCard(video) {
     video.thumbnailUrl ||
     (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : MEDIA_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
-  const buttonLabel = video.ctaLabel || "Play";
   const videoTitle = video.title || "Video highlight";
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
@@ -1031,7 +1029,6 @@ function renderOverlayVideoCard(video) {
           videoTitle
         )}">
           <span class="play-icon" aria-hidden="true"></span>
-          <span>${escapeHtml(buttonLabel)}</span>
         </button>
       </div>
       <div class="overlay-media-copy">
@@ -1442,7 +1439,6 @@ function renderVideoCard(video, index) {
     video.thumbnailUrl ||
     (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : HERO_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
-  const buttonLabel = video.ctaLabel || "Play";
   const videoTitle = video.title || "Video highlight";
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
@@ -1462,7 +1458,6 @@ function renderVideoCard(video, index) {
           videoTitle
         )}">
           <span class="play-icon" aria-hidden="true"></span>
-          <span>${escapeHtml(buttonLabel)}</span>
         </button>
       </div>
       <div class="video-gallery-copy">
@@ -1946,6 +1941,23 @@ function formatShotDate(value) {
   }
 
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function getShotDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate().toString().padStart(2, "0"),
+    year: date.getFullYear(),
+  };
 }
 
 function getPhotoTournamentTitle(photo) {

@@ -797,7 +797,6 @@ function renderOverlayVideoCard(video) {
     video.thumbnailUrl ||
     (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : MEDIA_PLACEHOLDER_IMAGE);
   const alt = video.thumbnailAlt || video.title || "Video highlight";
-  const buttonLabel = video.ctaLabel || "Play";
   const videoTitle = video.title || "Video highlight";
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
@@ -812,7 +811,6 @@ function renderOverlayVideoCard(video) {
           videoTitle
         )}">
           <span class="play-icon" aria-hidden="true"></span>
-          <span>${escapeHtml(buttonLabel)}</span>
         </button>
       </div>
       <div class="overlay-media-copy">
