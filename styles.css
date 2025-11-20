@@ -1986,10 +1986,13 @@ body.content-page {
   padding: 1.2rem 1.3rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.4rem;
   flex: 1;
 }
 
+.video-gallery-copy p {
+  margin: 0;
+}
 .video-card-link {
   color: var(--accent-secondary);
   font-weight: 600;

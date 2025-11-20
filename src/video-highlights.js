@@ -317,6 +317,13 @@ function renderGalleryVideo(video) {
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
   const tagsMarkup = renderVideoTags(video);
   const tournamentChip = renderTournamentChip(video);
+  const topRow =
+    badge || externalLink
+      ? `<div class="video-card-top">
+          ${badge || ""}
+          ${externalLink || ""}
+        </div>`
+      : "";
 
   return `
     <article class="video-gallery-card${isFeatured ? " is-featured" : ""}">
@@ -332,11 +339,7 @@ function renderGalleryVideo(video) {
         </button>
       </div>
       <div class="video-gallery-copy">
-        <div class="video-card-top">
-          ${badge}
-          <span class="video-meta">${escapeHtml(primaryDate || "Updated recently")}</span>
-          ${externalLink}
-        </div>
+        ${topRow}
         <h3>${escapeHtml(video.title || "Video highlight")}</h3>
         ${tournamentChip ? `<div class="card-chip-slot">${tournamentChip}</div>` : ""}
         <p>${escapeHtml(video.description || "")}</p>
