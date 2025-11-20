@@ -47,6 +47,7 @@ async function loadTournamentHighlights() {
   setupHighlightSearch();
   renderHighlightGroups();
   setPageMessage("");
+  openTournamentFromUrl();
 }
 
 function renderSiteIdentity(site, pageTitleSuffix) {
@@ -697,6 +698,38 @@ function closeHighlightOverlay() {
   highlightOverlayElement.classList.remove("is-open");
   highlightOverlayElement.setAttribute("aria-hidden", "true");
   document.body.classList.remove("is-showing-highlight-overlay");
+}
+
+function getRequestedTournamentId() {
+  try {
+    const url = new URL(window.location.href);
+    const searchId = url.searchParams.get("tournament");
+    if (searchId) {
+      return decodeURIComponent(searchId);
+    }
+  } catch {
+    // Ignore URL parsing issues
+  }
+
+  if (window.location.hash) {
+    return decodeURIComponent(window.location.hash.replace(/^#/, ""));
+  }
+
+  return null;
+}
+
+function openTournamentFromUrl() {
+  const targetId = getRequestedTournamentId();
+  if (!targetId) {
+    return;
+  }
+
+  const event = findHighlightEvent(targetId);
+  if (!event) {
+    return;
+  }
+
+  openHighlightOverlay(event._id || event.title || targetId);
 }
 
 function findHighlightEvent(eventId) {

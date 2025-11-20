@@ -313,11 +313,10 @@ function renderGalleryVideo(video) {
   const isFeatured = isFeaturedVideo(video);
   const badgeParts = getVideoDateParts(video.eventDate);
   const primaryDate = badgeParts ? formatVideoDate(video) : formatVideoMeta(video);
-  const tournamentTitle = getVideoTournamentTitle(video);
-  const metaLabel = [primaryDate, tournamentTitle].filter(Boolean).join(" • ") || primaryDate;
   const badge = isFeatured ? `<span class="highlight-badge">Featured</span>` : "";
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
   const tagsMarkup = renderVideoTags(video);
+  const tournamentChip = renderTournamentChip(video);
 
   return `
     <article class="video-gallery-card${isFeatured ? " is-featured" : ""}">
@@ -336,10 +335,11 @@ function renderGalleryVideo(video) {
       <div class="video-gallery-copy">
         <div class="video-card-top">
           ${badge}
-          <span class="video-meta">${escapeHtml(metaLabel || "—")}</span>
+          <span class="video-meta">${escapeHtml(primaryDate || "Updated recently")}</span>
           ${externalLink}
         </div>
         <h3>${escapeHtml(video.title || "Video highlight")}</h3>
+        ${tournamentChip ? `<div class="card-chip-slot">${tournamentChip}</div>` : ""}
         <p>${escapeHtml(video.description || "")}</p>
         ${tagsMarkup}
       </div>
@@ -491,6 +491,26 @@ function getVideoTournament(video) {
 function getVideoTournamentTitle(video) {
   const tournament = getVideoTournament(video);
   return tournament?.title || "";
+}
+
+function renderTournamentChip(video) {
+  const tournament = getVideoTournament(video);
+  if (!tournament?.title) {
+    return "";
+  }
+
+  const targetId = tournament.id || tournament.title;
+  const href = targetId
+    ? `tournament-highlights.html?tournament=${encodeURIComponent(targetId)}`
+    : "tournament-highlights.html";
+
+  return `
+    <a class="tournament-chip tournament-chip--on-card" href="${escapeAttribute(href)}"${
+    targetId ? ` data-highlight-modal="${escapeAttribute(targetId)}" aria-label="View ${escapeAttribute(tournament.title)} tournament details"` : ""
+  }>
+      <span class="tournament-chip-name">${escapeHtml(tournament.title)}</span>
+    </a>
+  `;
 }
 
 function orderFeaturedVideos(videos) {

@@ -347,8 +347,7 @@ function filterBySearch(photo) {
 }
 
 function renderGalleryPhoto(photo, index = 0) {
-  const tournamentName = getPhotoTournamentTitle(photo);
-  const badgeLabel = tournamentName || "";
+  const tournamentChip = renderTournamentChip(photo);
   const isFeatured = isFeaturedPhoto(photo);
   const featureBadge = isFeatured ? `<span class="highlight-badge">Featured</span>` : "";
   const imageUrl = photo?.image?.url || photo?.photo?.asset?.url || HERO_PLACEHOLDER_IMAGE;
@@ -369,9 +368,6 @@ function renderGalleryPhoto(photo, index = 0) {
   const shotDate = formatShotDate(photo?.shotDate);
   if (shotDate) {
     metaParts.push(shotDate);
-  }
-  if (tournamentName) {
-    metaParts.push(tournamentName);
   }
   if (photo?.location) {
     metaParts.push(photo.location);
@@ -395,12 +391,12 @@ function renderGalleryPhoto(photo, index = 0) {
   return `
     <article class="gallery-card${isFeatured ? " is-featured" : ""}" data-motion="delay-${(index % 3) + 1}">
       <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
-        ${badgeLabel ? `<span class="gallery-card-badge">${escapeHtml(badgeLabel)}</span>` : ""}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" />
       </div>
       <div class="gallery-card-body">
         ${cardTop}
         <h3>${escapeHtml(photo?.title || "Gallery highlight")}</h3>
+        ${tournamentChip ? `<div class="card-chip-slot">${tournamentChip}</div>` : ""}
         ${descriptionMarkup}
         ${renderTagList(photo?.tags)}
         ${footerMarkup}
@@ -526,6 +522,26 @@ function getPhotoTournamentTitle(photo) {
   return tournament?.title || "";
 }
 
+function renderTournamentChip(photo) {
+  const tournament = getPhotoTournament(photo);
+  if (!tournament?.title) {
+    return "";
+  }
+
+  const targetId = tournament.id || tournament.title;
+  const href = targetId
+    ? `tournament-highlights.html?tournament=${encodeURIComponent(targetId)}`
+    : "tournament-highlights.html";
+
+  return `
+    <a class="tournament-chip tournament-chip--on-card" href="${escapeAttribute(href)}"${
+    targetId ? ` data-highlight-modal="${escapeAttribute(targetId)}" aria-label="View ${escapeAttribute(tournament.title)} tournament details"` : ""
+  }>
+      <span class="tournament-chip-name">${escapeHtml(tournament.title)}</span>
+    </a>
+  `;
+}
+
 let photoOverlayElement = null;
 
 function setupPhotoPreviewButtons(scope = document) {
@@ -538,7 +554,10 @@ function setupPhotoPreviewButtons(scope = document) {
     if (media.dataset.photoPreviewReady === "true") {
       return;
     }
-    media.addEventListener("click", () => {
+    media.addEventListener("click", (event) => {
+      if (event.target.closest(".tournament-chip")) {
+        return;
+      }
       openPhotoOverlay(
         media.getAttribute("data-photo-src"),
         media.getAttribute("data-photo-alt"),

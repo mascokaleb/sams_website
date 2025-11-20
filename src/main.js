@@ -33,6 +33,7 @@ const SELECTORS = {
 
 const highlightsState = {
   meta: null,
+  allItems: [],
   items: [],
   videos: [],
   photos: [],
@@ -106,6 +107,7 @@ async function hydratePage() {
 
   const orderedHighlights = sortEntriesChronologically(data.highlightEvents || []);
   highlightsState.meta = data.highlightsSection;
+  highlightsState.allItems = orderedHighlights;
   highlightsState.items = orderedHighlights.filter(shouldDisplayOnHome);
   renderHighlights();
 
@@ -465,6 +467,7 @@ function renderVideos() {
   gridEl.innerHTML = limitedVideos.map((video, index) => renderVideoCard(video, index)).join("");
   gridEl.querySelectorAll("[data-motion]").forEach((el) => el.classList.add("is-visible"));
   setupVideoFrames();
+  setupHighlightDetailButtons(gridEl);
 
   if (actionsEl) {
     actionsEl.innerHTML = `
@@ -510,6 +513,7 @@ function renderGallery() {
   gridEl.innerHTML = limitedPhotos.map((photo, index) => renderGalleryCard(photo, index)).join("");
   gridEl.querySelectorAll("[data-motion]").forEach((el) => el.classList.add("is-visible"));
   setupPhotoPreviewButtons(gridEl);
+  setupHighlightDetailButtons(gridEl);
 
   if (actionsEl) {
     const href = sectionMeta?.ctaHref || "gallery.html";
@@ -521,8 +525,7 @@ function renderGallery() {
 function renderGalleryCard(photo, index = 0) {
   const imageUrl = photo?.image?.url || HERO_PLACEHOLDER_IMAGE;
   const altText = photo?.image?.alt || photo?.title || "Gallery highlight";
-  const tournamentName = getPhotoTournamentTitle(photo);
-  const badgeLabel = tournamentName || "";
+  const tournamentBadge = renderTournamentChip(photo, { variant: "card" });
   const previewData = photo?.image?.url
     ? {
         src: imageUrl,
@@ -539,9 +542,6 @@ function renderGalleryCard(photo, index = 0) {
   const shotDate = formatShotDate(photo?.shotDate);
   if (shotDate) {
     metaParts.push(shotDate);
-  }
-  if (tournamentName) {
-    metaParts.push(tournamentName);
   }
   if (photo?.location) {
     metaParts.push(photo.location);
@@ -563,12 +563,12 @@ function renderGalleryCard(photo, index = 0) {
   return `
     <article class="gallery-card" data-motion="delay-${(index % 3) + 1}">
       <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
-        ${badgeLabel ? `<span class="gallery-card-badge">${escapeHtml(badgeLabel)}</span>` : ""}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" />
       </div>
       <div class="gallery-card-body">
         ${metaMarkup}
         <h3>${escapeHtml(photo?.title || "Gallery highlight")}</h3>
+        ${tournamentBadge ? `<div class="card-chip-slot">${tournamentBadge}</div>` : ""}
         ${descriptionMarkup}
         ${renderGalleryTags(photo?.tags)}
         ${footerMarkup}
@@ -851,7 +851,9 @@ function setupHighlightDetailButtons(root) {
     }
 
     button.dataset.modalBound = "true";
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       const eventId = button.getAttribute("data-highlight-modal");
       openHighlightOverlay(eventId);
     });
@@ -935,15 +937,30 @@ function closeHighlightOverlay() {
 }
 
 function findHighlightEvent(eventId) {
-  if (!eventId) {
-    return highlightsState.items[0] || null;
+  const pools = [];
+  if (Array.isArray(highlightsState.items)) {
+    pools.push(highlightsState.items);
+  }
+  if (Array.isArray(highlightsState.allItems)) {
+    pools.push(highlightsState.allItems);
   }
 
-  return (
-    highlightsState.items.find((event) => (event?._id || "") === eventId) ||
-    highlightsState.items.find((event) => event?.title === eventId) ||
-    null
-  );
+  if (!eventId) {
+    return (pools[0] && pools[0][0]) || (pools[1] && pools[1][0]) || null;
+  }
+
+  for (const list of pools) {
+    const byId = list.find((event) => (event?._id || "") === eventId);
+    if (byId) {
+      return byId;
+    }
+    const byTitle = list.find((event) => event?.title === eventId);
+    if (byTitle) {
+      return byTitle;
+    }
+  }
+
+  return null;
 }
 
 function renderHighlightOverlayContent(event, videos, photos) {
@@ -1116,6 +1133,132 @@ function getTournamentInfo(item) {
   }
 
   return null;
+}
+
+function isFeaturedVideo(video) {
+  return Boolean(video?.pinToTop);
+}
+
+function getVideoTags(video) {
+  if (!video || !Array.isArray(video.tags)) {
+    return [];
+  }
+  return video.tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean);
+}
+
+function renderVideoTags(video) {
+  const tags = getVideoTags(video);
+  if (!tags.length) {
+    return "";
+  }
+
+  return `
+    <div class="gallery-card-tags video-card-tags">
+      ${tags.map((tag) => `<span class="gallery-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function resolveTournamentTarget(item) {
+  const info = getTournamentInfo(item);
+  if (!info || !info.title) {
+    return null;
+  }
+
+  const lookupKey = info.id || info.title;
+  const event = lookupKey ? findHighlightEvent(lookupKey) : null;
+  const targetId = event ? event._id || event.title : null;
+  const label = event?.title || info.title;
+
+  return {
+    label,
+    targetId,
+  };
+}
+
+function renderTournamentChip(item, { variant = "inline" } = {}) {
+  const data = resolveTournamentTarget(item);
+  if (!data?.label) {
+    return "";
+  }
+
+  const classes = ["tournament-chip"];
+  if (variant === "card") {
+    classes.push("tournament-chip--on-card");
+  }
+  if (variant === "inline") {
+    classes.push("tournament-chip--inline");
+  }
+
+  const label = escapeHtml(data.label);
+  const actionLabel = escapeAttribute(`View ${data.label} tournament details`);
+  const targetAttr = data.targetId ? ` data-highlight-modal="${escapeAttribute(data.targetId)}"` : "";
+  const href = data.targetId
+    ? `tournament-highlights.html?tournament=${encodeURIComponent(data.targetId)}`
+    : "tournament-highlights.html";
+  const tagName = "a";
+  const typeAttr = "";
+
+  return `
+    <${tagName} class="${classes.join(" ")}" href="${escapeAttribute(href)}"${targetAttr}${typeAttr}${
+    data.targetId ? ` aria-label="${actionLabel}"` : ""
+  }>
+      <span class="tournament-chip-name">${label}</span>
+    </${tagName}>
+  `;
+}
+
+function formatVideoMeta(video) {
+  if (!video?.eventDate) {
+    return "Updated recently";
+  }
+
+  const date = new Date(video.eventDate);
+  if (Number.isNaN(date.getTime())) {
+    return "Updated recently";
+  }
+
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatVideoDate(video) {
+  if (!video?.eventDate) {
+    return "";
+  }
+
+  const date = new Date(video.eventDate);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+function getVideoDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate().toString().padStart(2, "0"),
+    year: date.getFullYear(),
+  };
+}
+
+function renderVideoDateOverlay(parts) {
+  return `
+    <div class="video-date-overlay" aria-label="${parts.month} ${parts.day}, ${parts.year}">
+      <span class="month">${parts.month}</span>
+      <strong>${parts.day}</strong>
+      <span class="year">${parts.year}</span>
+    </div>
+  `;
 }
 
 function getVideoThumbnail(video) {
@@ -1303,12 +1446,17 @@ function renderVideoCard(video, index) {
   const videoTitle = video.title || "Video highlight";
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
+  const tournamentChip = renderTournamentChip(video, { variant: "card" });
+  const badgeParts = getVideoDateParts(video.eventDate);
+  const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
+  const tagsMarkup = renderVideoTags(video);
 
   return `
-    <article class="video-card" data-motion="delay-${index + 1}">
+    <article class="video-gallery-card" data-motion="delay-${index + 1}">
       <div class="video-frame" data-video-id="${escapeHtml(
         youtubeId
       )}" data-video-title="${escapeHtml(videoTitle)}">
+        ${dateOverlay}
         <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
         <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
           videoTitle
@@ -1317,8 +1465,12 @@ function renderVideoCard(video, index) {
           <span>${escapeHtml(buttonLabel)}</span>
         </button>
       </div>
-      <h3>${escapeHtml(video.title || "")}</h3>
-      <p>${escapeHtml(video.description || "")}</p>
+      <div class="video-gallery-copy">
+        <h3>${escapeHtml(video.title || "")}</h3>
+        ${tournamentChip ? `<div class="card-chip-slot">${tournamentChip}</div>` : ""}
+        <p>${escapeHtml(video.description || "")}</p>
+        ${tagsMarkup}
+      </div>
     </article>
   `;
 }
@@ -1439,7 +1591,10 @@ function setupPhotoPreviewButtons(scope = document) {
     if (media.dataset.photoPreviewReady === "true") {
       return;
     }
-    media.addEventListener("click", () => {
+    media.addEventListener("click", (event) => {
+      if (event.target.closest(".tournament-chip")) {
+        return;
+      }
       openPhotoOverlay(
         media.getAttribute("data-photo-src"),
         media.getAttribute("data-photo-alt"),
