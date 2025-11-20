@@ -12,6 +12,10 @@ const SELECTORS = {
   search: "[data-highlight-search]",
 };
 
+const overlayReferrerBack = /video-highlights\.html|gallery\.html/.test(
+  (document.referrer || "").toLowerCase()
+);
+
 const MEDIA_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
 const YOUTUBE_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
@@ -698,6 +702,10 @@ function closeHighlightOverlay() {
   highlightOverlayElement.classList.remove("is-open");
   highlightOverlayElement.setAttribute("aria-hidden", "true");
   document.body.classList.remove("is-showing-highlight-overlay");
+
+  if (overlayReferrerBack && window.history.length > 1) {
+    history.back();
+  }
 }
 
 function getRequestedTournamentId() {
@@ -800,12 +808,15 @@ function renderOverlayVideoCard(video) {
   const videoTitle = video.title || "Video highlight";
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
+  const badgeParts = getVideoDateParts(video.eventDate);
+  const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
 
   return `
-    <article class="overlay-media-card overlay-video-card">
+    <article class="video-gallery-card">
       <div class="video-frame" data-video-id="${escapeHtml(
         youtubeId
       )}" data-video-title="${escapeHtml(videoTitle)}">
+        ${dateOverlay}
         <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
         <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
           videoTitle
@@ -813,7 +824,7 @@ function renderOverlayVideoCard(video) {
           <span class="play-icon" aria-hidden="true"></span>
         </button>
       </div>
-      <div class="overlay-media-copy">
+      <div class="video-gallery-copy">
         <h4>${escapeHtml(video.title || "Video highlight")}</h4>
         ${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
       </div>
@@ -836,29 +847,32 @@ function renderOverlayPhotos(photos) {
 function renderOverlayPhotoCard(photo) {
   const imageUrl = photo?.image?.url || MEDIA_PLACEHOLDER_IMAGE;
   const alt = photo?.image?.alt || photo?.title || "Gallery photo";
-  const captionParts = [photo?.title, photo?.description, photo?.photographer ? `Photo: ${photo.photographer}` : ""]
-    .map((part) => (part ? escapeHtml(part) : ""))
-    .filter(Boolean);
+  const shotDateParts = getShotDateParts(photo?.shotDate);
+  const dateOverlay = shotDateParts ? renderPhotoDateOverlay(shotDateParts) : "";
   const previewData = photo?.image?.url
-    ? {
-        src: imageUrl,
-        alt,
-        title: photo?.title || "Gallery photo",
-      }
+    ? { src: imageUrl, alt, title: photo?.title || "Gallery photo" }
     : null;
   const previewAttributes = previewData
     ? `data-photo-preview="true" data-photo-src="${escapeAttribute(previewData.src)}" data-photo-alt="${escapeAttribute(
         previewData.alt
       )}" data-photo-title="${escapeAttribute(previewData.title)}"`
     : "";
+  const photographerText = photo?.photographer
+    ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
+    : "";
 
   return `
-    <figure class="overlay-photo-card">
-      <div class="overlay-media-thumb"${previewAttributes ? ` ${previewAttributes}` : ""}>
+    <article class="gallery-card">
+      <div class="gallery-card-media"${previewAttributes ? ` ${previewAttributes}` : ""}>
+        ${dateOverlay}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
       </div>
-      ${captionParts.length ? `<figcaption>${captionParts.join(" • ")}</figcaption>` : ""}
-    </figure>
+      <div class="gallery-card-body">
+        <h4>${escapeHtml(photo?.title || "Gallery photo")}</h4>
+        ${photo?.description ? `<p class="gallery-card-description">${escapeHtml(photo.description)}</p>` : ""}
+        ${photographerText ? `<div class="gallery-card-footer">${photographerText}</div>` : ""}
+      </div>
+    </article>
   `;
 }
 
@@ -912,6 +926,86 @@ function getTournamentInfo(item) {
   }
 
   return null;
+}
+
+function formatVideoMeta(video) {
+  if (!video?.eventDate) {
+    return "Updated recently";
+  }
+
+  const date = new Date(video.eventDate);
+  if (Number.isNaN(date.getTime())) {
+    return "Updated recently";
+  }
+
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatVideoDate(video) {
+  if (!video?.eventDate) {
+    return "";
+  }
+
+  const date = new Date(video.eventDate);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+function getVideoDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate().toString().padStart(2, "0"),
+    year: date.getFullYear(),
+  };
+}
+
+function renderVideoDateOverlay(parts) {
+  return `
+    <div class="video-date-overlay" aria-label="${parts.month} ${parts.day}, ${parts.year}">
+      <span class="month">${parts.month}</span>
+      <strong>${parts.day}</strong>
+      <span class="year">${parts.year}</span>
+    </div>
+  `;
+}
+
+function getShotDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate().toString().padStart(2, "0"),
+    year: date.getFullYear(),
+  };
+}
+
+function renderPhotoDateOverlay(parts) {
+  return `
+    <div class="video-date-overlay" aria-label="${parts.month} ${parts.day}, ${parts.year}">
+      <span class="month">${parts.month}</span>
+      <strong>${parts.day}</strong>
+      <span class="year">${parts.year}</span>
+    </div>
+  `;
 }
 
 function getVideoExternalLink(video) {
