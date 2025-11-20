@@ -12,9 +12,8 @@ const SELECTORS = {
   search: "[data-highlight-search]",
 };
 
-const overlayReferrerBack = /video-highlights\.html|gallery\.html/.test(
-  (document.referrer || "").toLowerCase()
-);
+const isTournamentPage = window.location.pathname.includes("tournament-highlights");
+let overlayReturnToReferrer = false;
 
 const MEDIA_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
 const YOUTUBE_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
@@ -612,6 +611,7 @@ function setupHighlightModals(root) {
 
     button.dataset.modalBound = "true";
     button.addEventListener("click", () => {
+      overlayReturnToReferrer = false;
       const eventId = button.getAttribute("data-highlight-modal");
       openHighlightOverlay(eventId);
     });
@@ -703,7 +703,7 @@ function closeHighlightOverlay() {
   highlightOverlayElement.setAttribute("aria-hidden", "true");
   document.body.classList.remove("is-showing-highlight-overlay");
 
-  if (overlayReferrerBack && window.history.length > 1) {
+  if (overlayReturnToReferrer && window.history.length > 1) {
     history.back();
   }
 }
@@ -719,6 +719,7 @@ function getRequestedTournamentId() {
     // Ignore URL parsing issues
   }
 
+  // Only treat hash as target when not on the tournaments page to avoid hijacking the back stack here
   if (window.location.hash) {
     return decodeURIComponent(window.location.hash.replace(/^#/, ""));
   }
@@ -731,6 +732,11 @@ function openTournamentFromUrl() {
   if (!targetId) {
     return;
   }
+
+  // Only attempt to travel back when this overlay was invoked from another page
+  overlayReturnToReferrer =
+    !isTournamentPage &&
+    /video-highlights\.html|gallery\.html/.test((document.referrer || "").toLowerCase());
 
   const event = findHighlightEvent(targetId);
   if (!event) {
@@ -810,6 +816,7 @@ function renderOverlayVideoCard(video) {
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
   const badgeParts = getVideoDateParts(video.eventDate);
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
+  const tagsMarkup = renderVideoTags(video);
 
   return `
     <article class="video-gallery-card">
@@ -827,6 +834,7 @@ function renderOverlayVideoCard(video) {
       <div class="video-gallery-copy">
         <h4>${escapeHtml(video.title || "Video highlight")}</h4>
         ${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
+        ${tagsMarkup}
       </div>
     </article>
   `;
@@ -860,6 +868,7 @@ function renderOverlayPhotoCard(photo) {
   const photographerText = photo?.photographer
     ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
     : "";
+  const tagsMarkup = renderPhotoTags(photo?.tags);
 
   return `
     <article class="gallery-card">
@@ -869,6 +878,7 @@ function renderOverlayPhotoCard(photo) {
       </div>
       <div class="gallery-card-body">
         <h4>${escapeHtml(photo?.title || "Gallery photo")}</h4>
+        ${tagsMarkup}
         ${photo?.description ? `<p class="gallery-card-description">${escapeHtml(photo.description)}</p>` : ""}
         ${photographerText ? `<div class="gallery-card-footer">${photographerText}</div>` : ""}
       </div>
@@ -926,6 +936,44 @@ function getTournamentInfo(item) {
   }
 
   return null;
+}
+
+function getVideoTags(video) {
+  if (!video || !Array.isArray(video.tags)) {
+    return [];
+  }
+
+  return video.tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean);
+}
+
+function renderVideoTags(video) {
+  const tags = getVideoTags(video);
+  if (!tags.length) {
+    return "";
+  }
+
+  return `
+    <div class="gallery-card-tags video-card-tags">
+      ${tags.map((tag) => `<span class="gallery-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderPhotoTags(tags) {
+  if (!Array.isArray(tags)) {
+    return "";
+  }
+
+  const cleaned = tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean);
+  if (!cleaned.length) {
+    return "";
+  }
+
+  return `
+    <div class="gallery-card-tags">
+      ${cleaned.map((tag) => `<span class="gallery-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
 }
 
 function formatVideoMeta(video) {
