@@ -412,7 +412,6 @@ function filterVideosBySearch(videos, query) {
     const text = [
       video.title,
       video.description,
-      video.ctaLabel,
       getVideoTournamentTitle(video),
       getVideoTags(video).join(" "),
     ]
@@ -502,9 +501,12 @@ function renderTournamentChip(video) {
   }
 
   const targetId = tournament.id || tournament.title;
-  const href = targetId
-    ? `tournament-highlights.html?tournament=${encodeURIComponent(targetId)}`
-    : "tournament-highlights.html";
+  const params = new URLSearchParams();
+  if (targetId) {
+    params.set("tournament", targetId);
+  }
+  params.set("origin", "video-highlights");
+  const href = `tournament-highlights.html${params.toString() ? `?${params.toString()}` : ""}`;
 
   return `
     <a class="tournament-chip tournament-chip--on-card" href="${escapeAttribute(href)}"${

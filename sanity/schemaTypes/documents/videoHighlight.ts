@@ -90,12 +90,6 @@ export const videoHighlight = defineType({
       fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
     }),
     defineField({
-      name: 'ctaLabel',
-      type: 'string',
-      title: 'Button Label',
-      initialValue: 'Play Highlight',
-    }),
-    defineField({
       name: 'showOnHomePage',
       type: 'boolean',
       title: 'Show on home page',

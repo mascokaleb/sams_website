@@ -97,7 +97,6 @@ const siteContentQuery = `{
     youtubeId,
     youtubeUrl,
     description,
-    ctaLabel,
     tags,
     "tournament": tournament->{
       _id,
@@ -111,7 +110,7 @@ const siteContentQuery = `{
     "thumbnailUrl": thumbnail.asset->url,
     "thumbnailAlt": thumbnail.alt
   },
-  "gallerySection": *[_type == "gallerySection"][0]{heading, subheading, maxItems, ctaLabel, ctaHref},
+  "gallerySection": *[_type == "gallerySection"][0]{heading, subheading, maxItems, ctaLabel},
   "galleryPhotos": *[_type == "galleryPhoto"]|order(shotDate desc, _createdAt desc){
     title,
     description,

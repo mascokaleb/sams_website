@@ -528,9 +528,12 @@ function renderTournamentChip(photo) {
   }
 
   const targetId = tournament.id || tournament.title;
-  const href = targetId
-    ? `tournament-highlights.html?tournament=${encodeURIComponent(targetId)}`
-    : "tournament-highlights.html";
+  const params = new URLSearchParams();
+  if (targetId) {
+    params.set("tournament", targetId);
+  }
+  params.set("origin", "gallery");
+  const href = `tournament-highlights.html${params.toString() ? `?${params.toString()}` : ""}`;
 
   return `
     <a class="tournament-chip tournament-chip--on-card" href="${escapeAttribute(href)}"${

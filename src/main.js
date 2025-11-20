@@ -516,7 +516,7 @@ function renderGallery() {
   setupHighlightDetailButtons(gridEl);
 
   if (actionsEl) {
-    const href = sectionMeta?.ctaHref || "gallery.html";
+    const href = "gallery.html";
     const label = sectionMeta?.ctaLabel || "Explore the full gallery";
     actionsEl.innerHTML = `<a class="btn ghost" href="${escapeAttribute(href)}">${escapeHtml(label)}</a>`;
   }

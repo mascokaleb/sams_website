@@ -31,12 +31,5 @@ export const gallerySection = defineType({
       title: 'Gallery Button Label',
       initialValue: 'Explore the full gallery',
     }),
-    defineField({
-      name: 'ctaHref',
-      type: 'string',
-      title: 'Gallery Button Link',
-      description: 'Use a relative path (gallery.html) or full URL.',
-      initialValue: 'gallery.html',
-    }),
   ],
 });

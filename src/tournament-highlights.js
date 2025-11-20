@@ -12,7 +12,6 @@ const SELECTORS = {
   search: "[data-highlight-search]",
 };
 
-const isTournamentPage = window.location.pathname.includes("tournament-highlights");
 let overlayReturnToReferrer = false;
 
 const MEDIA_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
@@ -708,9 +707,9 @@ function closeHighlightOverlay() {
   }
 }
 
-function getRequestedTournamentId() {
+function getRequestedTournamentId(currentUrl = null) {
   try {
-    const url = new URL(window.location.href);
+    const url = currentUrl || new URL(window.location.href);
     const searchId = url.searchParams.get("tournament");
     if (searchId) {
       return decodeURIComponent(searchId);
@@ -728,15 +727,13 @@ function getRequestedTournamentId() {
 }
 
 function openTournamentFromUrl() {
-  const targetId = getRequestedTournamentId();
+  const currentUrl = getCurrentUrl();
+  const targetId = getRequestedTournamentId(currentUrl);
   if (!targetId) {
     return;
   }
 
-  // Only attempt to travel back when this overlay was invoked from another page
-  overlayReturnToReferrer =
-    !isTournamentPage &&
-    /video-highlights\.html|gallery\.html/.test((document.referrer || "").toLowerCase());
+  overlayReturnToReferrer = shouldReturnToReferrer(currentUrl);
 
   const event = findHighlightEvent(targetId);
   if (!event) {
@@ -744,6 +741,56 @@ function openTournamentFromUrl() {
   }
 
   openHighlightOverlay(event._id || event.title || targetId);
+}
+
+function getCurrentUrl() {
+  try {
+    return new URL(window.location.href);
+  } catch {
+    return null;
+  }
+}
+
+function shouldReturnToReferrer(currentUrl = null) {
+  const referrerPath = getReferrerPath();
+  const returnHint = getReturnHint(currentUrl);
+
+  const cameFromMediaPage = referrerPath
+    ? ["/video-highlights", "/video-highlights.html", "/gallery", "/gallery.html"].some((path) =>
+        referrerPath.endsWith(path)
+      )
+    : false;
+
+  const hintedReturn =
+    returnHint &&
+    ["video-highlights", "videos", "video", "gallery"].some((hint) => returnHint.includes(hint)) &&
+    (!document.referrer || cameFromMediaPage);
+
+  return cameFromMediaPage || hintedReturn;
+}
+
+function getReferrerPath() {
+  try {
+    const referrerUrl = new URL(document.referrer);
+    if (referrerUrl.host && referrerUrl.host !== window.location.host) {
+      return "";
+    }
+    return trimTrailingSlash(referrerUrl.pathname.toLowerCase());
+  } catch {
+    return "";
+  }
+}
+
+function getReturnHint(currentUrl = null) {
+  if (!currentUrl) {
+    return "";
+  }
+  const value = currentUrl.searchParams.get("origin") || currentUrl.searchParams.get("from");
+  return value ? value.trim().toLowerCase() : "";
+}
+
+function trimTrailingSlash(pathname) {
+  return pathname.replace(/\/+$/, "") || "/";
 }
 
 function findHighlightEvent(eventId) {
