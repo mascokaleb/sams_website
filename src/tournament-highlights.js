@@ -277,7 +277,7 @@ function renderHighlightListItem(event, identifier) {
       View Details
     </button>
   `;
-  const actionRow = `<div class="highlight-row-actions">${featuredBadge}${modalButton}</div>`;
+  const actionsMarkup = `<div class="highlight-card-actions">${featuredBadge}${modalButton}</div>`;
 
   return `
     <li class="highlight-list-item${isFeatured ? " is-featured" : ""}">
@@ -287,9 +287,9 @@ function renderHighlightListItem(event, identifier) {
           ${readableDate ? `<span class="highlight-date">${readableDate}</span>` : ""}
           ${!readableDate && fallbackDate ? `<span class="highlight-date">${fallbackDate}</span>` : ""}
         </div>
-        <div class="highlight-row">
+        ${actionsMarkup}
+        <div class="highlight-row highlight-row--title">
           <h3>${escapeHtml(event.title || "Tournament highlight")}</h3>
-          ${actionRow}
         </div>
         ${statsMarkup}
         ${summaryMarkup}

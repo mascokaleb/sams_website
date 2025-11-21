@@ -1819,12 +1819,18 @@ body.content-page {
 }
 
 .highlight-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "meta meta"
+    "title actions"
+    "stats stats"
+    "summary summary";
+  gap: 0.6rem;
 }
 
 .highlight-card-meta {
+  grid-area: meta;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -1832,11 +1838,26 @@ body.content-page {
   color: var(--text-dim);
 }
 
+.highlight-card-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .highlight-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.highlight-row--title {
+  grid-area: title;
+  justify-content: flex-start;
+  gap: 0.65rem;
 }
 
 .highlight-row h3 {
@@ -1847,6 +1868,14 @@ body.content-page {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.highlight-card-body .day-stats {
+  grid-area: stats;
+}
+
+.highlight-card-body .highlight-summary {
+  grid-area: summary;
 }
 
 .highlight-badge {
@@ -2627,6 +2656,28 @@ body.is-showing-highlight-overlay {
 
   .highlight-list-item {
     grid-template-columns: 1fr;
+  }
+
+  .highlight-card-body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "actions"
+      "title"
+      "stats"
+      "summary";
+    gap: 0.75rem;
+  }
+
+  .highlight-card-actions {
+    justify-content: flex-start;
+  }
+
+  .highlight-row--title {
+    align-items: flex-start;
+  }
+
+  .highlight-card-meta {
+    display: none;
   }
 
   .highlight-feature-card {
