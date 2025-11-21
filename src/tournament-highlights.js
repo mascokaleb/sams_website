@@ -864,6 +864,8 @@ function renderOverlayVideoCard(video) {
   const badgeParts = getVideoDateParts(video.eventDate);
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
   const tagsMarkup = renderVideoTags(video);
+  const focalPoint = buildObjectPosition(video.thumbnailHotspot);
+  const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
     <article class="video-gallery-card">
@@ -871,7 +873,7 @@ function renderOverlayVideoCard(video) {
         youtubeId
       )}" data-video-title="${escapeHtml(videoTitle)}">
         ${dateOverlay}
-        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
         <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
           videoTitle
         )}">
@@ -916,12 +918,14 @@ function renderOverlayPhotoCard(photo) {
     ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
     : "";
   const tagsMarkup = renderPhotoTags(photo?.tags);
+  const focalPoint = buildObjectPosition(photo?.image?.hotspot);
+  const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
     <article class="gallery-card">
       <div class="gallery-card-media"${previewAttributes ? ` ${previewAttributes}` : ""}>
         ${dateOverlay}
-        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
       </div>
       <div class="gallery-card-body">
         <h4>${escapeHtml(photo?.title || "Gallery photo")}</h4>
@@ -1508,6 +1512,17 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function buildObjectPosition(hotspot) {
+  if (!hotspot || typeof hotspot.x !== "number" || typeof hotspot.y !== "number") {
+    return "";
+  }
+
+  const clamp = (val) => Math.max(0, Math.min(1, val));
+  const x = Math.round(clamp(hotspot.x) * 1000) / 10;
+  const y = Math.round(clamp(hotspot.y) * 1000) / 10;
+  return `${x}% ${y}%`;
 }
 
 function getInitials(value) {

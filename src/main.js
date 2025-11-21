@@ -1023,6 +1023,8 @@ function renderOverlayVideoCard(video) {
   const badgeParts = getVideoDateParts(video.eventDate);
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
   const tagsMarkup = renderVideoTags ? renderVideoTags(video) : "";
+  const focalPoint = buildObjectPosition(video.thumbnailHotspot);
+  const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
     <article class="video-gallery-card">
@@ -1030,7 +1032,7 @@ function renderOverlayVideoCard(video) {
         youtubeId
       )}" data-video-title="${escapeHtml(videoTitle)}">
         ${dateOverlay}
-        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
         <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
           videoTitle
         )}">
@@ -1074,12 +1076,14 @@ function renderOverlayPhotoCard(photo) {
   const photographerText = photo?.photographer
     ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
     : "";
+  const focalPoint = buildObjectPosition(photo?.image?.hotspot);
+  const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
     <article class="gallery-card">
       <div class="gallery-card-media"${previewAttributes ? ` ${previewAttributes}` : ""}>
         ${dateOverlay}
-        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
       </div>
       <div class="gallery-card-body">
         <h4>${escapeHtml(photo?.title || "Gallery photo")}</h4>
