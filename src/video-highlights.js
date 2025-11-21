@@ -324,6 +324,8 @@ function renderGalleryVideo(video) {
           ${externalLink || ""}
         </div>`
       : "";
+  const focalPoint = buildObjectPosition(video.thumbnailHotspot);
+  const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
     <article class="video-gallery-card${isFeatured ? " is-featured" : ""}">
@@ -331,7 +333,9 @@ function renderGalleryVideo(video) {
         video.title || "Video highlight"
       )}">
         ${dateOverlay}
-        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(video.thumbnailAlt || video.title || "Video")}" loading="lazy" />
+        <img src="${escapeAttribute(thumbnail)}" alt="${escapeHtml(
+          video.thumbnailAlt || video.title || "Video"
+        )}" loading="lazy"${focalStyle} />
         <button class="play-button" type="button"${buttonState} aria-label="Play ${escapeHtml(
           video.title || "video"
         )}">
@@ -793,6 +797,17 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function buildObjectPosition(hotspot) {
+  if (!hotspot || typeof hotspot.x !== "number" || typeof hotspot.y !== "number") {
+    return "";
+  }
+
+  const clamp = (val) => Math.max(0, Math.min(1, val));
+  const x = Math.round(clamp(hotspot.x) * 1000) / 10;
+  const y = Math.round(clamp(hotspot.y) * 1000) / 10;
+  return `${x}% ${y}%`;
 }
 
 function getInitials(value) {

@@ -108,7 +108,9 @@ const siteContentQuery = `{
     pinToTop,
     _createdAt,
     "thumbnailUrl": thumbnail.asset->url,
-    "thumbnailAlt": thumbnail.alt
+    "thumbnailAlt": thumbnail.alt,
+    "thumbnailHotspot": thumbnail.hotspot,
+    "thumbnailCrop": thumbnail.crop
   },
   "gallerySection": *[_type == "gallerySection"][0]{heading, subheading, maxItems, ctaLabel},
   "galleryPhotos": *[_type == "galleryPhoto"]|order(shotDate desc, _createdAt desc){
@@ -128,7 +130,9 @@ const siteContentQuery = `{
     _createdAt,
     "image": photo{
       alt,
-      "url": asset->url
+      "url": asset->url,
+      hotspot,
+      crop
     }
   },
   "dualSport": *[_type == "dualSportSection"][0]{heading, subheading, cards},
