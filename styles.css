@@ -1128,18 +1128,25 @@ button.tournament-chip {
     ),
     radial-gradient(circle at 80% 65%, rgba(10, 191, 155, 0.2), transparent 60%),
     rgba(245, 247, 252, 0.85);
-  display: grid;
-  place-items: center;
   isolation: isolate;
   box-shadow: 0 25px 45px rgba(15, 29, 51, 0.16);
 }
 
 .video-frame img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   transform: scale(1.02);
   transition: transform 340ms ease, filter 340ms ease;
+}
+
+@supports not (aspect-ratio: 1 / 1) {
+  .video-frame {
+    height: 0;
+    padding-top: 56.25%;
+  }
 }
 
 .video-frame::after {
