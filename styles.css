@@ -1130,6 +1130,10 @@ button.tournament-chip {
     rgba(245, 247, 252, 0.85);
   isolation: isolate;
   box-shadow: 0 25px 45px rgba(15, 29, 51, 0.16);
+  display: grid;
+  place-items: center;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
 }
 
 .video-frame img {
@@ -1138,6 +1142,7 @@ button.tournament-chip {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: inherit;
   transform: scale(1.02);
   transition: transform 340ms ease, filter 340ms ease;
 }
@@ -1153,6 +1158,7 @@ button.tournament-chip {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background: linear-gradient(
     180deg,
     rgba(5, 12, 35, 0.05),
