@@ -1,3 +1,4 @@
+import { parseDate } from "./lib/dateUtils.js";
 import { fetchSiteContent } from "./lib/sanityClient.js";
 
 const SELECTORS = {
@@ -581,18 +582,14 @@ function getEntryTimestamp(entry) {
     return 0;
   }
 
-  if (entry.eventDate) {
-    const parsed = Date.parse(entry.eventDate);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
+  const parsed = parseDate(entry.eventDate);
+  if (parsed) {
+    return parsed.getTime();
   }
 
-  if (entry._createdAt) {
-    const fallback = Date.parse(entry._createdAt);
-    if (!Number.isNaN(fallback)) {
-      return fallback;
-    }
+  const fallback = parseDate(entry._createdAt);
+  if (fallback) {
+    return fallback.getTime();
   }
 
   return 0;
@@ -1032,8 +1029,8 @@ function formatVideoMeta(video) {
     return "Updated recently";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "Updated recently";
   }
 
@@ -1045,8 +1042,8 @@ function formatVideoDate(video) {
     return "";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "";
   }
 
@@ -1058,8 +1055,8 @@ function getVideoDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -1085,8 +1082,8 @@ function getShotDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -1343,8 +1340,8 @@ function formatDateRangeDisplay(startValue, endValue, { month = "long" } = {}) {
     return "";
   }
 
-  const start = new Date(startValue);
-  if (Number.isNaN(start.getTime())) {
+  const start = parseDate(startValue);
+  if (!start) {
     return escapeHtml(startValue);
   }
 
@@ -1352,8 +1349,8 @@ function formatDateRangeDisplay(startValue, endValue, { month = "long" } = {}) {
     return start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
   }
 
-  const end = new Date(endValue);
-  if (Number.isNaN(end.getTime())) {
+  const end = parseDate(endValue);
+  if (!end) {
     const startText = start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
     return `${startText} – ${escapeHtml(endValue)}`;
   }
@@ -1423,8 +1420,8 @@ function getDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -1457,8 +1454,8 @@ function getEventYear(event) {
     return "undated";
   }
 
-  const date = new Date(event.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(event.eventDate);
+  if (!date) {
     return "undated";
   }
 

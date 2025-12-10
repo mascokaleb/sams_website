@@ -1,4 +1,5 @@
 import { toHTML } from "@portabletext/to-html";
+import { parseDate } from "./lib/dateUtils.js";
 import { fetchSiteContent } from "./lib/sanityClient.js";
 
 const HERO_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
@@ -1225,8 +1226,8 @@ function formatVideoMeta(video) {
     return "Updated recently";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "Updated recently";
   }
 
@@ -1238,8 +1239,8 @@ function formatVideoDate(video) {
     return "";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "";
   }
 
@@ -1251,8 +1252,8 @@ function getVideoDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -1776,8 +1777,8 @@ function formatDateRangeDisplay(startValue, endValue, { month = "short" } = {}) 
     return "";
   }
 
-  const start = new Date(startValue);
-  if (Number.isNaN(start.getTime())) {
+  const start = parseDate(startValue);
+  if (!start) {
     return escapeHtml(startValue);
   }
 
@@ -1785,8 +1786,8 @@ function formatDateRangeDisplay(startValue, endValue, { month = "short" } = {}) 
     return start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
   }
 
-  const end = new Date(endValue);
-  if (Number.isNaN(end.getTime())) {
+  const end = parseDate(endValue);
+  if (!end) {
     const startText = start.toLocaleDateString("en-US", { month, day: "numeric", year: "numeric" });
     return `${startText} – ${escapeHtml(endValue)}`;
   }
@@ -1963,8 +1964,8 @@ function formatShotDate(value) {
     return "";
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return value;
   }
 
@@ -1976,8 +1977,8 @@ function getShotDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -2019,18 +2020,14 @@ function getDateScore(entry, dateField) {
   }
 
   const value = entry[dateField];
-  if (value) {
-    const parsed = Date.parse(value);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
+  const parsed = parseDate(value);
+  if (parsed) {
+    return parsed.getTime();
   }
 
-  if (entry._createdAt) {
-    const fallback = Date.parse(entry._createdAt);
-    if (!Number.isNaN(fallback)) {
-      return fallback;
-    }
+  const fallback = parseDate(entry._createdAt);
+  if (fallback) {
+    return fallback.getTime();
   }
 
   return 0;

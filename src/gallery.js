@@ -1,3 +1,4 @@
+import { parseDate } from "./lib/dateUtils.js";
 import { fetchSiteContent } from "./lib/sanityClient.js";
 
 const HERO_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
@@ -451,18 +452,14 @@ function getPhotoTimestamp(photo) {
     return 0;
   }
 
-  if (photo.shotDate) {
-    const parsed = Date.parse(photo.shotDate);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
+  const parsed = parseDate(photo.shotDate);
+  if (parsed) {
+    return parsed.getTime();
   }
 
-  if (photo._createdAt) {
-    const fallback = Date.parse(photo._createdAt);
-    if (!Number.isNaN(fallback)) {
-      return fallback;
-    }
+  const fallback = parseDate(photo._createdAt);
+  if (fallback) {
+    return fallback.getTime();
   }
 
   return 0;
@@ -473,8 +470,8 @@ function getPhotoYear(photo) {
     return "undated";
   }
 
-  const parsed = new Date(photo.shotDate);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseDate(photo.shotDate);
+  if (!parsed) {
     return "undated";
   }
 
@@ -656,8 +653,8 @@ function formatShotDate(value) {
     return "";
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return value;
   }
 
@@ -669,8 +666,8 @@ function getShotDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 

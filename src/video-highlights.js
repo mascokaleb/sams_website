@@ -1,3 +1,4 @@
+import { parseDate } from "./lib/dateUtils.js";
 import { fetchSiteContent } from "./lib/sanityClient.js";
 
 const HERO_PLACEHOLDER_IMAGE = "images/samuel-placeholder.svg";
@@ -358,8 +359,8 @@ function formatVideoMeta(video) {
     return "Updated recently";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "Updated recently";
   }
 
@@ -371,8 +372,8 @@ function formatVideoDate(video) {
     return "";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "";
   }
 
@@ -384,8 +385,8 @@ function getVideoDateParts(value) {
     return null;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(value);
+  if (!date) {
     return null;
   }
 
@@ -459,8 +460,8 @@ function getVideoYear(video) {
     return "undated";
   }
 
-  const date = new Date(video.eventDate);
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDate(video.eventDate);
+  if (!date) {
     return "undated";
   }
 
@@ -565,18 +566,14 @@ function getVideoTimestamp(video) {
     return 0;
   }
 
-  if (video.eventDate) {
-    const parsed = Date.parse(video.eventDate);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
+  const parsed = parseDate(video.eventDate);
+  if (parsed) {
+    return parsed.getTime();
   }
 
-  if (video._createdAt) {
-    const fallback = Date.parse(video._createdAt);
-    if (!Number.isNaN(fallback)) {
-      return fallback;
-    }
+  const fallback = parseDate(video._createdAt);
+  if (fallback) {
+    return fallback.getTime();
   }
 
   return 0;
