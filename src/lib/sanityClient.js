@@ -135,7 +135,21 @@ const siteContentQuery = `{
       crop
     }
   },
-  "dualSport": *[_type == "dualSportSection"][0]{heading, subheading, cards},
+  "dualSport": *[_type == "dualSportSection"][0]{
+    heading,
+    subheading,
+    cards[]{
+      title,
+      body,
+      bulletPoints,
+      "image": image{
+        alt,
+        "url": asset->url,
+        hotspot,
+        crop
+      }
+    }
+  },
   "contact": *[_type == "contactSection"][0]{heading, subheading, cards}
 }`;
 
