@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { SiteFocusImageInput } from '../components/SiteFocusImageInput';
 
 export const siteSettings = defineType({
   name: 'siteSettings',
@@ -27,12 +28,18 @@ export const siteSettings = defineType({
       type: 'image',
       title: 'Navigation Logo',
       description: 'Optional logo that replaces the “SM” circle.',
+      components: {
+        input: SiteFocusImageInput,
+      },
+      options: {
+        hotspot: true,
+      },
       fields: [
         defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
         defineField({
           name: 'focalPoint',
           type: 'focalPoint',
-          title: 'Center Point',
+          hidden: true,
         }),
       ],
     }),
@@ -47,12 +54,18 @@ export const siteSettings = defineType({
       name: 'ogImage',
       type: 'image',
       title: 'Default Open Graph Image',
+      components: {
+        input: SiteFocusImageInput,
+      },
+      options: {
+        hotspot: true,
+      },
       fields: [
         defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
         defineField({
           name: 'focalPoint',
           type: 'focalPoint',
-          title: 'Center Point',
+          hidden: true,
         }),
       ],
     }),

@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { SiteFocusImageInput } from '../components/SiteFocusImageInput';
 
 export const blockContent = defineType({
   name: 'blockContent',
@@ -41,16 +42,22 @@ export const blockContent = defineType({
         ],
       },
     },
-    {
+    defineField({
       type: 'image',
+      components: {
+        input: SiteFocusImageInput,
+      },
+      options: {
+        hotspot: true,
+      },
       fields: [
         defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
         defineField({
           name: 'focalPoint',
           type: 'focalPoint',
-          title: 'Center Point',
+          hidden: true,
         }),
       ],
-    },
+    }),
   ],
 });

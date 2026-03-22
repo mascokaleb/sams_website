@@ -1,13 +1,9 @@
 import { defineField, defineType } from 'sanity';
-import { FocalPointInput } from '../components/FocalPointInput';
 
 export const focalPoint = defineType({
   name: 'focalPoint',
-  title: 'Center Point',
+  title: 'Site Focus Point',
   type: 'object',
-  components: {
-    input: FocalPointInput,
-  },
   fields: [
     defineField({
       name: 'x',
