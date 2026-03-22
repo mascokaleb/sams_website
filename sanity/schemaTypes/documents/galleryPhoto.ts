@@ -43,8 +43,14 @@ export const galleryPhoto = defineType({
       name: 'photo',
       type: 'image',
       title: 'Photo',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
       validation: (Rule) => Rule.required(),
     }),
     defineField({

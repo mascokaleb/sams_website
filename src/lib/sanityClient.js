@@ -22,7 +22,9 @@ const siteContentQuery = `{
     brandMarkInitials,
     "brandMarkImage": brandMarkImage{
       alt,
-      "url": asset->url
+      "url": asset->url,
+      focalPoint,
+      hotspot
     }
   },
   "hero": *[_type == "heroSection"][0]{
@@ -35,7 +37,9 @@ const siteContentQuery = `{
     secondaryCta,
     "headshot": headshot{
       alt,
-      "url": asset->url
+      "url": asset->url,
+      focalPoint,
+      hotspot
     },
     "metrics": metrics[]{label, value}
   },
@@ -109,6 +113,7 @@ const siteContentQuery = `{
     _createdAt,
     "thumbnailUrl": thumbnail.asset->url,
     "thumbnailAlt": thumbnail.alt,
+    "thumbnailFocalPoint": thumbnail.focalPoint,
     "thumbnailHotspot": thumbnail.hotspot,
     "thumbnailCrop": thumbnail.crop
   },
@@ -131,6 +136,7 @@ const siteContentQuery = `{
     "image": photo{
       alt,
       "url": asset->url,
+      focalPoint,
       hotspot,
       crop
     }
@@ -145,6 +151,7 @@ const siteContentQuery = `{
       "image": image{
         alt,
         "url": asset->url,
+        focalPoint,
         hotspot,
         crop
       }

@@ -152,9 +152,15 @@ function renderMeta(site) {
   const brandMark = document.querySelector(".brand-mark");
   if (brandMark) {
     if (site.brandMarkImage?.url) {
+      const focalPoint = buildObjectPosition(
+        site.brandMarkImage.focalPoint || site.brandMarkImage.hotspot
+      );
+      const focalStyle = focalPoint
+        ? ` style="object-position: ${escapeAttribute(focalPoint)};"`
+        : "";
       brandMark.innerHTML = `<span class="brand-mark-image"><img src="${escapeAttribute(
         site.brandMarkImage.url
-      )}" alt="${escapeHtml(site.brandMarkImage.alt || site.siteTitle || "Site logo")}" loading="lazy" /></span>`;
+      )}" alt="${escapeHtml(site.brandMarkImage.alt || site.siteTitle || "Site logo")}" loading="lazy"${focalStyle} /></span>`;
       brandMark.classList.add("has-image");
     } else {
       const initials =
@@ -208,10 +214,12 @@ function renderHero(hero, site) {
     const photoUrl = hero.headshot?.url || HERO_PLACEHOLDER_IMAGE;
     const alt = hero.headshot?.alt || "Portrait of Samuel Masco";
     const caption = hero.photoCaption || "Focused on the next shot.";
+    const focalPoint = buildObjectPosition(hero.headshot?.focalPoint || hero.headshot?.hotspot);
+    const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
     photoEl.innerHTML = `
       <div class="hero-photo-frame">
-        <img src="${photoUrl}" alt="${escapeHtml(alt)}" loading="lazy" />
+        <img src="${photoUrl}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
         <div class="hero-photo-glow" aria-hidden="true"></div>
       </div>
       <figcaption>${escapeHtml(caption)}</figcaption>
@@ -558,7 +566,7 @@ function renderGalleryCard(photo, index = 0) {
   const footerMarkup = photographerText ? `<div class="gallery-card-footer">${photographerText}</div>` : "";
 
   const mediaAttributes = previewData ? `data-photo-preview="true" ${previewAttributes}` : "";
-  const focalPoint = buildObjectPosition(photo?.image?.hotspot);
+  const focalPoint = buildObjectPosition(photo?.image?.focalPoint || photo?.image?.hotspot);
   const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
@@ -617,7 +625,7 @@ function renderDualSport(dual) {
 
     gridEl.innerHTML = dual.cards
       .map((card, index) => {
-        const focalPoint = buildObjectPosition(card?.image?.hotspot);
+        const focalPoint = buildObjectPosition(card?.image?.focalPoint || card?.image?.hotspot);
         const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
         const imageMarkup = card?.image?.url
           ? `
@@ -1037,7 +1045,7 @@ function renderOverlayVideoCard(video) {
   const isPlayable = Boolean(youtubeId);
   const buttonState = isPlayable ? "" : ' disabled aria-disabled="true"';
   const tagsMarkup = renderVideoTags ? renderVideoTags(video) : "";
-  const focalPoint = buildObjectPosition(video.thumbnailHotspot);
+  const focalPoint = buildObjectPosition(video.thumbnailFocalPoint || video.thumbnailHotspot);
   const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
@@ -1087,7 +1095,7 @@ function renderOverlayPhotoCard(photo) {
   const photographerText = photo?.photographer
     ? `<div class="gallery-card-meta gallery-card-meta--secondary">Photo: ${escapeHtml(photo.photographer)}</div>`
     : "";
-  const focalPoint = buildObjectPosition(photo?.image?.hotspot);
+  const focalPoint = buildObjectPosition(photo?.image?.focalPoint || photo?.image?.hotspot);
   const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
@@ -1471,7 +1479,7 @@ function renderVideoCard(video, index) {
   const badgeParts = getVideoDateParts(video.eventDate);
   const dateOverlay = badgeParts ? renderVideoDateOverlay(badgeParts) : "";
   const tagsMarkup = renderVideoTags(video);
-  const focalPoint = buildObjectPosition(video.thumbnailHotspot);
+  const focalPoint = buildObjectPosition(video.thumbnailFocalPoint || video.thumbnailHotspot);
   const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
@@ -1893,14 +1901,14 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
-function buildObjectPosition(hotspot) {
-  if (!hotspot || typeof hotspot.x !== "number" || typeof hotspot.y !== "number") {
+function buildObjectPosition(point) {
+  if (!point || typeof point.x !== "number" || typeof point.y !== "number") {
     return "";
   }
 
   const clamp = (val) => Math.max(0, Math.min(1, val));
-  const x = Math.round(clamp(hotspot.x) * 1000) / 10;
-  const y = Math.round(clamp(hotspot.y) * 1000) / 10;
+  const x = Math.round(clamp(point.x) * 1000) / 10;
+  const y = Math.round(clamp(point.y) * 1000) / 10;
   return `${x}% ${y}%`;
 }
 

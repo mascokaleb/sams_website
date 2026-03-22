@@ -27,8 +27,14 @@ export const siteSettings = defineType({
       type: 'image',
       title: 'Navigation Logo',
       description: 'Optional logo that replaces the “SM” circle.',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
     }),
     defineField({
       name: 'seoDescription',
@@ -41,8 +47,14 @@ export const siteSettings = defineType({
       name: 'ogImage',
       type: 'image',
       title: 'Default Open Graph Image',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
     }),
   ],
 });

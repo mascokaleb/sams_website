@@ -16,8 +16,14 @@ export const dualCard = defineType({
       type: 'image',
       title: 'Card Image',
       description: 'Optional image shown at the top of the card.',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
     }),
     defineField({
       name: 'body',

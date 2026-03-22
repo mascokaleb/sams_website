@@ -86,8 +86,14 @@ export const videoHighlight = defineType({
       type: 'image',
       title: 'Custom Thumbnail',
       description: 'Optional — defaults to the YouTube thumbnail.',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
     }),
     defineField({
       name: 'showOnHomePage',

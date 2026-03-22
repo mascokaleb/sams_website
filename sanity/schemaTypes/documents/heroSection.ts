@@ -45,8 +45,14 @@ export const heroSection = defineType({
       name: 'headshot',
       type: 'image',
       title: 'Hero Photo',
-      options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          title: 'Center Point',
+        }),
+      ],
     }),
     defineField({
       name: 'photoCaption',

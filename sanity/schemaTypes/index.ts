@@ -16,6 +16,7 @@ import { contactCard } from './objects/contactCard';
 import { contactEntry } from './objects/contactEntry';
 import { cta } from './objects/cta';
 import { dualCard } from './objects/dualCard';
+import { focalPoint } from './objects/focalPoint';
 import { metric } from './objects/metric';
 import { profileFact } from './objects/profileFact';
 import { quickHit } from './objects/quickHit';
@@ -41,6 +42,7 @@ export const schemaTypes = [
   blockContent,
   metric,
   cta,
+  focalPoint,
   profileFact,
   quickHit,
   statItem,

@@ -62,9 +62,13 @@ function renderSiteIdentity(site, pageTitleSuffix) {
   const brandMarkEl = select(SELECTORS.brandMark);
   if (brandMarkEl) {
     if (site?.brandMarkImage?.url) {
+      const focalPoint = buildObjectPosition(
+        site.brandMarkImage.focalPoint || site.brandMarkImage.hotspot
+      );
+      const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
       brandMarkEl.innerHTML = `<span class="brand-mark-image"><img src="${escapeAttribute(
         site.brandMarkImage.url
-      )}" alt="${escapeHtml(site.brandMarkImage.alt || site.siteTitle || "Site logo")}" loading="lazy" /></span>`;
+      )}" alt="${escapeHtml(site.brandMarkImage.alt || site.siteTitle || "Site logo")}" loading="lazy"${focalStyle} /></span>`;
       brandMarkEl.classList.add("has-image");
     } else {
       brandMarkEl.textContent =
@@ -728,6 +732,17 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function buildObjectPosition(point) {
+  if (!point || typeof point.x !== "number" || typeof point.y !== "number") {
+    return "";
+  }
+
+  const clamp = (val) => Math.max(0, Math.min(1, val));
+  const x = Math.round(clamp(point.x) * 1000) / 10;
+  const y = Math.round(clamp(point.y) * 1000) / 10;
+  return `${x}% ${y}%`;
 }
 
 function getInitials(value) {
