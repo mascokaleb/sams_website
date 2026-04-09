@@ -2841,16 +2841,16 @@ body.is-showing-highlight-overlay {
 /* Performance Snapshot — stats + club yardages split layout */
 .performance-panel .performance-content {
   display: grid;
-  gap: clamp(1.2rem, 3vw, 2rem);
+  gap: clamp(1.5rem, 3vw, 2.25rem);
 }
 
 .performance-panel--split .performance-content {
   grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 560px) {
+@media (min-width: 720px) {
   .performance-panel--split .performance-content {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     align-items: start;
   }
 }
@@ -2859,24 +2859,89 @@ body.is-showing-highlight-overlay {
   min-width: 0;
 }
 
-.performance-column--clubs {
-  padding-top: 0.25rem;
-}
-
-@media (min-width: 560px) {
-  .performance-column--clubs {
-    padding-left: clamp(0.75rem, 2vw, 1.25rem);
-    border-left: 1px solid rgba(15, 29, 51, 0.08);
-  }
-}
-
 .performance-column-title {
   font-family: "Space Grotesk", sans-serif;
-  margin: 0 0 0.9rem;
-  font-size: 0.95rem;
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(15, 29, 51, 0.55);
+}
+
+/* 2x2 stats grid */
+.performance-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.performance-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1rem 1.05rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    155deg,
+    rgba(10, 191, 155, 0.07),
+    rgba(17, 104, 255, 0.05) 70%,
+    rgba(17, 104, 255, 0) 100%
+  );
+  border: 1px solid rgba(15, 29, 51, 0.08);
+  overflow: hidden;
+  transition: border var(--transition), transform var(--transition);
+}
+
+.performance-stat::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent-gradient);
+  opacity: 0.85;
+}
+
+.performance-stat:hover {
+  border-color: rgba(17, 104, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.performance-stat-label {
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: rgba(15, 29, 51, 0.55);
+  font-weight: 500;
+}
+
+.performance-stat-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* Club yardages — grouped by category */
+.club-yardage-groups {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.club-yardage-group-title {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-secondary);
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(17, 104, 255, 0.18);
 }
 
 .club-yardage-list {
@@ -2884,7 +2949,7 @@ body.is-showing-highlight-overlay {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.4rem;
+  gap: 0.1rem;
 }
 
 .panel .club-yardage-list li {
@@ -2892,30 +2957,16 @@ body.is-showing-highlight-overlay {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.4rem 0 0.4rem 1.1rem;
-  border-bottom: 1px solid rgba(15, 29, 51, 0.08);
-  position: relative;
+  padding: 0.32rem 0;
   color: var(--text);
-}
-
-.panel .club-yardage-list li:last-child {
-  border-bottom: 0;
-}
-
-.panel .club-yardage-list li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.95rem;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-gradient);
+  font-size: 0.92rem;
+  border: 0;
 }
 
 .club-yardage-name {
   font-weight: 500;
   letter-spacing: 0.01em;
+  color: rgba(15, 29, 51, 0.82);
 }
 
 .club-yardage-value {
@@ -2923,6 +2974,7 @@ body.is-showing-highlight-overlay {
   font-weight: 600;
   color: var(--accent-secondary);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Upcoming Tournaments Section */

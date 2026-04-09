@@ -341,39 +341,30 @@ function renderResume(resume) {
       ? `
           <div class="performance-column performance-column--clubs">
             <h4 class="performance-column-title">${escapeHtml(clubYardagesTitle)}</h4>
-            <ul class="club-yardage-list">
-              ${clubYardages
-                .map(
-                  (club) => `
-                    <li>
-                      <span class="club-yardage-name">${escapeHtml(club?.club || "")}</span>
-                      <span class="club-yardage-value">${escapeHtml(club?.yardage || "")}</span>
-                    </li>
-                  `
-                )
-                .join("")}
-            </ul>
+            ${renderClubYardageGroups(clubYardages)}
           </div>
         `
       : "";
+
+    const statsMarkup = regularStats
+      .map(
+        (stat) => `
+          <div class="performance-stat">
+            <span class="performance-stat-label">${escapeHtml(stat.label || "")}</span>
+            <span class="performance-stat-value">${escapeHtml(stat.value || "")}</span>
+          </div>
+        `
+      )
+      .join("");
 
     panelsEl.innerHTML = `
       <article class="panel performance-panel${hasClubYardages ? " performance-panel--split" : ""}" data-motion="delay-1">
         <h3>${escapeHtml(resume.performanceTitle || "Performance Snapshot")}</h3>
         <div class="performance-content">
           <div class="performance-column performance-column--stats">
-            <dl>
-              ${regularStats
-                .map(
-                  (stat) => `
-                    <div>
-                      <dt>${escapeHtml(stat.label || "")}</dt>
-                      <dd>${escapeHtml(stat.value || "")}</dd>
-                    </div>
-                  `
-                )
-                .join("")}
-            </dl>
+            <div class="performance-stats-grid">
+              ${statsMarkup}
+            </div>
           </div>
           ${clubYardagesMarkup}
         </div>
@@ -475,6 +466,101 @@ function isClubYardagesStat(stat) {
     return false;
   }
   return /club\s*yardage/i.test(stat.label);
+}
+
+const CLUB_CATEGORY_ORDER = ["Woods", "Irons", "Wedges", "Putter", "Other"];
+
+function categorizeClubName(name) {
+  const n = (name || "").toLowerCase();
+  if (/putter/.test(n)) {
+    return "Putter";
+  }
+  if (/wedge/.test(n)) {
+    return "Wedges";
+  }
+  if (/iron/.test(n)) {
+    return "Irons";
+  }
+  if (/driver|wood|hybrid|\b\d+\s*w\b|\b\dw\b/.test(n)) {
+    return "Woods";
+  }
+  return "Other";
+}
+
+function formatClubYardageValue(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  const text = String(value).trim();
+  if (!text) {
+    return "";
+  }
+  if (/yard|yd/i.test(text)) {
+    return text;
+  }
+  return `${text} yds`;
+}
+
+function renderClubYardageGroups(clubs) {
+  const groups = new Map();
+  clubs.forEach((club) => {
+    if (!club || !club.club) {
+      return;
+    }
+    const category = categorizeClubName(club.club);
+    if (!groups.has(category)) {
+      groups.set(category, []);
+    }
+    groups.get(category).push(club);
+  });
+
+  if (!groups.size) {
+    return "";
+  }
+
+  const orderedCategories = CLUB_CATEGORY_ORDER.filter((cat) => groups.has(cat));
+  // Include any categories not in the predefined order (edge case).
+  Array.from(groups.keys()).forEach((cat) => {
+    if (!orderedCategories.includes(cat)) {
+      orderedCategories.push(cat);
+    }
+  });
+
+  // Hide the group header entirely when everything landed in one category.
+  const showHeaders = orderedCategories.length > 1;
+
+  return `
+    <div class="club-yardage-groups">
+      ${orderedCategories
+        .map((category) => {
+          const items = groups.get(category) || [];
+          return `
+            <div class="club-yardage-group">
+              ${
+                showHeaders
+                  ? `<h5 class="club-yardage-group-title">${escapeHtml(category)}</h5>`
+                  : ""
+              }
+              <ul class="club-yardage-list">
+                ${items
+                  .map(
+                    (club) => `
+                      <li>
+                        <span class="club-yardage-name">${escapeHtml(club?.club || "")}</span>
+                        <span class="club-yardage-value">${escapeHtml(
+                          formatClubYardageValue(club?.yardage)
+                        )}</span>
+                      </li>
+                    `
+                  )
+                  .join("")}
+              </ul>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
 }
 
 function parseClubYardagesString(value) {
