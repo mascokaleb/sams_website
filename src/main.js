@@ -1230,33 +1230,112 @@ function renderContactEntry(entry) {
 
 function renderHighlightCard(event, index) {
   const dateLabel = formatEventDate(event);
-  const summary = event.summary ? `<p>${escapeHtml(event.summary)}</p>` : "";
+  const summary = event.summary ? `<p class="case-study-summary">${escapeHtml(event.summary)}</p>` : "";
   const days = Array.isArray(event.days) ? event.days : [];
-  const dayStats = renderDayStats(days, { variant: "compact" });
   const fallbackId = `home-highlight-${index}`;
   const eventId = event?._id || event?.title || fallbackId;
+
+  // Pick a hero photo for this tournament so the card reads like an editorial spread.
+  const eventPhotos = getPhotosForEvent(event);
+  const heroPhoto = eventPhotos[0];
+  const heroImageUrl = heroPhoto?.image?.url || "";
+  const heroImageAlt = heroPhoto?.image?.alt || event?.title || "Tournament photo";
+  const heroFocal = buildObjectPosition(heroPhoto?.image?.focalPoint || heroPhoto?.image?.hotspot);
+  const heroFocalStyle = heroFocal ? ` style="object-position: ${escapeAttribute(heroFocal)};"` : "";
+
+  // Build the big headline score — best round across the event.
+  const bestDay = pickHeadlineDay(days);
+  const bestScore = bestDay?.score != null ? String(bestDay.score) : "";
+  const bestRank = bestDay?.rank != null && bestDay?.rank !== "" ? String(bestDay.rank) : "";
+  const bestField = bestDay?.fieldSize != null && bestDay?.fieldSize !== "" ? String(bestDay.fieldSize) : "";
+  const yardage = bestDay?.yardage != null && bestDay?.yardage !== "" ? String(bestDay.yardage) : "";
+  const location = event?.location ? String(event.location) : "";
+  const isFeatured = Boolean(event?.pinToTop || event?.featured);
+
   const actionButton = `
-    <button class="highlight-toggle" type="button" data-highlight-modal="${escapeAttribute(
-      eventId
-    )}">
-      View Details
+    <button class="case-study-cta" type="button" data-highlight-modal="${escapeAttribute(eventId)}">
+      <span>Read the round</span>
+      <span class="case-study-cta-arrow" aria-hidden="true">→</span>
     </button>
   `;
-  const actionRow = `<div class="highlight-row-actions">${actionButton}</div>`;
+
+  // Secondary stats row — only render rank / field / yardage when we have them.
+  const statChips = [];
+  if (bestRank) {
+    const fieldFragment = bestField ? ` / ${escapeHtml(bestField)}` : "";
+    statChips.push(`<div class="case-study-chip"><span class="case-study-chip-label">Finish</span><span class="case-study-chip-value">${escapeHtml(bestRank)}${fieldFragment}</span></div>`);
+  }
+  if (yardage) {
+    statChips.push(`<div class="case-study-chip"><span class="case-study-chip-label">Yardage</span><span class="case-study-chip-value">${escapeHtml(yardage)}</span></div>`);
+  }
+  if (days.length > 1) {
+    statChips.push(`<div class="case-study-chip"><span class="case-study-chip-label">Rounds</span><span class="case-study-chip-value">${days.length}</span></div>`);
+  }
+  const statChipsRow = statChips.length
+    ? `<div class="case-study-chips">${statChips.join("")}</div>`
+    : "";
+
+  const mediaMarkup = heroImageUrl
+    ? `
+        <img
+          src="${escapeAttribute(heroImageUrl)}"
+          alt="${escapeHtml(heroImageAlt)}"
+          loading="lazy"
+          ${heroFocalStyle}
+        />
+      `
+    : `<div class="case-study-media-placeholder" aria-hidden="true"><span>${escapeHtml((event?.title || "TOUR").slice(0, 2).toUpperCase())}</span></div>`;
+
+  const indexLabel = String(index + 1).padStart(2, "0");
 
   return `
-    <article class="timeline-card" data-motion="delay-${index + 1}">
-      <header>
-        <div class="highlight-row">
-          <h3>${escapeHtml(event.title || "")}</h3>
-          ${actionRow}
+    <article class="case-study-card${isFeatured ? " is-featured" : ""}" data-motion="delay-${index + 1}" data-index="${indexLabel}">
+      <div class="case-study-media">
+        ${mediaMarkup}
+        <div class="case-study-media-overlay" aria-hidden="true"></div>
+        ${isFeatured ? '<span class="case-study-badge">Featured</span>' : ""}
+      </div>
+      <div class="case-study-body">
+        <div class="case-study-meta">
+          <span class="case-study-index">${indexLabel}</span>
+          ${dateLabel ? `<span class="case-study-date">${escapeHtml(dateLabel)}</span>` : ""}
+          ${location ? `<span class="case-study-location">${escapeHtml(location)}</span>` : ""}
         </div>
-        ${dateLabel ? `<span class="timeline-date">${dateLabel}</span>` : ""}
-      </header>
-      ${dayStats}
-      ${summary}
+        <h3 class="case-study-title">${escapeHtml(event.title || "")}</h3>
+        ${
+          bestScore
+            ? `
+              <div class="case-study-headline-score">
+                <span class="case-study-score-value">${escapeHtml(bestScore)}</span>
+                <span class="case-study-score-label">${days.length > 1 ? "Best Round" : "Final Score"}</span>
+              </div>
+            `
+            : ""
+        }
+        ${statChipsRow}
+        ${summary}
+        ${actionButton}
+      </div>
     </article>
   `;
+}
+
+// Headline day = the lowest score if available, otherwise the first day.
+function pickHeadlineDay(days) {
+  if (!Array.isArray(days) || !days.length) {
+    return null;
+  }
+  const scored = days
+    .map((day) => {
+      const numeric = Number(day?.score);
+      return Number.isFinite(numeric) ? { day, numeric } : null;
+    })
+    .filter(Boolean);
+  if (scored.length) {
+    scored.sort((a, b) => a.numeric - b.numeric);
+    return scored[0].day;
+  }
+  return days[0];
 }
 
 function renderDayStats(days = [], { variant = "default", showLabels } = {}) {
@@ -2728,6 +2807,7 @@ function initInteractiveGolfBall() {
     ".section-heading",
     ".academics-card",
     ".timeline-card",
+    ".case-study-card",
     ".video-card",
     ".video-frame",
     ".dual-card",
