@@ -339,8 +339,8 @@ function renderResume(resume) {
     const clubYardagesTitle = resume.clubYardagesTitle || "Club Yardages";
     const clubYardagesMarkup = hasClubYardages
       ? `
-          <div class="performance-column performance-column--clubs">
-            <h4 class="performance-column-title">${escapeHtml(clubYardagesTitle)}</h4>
+          <div class="performance-clubs">
+            <h4 class="performance-section-title">${escapeHtml(clubYardagesTitle)}</h4>
             ${renderClubYardageGroups(clubYardages)}
           </div>
         `
@@ -358,13 +358,11 @@ function renderResume(resume) {
       .join("");
 
     panelsEl.innerHTML = `
-      <article class="panel performance-panel${hasClubYardages ? " performance-panel--split" : ""}" data-motion="delay-1">
+      <article class="panel performance-panel" data-motion="delay-1">
         <h3>${escapeHtml(resume.performanceTitle || "Performance Snapshot")}</h3>
         <div class="performance-content">
-          <div class="performance-column performance-column--stats">
-            <div class="performance-stats-grid">
-              ${statsMarkup}
-            </div>
+          <div class="performance-stats-grid" data-count="${regularStats.length}">
+            ${statsMarkup}
           </div>
           ${clubYardagesMarkup}
         </div>
