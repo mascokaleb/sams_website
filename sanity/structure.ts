@@ -3,6 +3,7 @@ import type { StructureResolver } from 'sanity/desk';
 const singletonDocs = [
   { title: 'Site Settings', type: 'siteSettings', id: 'siteSettings' },
   { title: 'Hero', type: 'heroSection', id: 'heroSection' },
+  { title: 'Coach Snapshot', type: 'coachSnapshot', id: 'coachSnapshot' },
   { title: 'About', type: 'aboutSection', id: 'aboutSection' },
   { title: 'Golf Resume', type: 'resumeSection', id: 'resumeSection' },
   { title: 'Academics', type: 'academicsSection', id: 'academicsSection' },

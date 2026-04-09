@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -29,13 +29,10 @@
           <span class="sr-only">Toggle navigation</span>
         </button>
         <ul class="nav-links" id="menu">
-          <li><a href="#about">About</a></li>
-          <li><a href="#golf-resume">Golf Resume</a></li>
-          <li><a href="#academics">Academics</a></li>
+          <li><a href="#golf-resume">Resume</a></li>
           <li><a href="#highlights">Highlights</a></li>
-          <li><a href="#upcoming-tournaments">Upcoming</a></li>
-          <li><a href="#videos">Videos</a></li>
-          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#videos">Media</a></li>
+          <li><a href="#about">About</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
@@ -51,24 +48,14 @@
               aria-hidden="true"
               loading="lazy"
             />
-            <div class="hero-photo-glow" aria-hidden="true"></div>
           </div>
         </figure>
-        <div class="hero-metrics" data-motion="delay-3" data-template="hero-metrics"></div>
       </div>
-      <div class="hero-scroll" aria-hidden="true">
-        <span>Scroll</span>
-        <span class="scroll-indicator"></span>
-      </div>
-      <div class="hero-hole" data-golf-hole aria-hidden="true"></div>
-      <div class="golf-scoreboard" data-golf-scoreboard aria-hidden="true">
-        <span class="score-label">Strokes</span>
-        <span class="score-value" data-golf-score-value>0</span>
-      </div>
-      <div class="hero-gradient"></div>
     </header>
 
     <main>
+      <section class="section coach-snapshot" id="coach-snapshot" data-template="coach-snapshot" hidden></section>
+
       <section class="section about" id="about">
         <div class="section-heading" data-motion data-template="about-heading">
           <p class="placeholder-text">Loading about section...</p>
@@ -77,13 +64,13 @@
       </section>
 
       <section class="section golf-resume" id="golf-resume">
-        <div class="section-heading" data-motion data-template="resume-heading">
+        <div class="section-heading" data-motion data-template="resume-heading" data-kicker="01 — Resume">
           <p class="placeholder-text">Loading golf resume...</p>
         </div>
         <div class="resume-panels" data-template="resume-panels"></div>
       </section>
 
-      <section class="section academics" id="academics">
+      <section class="section academics" id="academics" hidden>
         <div class="section-heading" data-motion data-template="academics-heading">
           <p class="placeholder-text">Loading academics...</p>
         </div>
@@ -91,7 +78,7 @@
       </section>
 
       <section class="section highlights" id="highlights">
-        <div class="section-heading" data-motion data-template="highlights-heading">
+        <div class="section-heading" data-motion data-template="highlights-heading" data-kicker="02 — Recent Results">
           <p class="placeholder-text">Loading highlights...</p>
         </div>
         <div class="timeline" data-template="timeline"></div>
@@ -106,7 +93,7 @@
       </section>
 
       <section class="section videos" id="videos">
-        <div class="section-heading" data-motion data-template="videos-heading">
+        <div class="section-heading" data-motion data-template="videos-heading" data-kicker="03 — Film Room">
           <p class="placeholder-text">Loading videos...</p>
         </div>
         <div class="video-grid" data-template="video-grid"></div>
@@ -131,7 +118,7 @@
       </section>
 
       <section class="section contact" id="contact">
-        <div class="section-heading" data-motion data-template="contact-heading">
+        <div class="section-heading" data-motion data-template="contact-heading" data-kicker="04 — Get In Touch">
           <p class="placeholder-text">Loading contact info...</p>
         </div>
         <div class="contact-grid" data-template="contact-grid"></div>

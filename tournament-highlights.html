@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -44,29 +44,36 @@
 
     <main>
       <section class="section highlight-browser">
-        <div class="browser-layout">
-          <aside class="browser-panel">
-            <div class="video-intro-card highlight-intro-card">
+        <div class="browser-shell">
+          <header class="browser-toolbar">
+            <div class="browser-toolbar-intro">
               <p class="summary-eyebrow">Tournament library</p>
               <h2 data-highlight-count>Loading tournament count...</h2>
               <p>
-                Browse verified finishes from each season. Search for events, courses, or keywords and use filters to jump into a campaign.
+                Browse verified finishes from each season. Search for events, courses, or keywords and use the filters below to jump into a campaign.
               </p>
-              <label class="video-search" for="highlight-search-input">
-                <span>Search</span>
+            </div>
+            <div class="browser-toolbar-controls">
+              <label class="browser-search" for="highlight-search-input">
+                <span>Search tournaments</span>
                 <input
                   id="highlight-search-input"
                   type="search"
-                  placeholder="Search"
+                  placeholder="Search by tournament, course, or keyword"
                   data-highlight-search
                 />
               </label>
-              <div class="video-filters inline-filters" data-year-filters>
-                <p class="placeholder-text">Loading filters...</p>
+              <div class="browser-toolbar-filters">
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Season</span>
+                  <div class="video-filters inline-filters" data-year-filters>
+                    <p class="placeholder-text">Loading filters...</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </aside>
-          <div class="browser-results">
+          </header>
+          <div class="browser-results-wide">
             <div class="page-message" data-page-message></div>
             <div class="highlight-year-groups" data-highlights-grid>
               <p class="placeholder-text">Loading tournament highlights...</p>

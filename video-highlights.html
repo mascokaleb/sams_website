@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -44,33 +44,46 @@
 
     <main>
       <section class="section video-browser">
-        <div class="browser-layout">
-          <aside class="browser-panel">
-          <div class="video-intro-card">
-            <p class="summary-eyebrow">Video library</p>
-            <h2 data-video-count>0 videos</h2>
-            <p>Search clips by keyword to quickly surface a specific round, shot, or recap.</p>
-            <label class="video-search" for="video-search-input">
-                <span>Search</span>
+        <div class="browser-shell">
+          <header class="browser-toolbar">
+            <div class="browser-toolbar-intro">
+              <p class="summary-eyebrow">Video library</p>
+              <h2 data-video-count>0 videos</h2>
+              <p>Search clips by keyword, filter by season or tournament, or drill down to a specific shot type.</p>
+            </div>
+            <div class="browser-toolbar-controls">
+              <label class="browser-search" for="video-search-input">
+                <span>Search videos</span>
                 <input
                   id="video-search-input"
                   type="search"
-                  placeholder="Search"
+                  placeholder="Search by keyword, shot type, or moment"
                   data-video-search
                 />
-            </label>
-            <div class="video-filters" data-video-year-filters>
-              <p class="placeholder-text">Loading filters...</p>
+              </label>
+              <div class="browser-toolbar-filters">
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Season</span>
+                  <div class="video-filters" data-video-year-filters>
+                    <p class="placeholder-text">Loading filters...</p>
+                  </div>
+                </div>
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Tags</span>
+                  <div class="video-filters" data-video-tag-filters>
+                    <p class="placeholder-text">Loading tags...</p>
+                  </div>
+                </div>
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Tournament</span>
+                  <div class="video-filters" data-video-tournament-filters>
+                    <p class="placeholder-text">Loading tournaments...</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="video-filters" data-video-tag-filters>
-              <p class="placeholder-text">Loading tags...</p>
-            </div>
-            <div class="video-filters" data-video-tournament-filters>
-              <p class="placeholder-text">Loading tournaments...</p>
-            </div>
-          </div>
-        </aside>
-          <div class="browser-results">
+          </header>
+          <div class="browser-results-wide">
             <div class="page-message" data-video-message></div>
             <div class="video-gallery-grid" data-video-grid>
               <p class="placeholder-text">Loading the video gallery...</p>

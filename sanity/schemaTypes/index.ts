@@ -1,5 +1,6 @@
 import { aboutSection } from './documents/aboutSection';
 import { academicsSection } from './documents/academicsSection';
+import { coachSnapshot } from './documents/coachSnapshot';
 import { contactSection } from './documents/contactSection';
 import { dualSportSection } from './documents/dualSportSection';
 import { galleryPhoto } from './documents/galleryPhoto';
@@ -30,6 +31,7 @@ export const schemaTypes = [
   // documents
   siteSettings,
   heroSection,
+  coachSnapshot,
   aboutSection,
   resumeSection,
   academicsSection,

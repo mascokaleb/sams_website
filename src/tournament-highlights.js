@@ -1436,7 +1436,7 @@ function updateHighlightCount(total, visible, activeYear) {
     return;
   }
 
-  const totalLabel = `${total} recorded ${pluralize(total, "highlight")}`;
+  const totalLabel = `${total} ${total === 1 ? "highlight" : "highlights"}`;
   if (activeYear === "all") {
     countEl.textContent = totalLabel;
     return;

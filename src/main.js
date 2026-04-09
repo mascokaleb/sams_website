@@ -10,6 +10,7 @@ const SELECTORS = {
   heroCopy: '[data-template="hero-copy"]',
   heroPhoto: '[data-template="hero-photo"]',
   heroMetrics: '[data-template="hero-metrics"]',
+  coachSnapshot: '[data-template="coach-snapshot"]',
   aboutHeading: '[data-template="about-heading"]',
   aboutGrid: '[data-template="about-grid"]',
   resumeHeading: '[data-template="resume-heading"]',
@@ -64,10 +65,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setupMotionAnimations(prefersReducedMotion);
-
-  if (!prefersReducedMotion) {
-    initInteractiveGolfBall();
-  }
 });
 
 function setupNav() {
@@ -104,17 +101,25 @@ async function hydratePage() {
 
   renderMeta(data.site);
   renderHero(data.hero, data.site);
-  renderAbout(data.about);
+  renderCoachSnapshot(data.coachSnapshot, { hero: data.hero, about: data.about });
+  renderAbout(data.about, { academics: data.academics });
   renderResume(data.resume);
   renderAcademics(data.academics);
 
   const orderedHighlights = sortEntriesChronologically(data.highlightEvents || []);
+  // Defensive guard: any highlight whose event date is still in the future
+  // gets re-routed to the Upcoming Tournaments bucket, regardless of how it
+  // was categorized in the CMS. This prevents mis-tagged entries from leaking
+  // into the "recent results" timeline.
+  const { past: pastHighlights, future: futureHighlights } = partitionByEventDate(orderedHighlights);
   highlightsState.meta = data.highlightsSection;
-  highlightsState.allItems = orderedHighlights;
-  highlightsState.items = orderedHighlights.filter(shouldDisplayOnHome);
+  highlightsState.allItems = pastHighlights;
+  highlightsState.items = pastHighlights.filter(shouldDisplayOnHome);
   renderHighlights();
 
-  renderUpcomingTournaments(data.upcomingTournamentsSection, data.upcomingTournaments || []);
+  const cmsUpcoming = Array.isArray(data.upcomingTournaments) ? data.upcomingTournaments : [];
+  const mergedUpcoming = mergeUpcomingTournaments(cmsUpcoming, futureHighlights);
+  renderUpcomingTournaments(data.upcomingTournamentsSection, mergedUpcoming);
 
   const orderedVideos = sortEntriesChronologically(data.videos || [], "eventDate");
   highlightsState.videos = orderedVideos;
@@ -181,7 +186,6 @@ function renderMeta(site) {
 function renderHero(hero, site) {
   const copyEl = select(SELECTORS.heroCopy);
   const photoEl = select(SELECTORS.heroPhoto);
-  const metricsEl = select(SELECTORS.heroMetrics);
 
   if (!hero) {
     if (copyEl) {
@@ -192,7 +196,6 @@ function renderHero(hero, site) {
 
   if (copyEl) {
     const tagline = hero.tagline ? `<p class="hero-tag">${escapeHtml(hero.tagline)}</p>` : "";
-    const subheadline = hero.subheadline ? `<span>${escapeHtml(hero.subheadline)}</span>` : "";
     const description = hero.bio ? `<p>${escapeHtml(hero.bio)}</p>` : "";
     const ctas = [
       buildCta(hero.primaryCta, "primary", "View Highlights", "#highlights"),
@@ -201,12 +204,27 @@ function renderHero(hero, site) {
       .filter(Boolean)
       .join("");
 
+    const snapshotItems = Array.isArray(hero.metrics)
+      ? hero.metrics
+          .filter((metric) => metric && (metric.label || metric.value))
+          .map(
+            (metric) => `
+              <li class="hero-snapshot-item">
+                <span class="hero-snapshot-value">${escapeHtml(metric.value || "")}</span>
+                <span class="hero-snapshot-label">${escapeHtml(metric.label || "")}</span>
+              </li>
+            `
+          )
+          .join("")
+      : "";
+    const snapshotMarkup = snapshotItems
+      ? `<ul class="hero-snapshot" aria-label="Player snapshot">${snapshotItems}</ul>`
+      : "";
+
     copyEl.innerHTML = `
       ${tagline}
-      <h1>
-        ${escapeHtml(hero.headline || site?.siteTitle || "")}
-        ${subheadline}
-      </h1>
+      <h1>${escapeHtml(hero.headline || site?.siteTitle || "")}</h1>
+      ${snapshotMarkup}
       ${description}
       <div class="hero-actions">
         ${ctas || '<span class="placeholder-text">Actions coming soon.</span>'}
@@ -217,40 +235,221 @@ function renderHero(hero, site) {
   if (photoEl) {
     const photoUrl = hero.headshot?.url || HERO_PLACEHOLDER_IMAGE;
     const alt = hero.headshot?.alt || "Portrait of Samuel Masco";
-    const caption = hero.photoCaption || "Focused on the next shot.";
     const focalPoint = buildObjectPosition(hero.headshot?.focalPoint || hero.headshot?.hotspot);
     const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
     photoEl.innerHTML = `
       <div class="hero-photo-frame">
         <img src="${photoUrl}" alt="${escapeHtml(alt)}" loading="lazy"${focalStyle} />
-        <div class="hero-photo-glow" aria-hidden="true"></div>
       </div>
-      <figcaption>${escapeHtml(caption)}</figcaption>
     `;
-  }
-
-  if (metricsEl) {
-    if (Array.isArray(hero.metrics) && hero.metrics.length) {
-      metricsEl.innerHTML = hero.metrics
-        .map(
-          (metric) => `
-            <div class="metric-card" data-motion>
-              <span class="metric-label">${escapeHtml(metric.label || "")}</span>
-              <span class="metric-value">${escapeHtml(metric.value || "")}</span>
-            </div>
-          `
-        )
-        .join("");
-    } else {
-      metricsEl.innerHTML = renderPlaceholder("Metrics coming soon.");
-    }
   }
 }
 
-function renderAbout(about) {
+function renderCoachSnapshot(snapshot, context = {}) {
+  const sectionEl = select(SELECTORS.coachSnapshot);
+  if (!sectionEl) return;
+
+  // The Coach Snapshot only renders when the CMS singleton has at least one
+  // recruiting-critical field populated. This prevents the section from
+  // appearing with nothing but a "Verified" timestamp while Sam is still
+  // filling out Studio. As soon as any of these fields lights up in Sanity,
+  // the whole section snaps into view.
+  const hasSnapshotData =
+    snapshot &&
+    [
+      snapshot.gpaWeighted,
+      snapshot.satScore,
+      snapshot.actScore,
+      snapshot.ncaaId,
+      snapshot.ncaaStatus,
+      snapshot.transcriptUrl,
+      snapshot.parentName,
+      snapshot.parentEmail,
+      snapshot.parentPhone,
+      snapshot.clubCoachName,
+      snapshot.clubCoachEmail,
+      snapshot.clubCoachPhone,
+      snapshot.hsCoachName,
+      snapshot.hsCoachEmail,
+      snapshot.hsCoachPhone,
+    ].some((value) => typeof value === "string" && value.trim() !== "");
+
+  if (!hasSnapshotData) {
+    sectionEl.hidden = true;
+    sectionEl.innerHTML = "";
+    return;
+  }
+
+  const about = context.about || {};
+  const profileFacts = Array.isArray(about.profileFacts) ? about.profileFacts : [];
+  const findFact = (labelPattern) =>
+    profileFacts.find((fact) => fact?.label && labelPattern.test(fact.label))?.value || "";
+
+  // Only fall back to data from other Sanity docs when it ADDS information
+  // beyond what the hero snapshot row already shows. Duplicating the hero's
+  // Handicap / 18-Hole Avg / Scoring Diff / GPA here would feel redundant.
+  const graduationYear = findFact(/graduat/i);
+  const resolvedClassYear =
+    snapshot?.classYear ||
+    (graduationYear ? `Class of ${graduationYear}` : "");
+
+  const data = {
+    eyebrow: snapshot?.eyebrow || "Coach Snapshot",
+    heading: snapshot?.heading || "The 30-second read",
+    subheading: snapshot?.subheading || "",
+    classYear: resolvedClassYear,
+    gpaWeighted: snapshot?.gpaWeighted || "",
+    sat: snapshot?.satScore || "",
+    act: snapshot?.actScore || "",
+    ncaaId: snapshot?.ncaaId || "",
+    ncaaStatus: snapshot?.ncaaStatus || "",
+    transcriptLabel: snapshot?.transcriptLabel || "Download transcript",
+    transcriptUrl: snapshot?.transcriptUrl || "",
+    parentName: snapshot?.parentName || "",
+    parentRole: snapshot?.parentRole || "",
+    parentEmail: snapshot?.parentEmail || "",
+    parentPhone: snapshot?.parentPhone || "",
+    clubCoachName: snapshot?.clubCoachName || findFact(/private\s*coach|club\s*coach/i),
+    clubCoachOrg: snapshot?.clubCoachOrg || "",
+    clubCoachEmail: snapshot?.clubCoachEmail || "",
+    clubCoachPhone: snapshot?.clubCoachPhone || "",
+    hsCoachName: snapshot?.hsCoachName || "",
+    hsCoachEmail: snapshot?.hsCoachEmail || "",
+    hsCoachPhone: snapshot?.hsCoachPhone || "",
+    verifiedAt: snapshot?.verifiedAt || findFact(/verified/i),
+  };
+
+  const factRow = (label, value, mono = false) => {
+    if (!value) return "";
+    const valueClass = mono
+      ? "coach-snapshot-fact-value coach-snapshot-fact-value--mono"
+      : "coach-snapshot-fact-value";
+    return `
+      <div class="coach-snapshot-fact">
+        <span class="coach-snapshot-fact-label">${escapeHtml(label)}</span>
+        <span class="${valueClass}">${escapeHtml(value)}</span>
+      </div>
+    `;
+  };
+
+  const contactRow = (name, role, phone, email) => {
+    if (!name && !phone && !email) return "";
+    const roleMarkup = role ? `<span class="coach-snapshot-contact-role">${escapeHtml(role)}</span>` : "";
+    const phoneMarkup = phone
+      ? `<a href="tel:${escapeAttribute(phone.replace(/[^0-9+]/g, ""))}">${escapeHtml(phone)}</a>`
+      : "";
+    const emailMarkup = email
+      ? `<a href="mailto:${escapeAttribute(email)}">${escapeHtml(email)}</a>`
+      : "";
+    const meta = [phoneMarkup, emailMarkup].filter(Boolean).join('<span class="coach-snapshot-contact-divider" aria-hidden="true">·</span>');
+    return `
+      <div class="coach-snapshot-contact">
+        <div class="coach-snapshot-contact-identity">
+          <span class="coach-snapshot-contact-name">${escapeHtml(name || "")}</span>
+          ${roleMarkup}
+        </div>
+        ${meta ? `<div class="coach-snapshot-contact-meta">${meta}</div>` : ""}
+      </div>
+    `;
+  };
+
+  // --- Column 1: Academic / recruiting identity (things NOT already in the hero row) ---
+  const identityMarkup = [
+    factRow("Class", data.classYear),
+    factRow("GPA (W)", data.gpaWeighted, true),
+    factRow("SAT", data.sat, true),
+    factRow("ACT", data.act, true),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  // --- Column 2: NCAA eligibility + transcript ---
+  const eligibilityMarkup = [
+    factRow("NCAA ID", data.ncaaId, true),
+    factRow("NCAA Status", data.ncaaStatus),
+    factRow("Verified", formatVerifiedDate(data.verifiedAt)),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  const transcriptMarkup = data.transcriptUrl
+    ? `<a class="btn subtle coach-snapshot-transcript" href="${escapeAttribute(data.transcriptUrl)}" target="_blank" rel="noopener">${escapeHtml(data.transcriptLabel)}</a>`
+    : "";
+
+  // --- Column 3: Recruiting contacts ---
+  const contactsMarkup = [
+    contactRow(data.parentName, data.parentRole || "Parent / Guardian", data.parentPhone, data.parentEmail),
+    contactRow(data.clubCoachName, data.clubCoachOrg || "Private Coach", data.clubCoachPhone, data.clubCoachEmail),
+    contactRow(data.hsCoachName, "HS Coach", data.hsCoachPhone, data.hsCoachEmail),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  const columns = [
+    identityMarkup ? { title: "By the numbers", body: identityMarkup } : null,
+    eligibilityMarkup || transcriptMarkup
+      ? {
+          title: "Eligibility",
+          body: `${eligibilityMarkup}${transcriptMarkup ? `<div class="coach-snapshot-transcript-wrap">${transcriptMarkup}</div>` : ""}`,
+        }
+      : null,
+    contactsMarkup ? { title: "Recruiting contacts", body: contactsMarkup } : null,
+  ].filter(Boolean);
+
+  if (!columns.length) {
+    // Nothing to show — keep the section hidden.
+    sectionEl.hidden = true;
+    return;
+  }
+
+  const eyebrowMarkup = data.eyebrow
+    ? `<p class="section-kicker">${escapeHtml(data.eyebrow)}</p>`
+    : "";
+  const headingMarkup = data.heading
+    ? `<h2 class="coach-snapshot-heading">${escapeHtml(data.heading)}</h2>`
+    : "";
+  const subheadingMarkup = data.subheading
+    ? `<p class="coach-snapshot-subheading">${escapeHtml(data.subheading)}</p>`
+    : "";
+
+  sectionEl.hidden = false;
+  sectionEl.innerHTML = `
+    <header class="coach-snapshot-header" data-motion>
+      ${eyebrowMarkup}
+      ${headingMarkup}
+      ${subheadingMarkup}
+    </header>
+    <div class="coach-snapshot-grid">
+      ${columns
+        .map(
+          (col, idx) => `
+            <section class="coach-snapshot-column" data-motion="delay-${idx + 1}">
+              <h3 class="coach-snapshot-column-title">${escapeHtml(col.title)}</h3>
+              <div class="coach-snapshot-column-body">${col.body}</div>
+            </section>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function formatVerifiedDate(value) {
+  if (!value) return "";
+  const date = parseDate(value);
+  if (!date) return String(value);
+  try {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return String(value);
+  }
+}
+
+function renderAbout(about, context = {}) {
   const headingEl = select(SELECTORS.aboutHeading);
   const gridEl = select(SELECTORS.aboutGrid);
+  const academics = context.academics || null;
 
   if (headingEl) {
     headingEl.innerHTML = about
@@ -261,44 +460,104 @@ function renderAbout(about) {
       : renderPlaceholder("About section coming soon.");
   }
 
-  if (gridEl) {
-    if (!about) {
-      gridEl.innerHTML = renderPlaceholder("About details coming soon.");
-      return;
-    }
+  if (!gridEl) return;
 
-    gridEl.innerHTML = `
-      <article class="about-card" data-motion="delay-1">
-        <h3>${escapeHtml(about.profileCardTitle || "Profile")}</h3>
-        <ul>
-          ${(about.profileFacts || [])
-            .map(
-              (fact) => `
-                <li><strong>${escapeHtml(fact.label || "")}: </strong>${escapeHtml(fact.value || "")}</li>
-              `
-            )
-            .join("")}
-        </ul>
-      </article>
-      <article class="about-card about-story" data-motion="delay-2">
-        <h3>${escapeHtml(about.mindsetTitle || "Mindset & Goals")}</h3>
-        ${renderPortableText(about.mindsetBody)}
-      </article>
-      <article class="about-card about-highlight" data-motion="delay-3">
-        <h3>${escapeHtml(about.quickHitsTitle || "Quick Hits")}</h3>
-        ${(about.quickHits || [])
+  if (!about) {
+    gridEl.innerHTML = renderPlaceholder("About details coming soon.");
+    return;
+  }
+
+  const profileCard = `
+    <article class="about-card" data-motion="delay-1">
+      <h3>${escapeHtml(about.profileCardTitle || "Profile")}</h3>
+      <ul>
+        ${(about.profileFacts || [])
           .map(
-            (hit) => `
-              <div class="highlight-row">
-                <span>${escapeHtml(hit.label || "")}</span>
-                <span>${escapeHtml(hit.value || "")}</span>
-              </div>
+            (fact) => `
+              <li><strong>${escapeHtml(fact.label || "")}: </strong>${escapeHtml(fact.value || "")}</li>
             `
           )
           .join("")}
-      </article>
-    `;
+      </ul>
+    </article>
+  `;
+
+  const mindsetCard = `
+    <article class="about-card about-story" data-motion="delay-2">
+      <h3>${escapeHtml(about.mindsetTitle || "Mindset & Goals")}</h3>
+      ${renderPortableText(about.mindsetBody)}
+    </article>
+  `;
+
+  const quickHitsCard = `
+    <article class="about-card about-highlight" data-motion="delay-3">
+      <h3>${escapeHtml(about.quickHitsTitle || "Quick Hits")}</h3>
+      ${(about.quickHits || [])
+        .map(
+          (hit) => `
+            <div class="highlight-row">
+              <span>${escapeHtml(hit.label || "")}</span>
+              <span>${escapeHtml(hit.value || "")}</span>
+            </div>
+          `
+        )
+        .join("")}
+    </article>
+  `;
+
+  // Academics is now folded into About as a fourth card so coaches see the
+  // full off-course profile in one place. The standalone Academics <section>
+  // in the DOM is hidden via the `hidden` attribute on the element.
+  let academicsCard = "";
+  if (academics) {
+    const academicsFacts = [
+      { label: "School", value: academics.schoolCardTitle },
+      { label: "GPA", value: academics.gpa },
+      { label: "Honors / AP", value: academics.honors },
+      { label: "AP / IB Status", value: academics.apCourses },
+    ].filter((f) => f.value);
+
+    const factsMarkup = academicsFacts.length
+      ? `
+          <ul class="about-facts-list">
+            ${academicsFacts
+              .map(
+                (fact) => `
+                  <li><strong>${escapeHtml(fact.label)}: </strong>${escapeHtml(fact.value)}</li>
+                `
+              )
+              .join("")}
+          </ul>
+        `
+      : "";
+
+    const interestsMarkup = academics.interestsBody
+      ? `<div class="about-academics-interests">${renderPortableText(academics.interestsBody)}</div>`
+      : "";
+
+    const transcriptMarkup =
+      academics.transcriptUrl
+        ? `<a class="btn subtle" href="${escapeAttribute(academics.transcriptUrl)}" target="_blank" rel="noopener">${escapeHtml(academics.transcriptLabel || "Transcript")}</a>`
+        : "";
+
+    if (factsMarkup || interestsMarkup || transcriptMarkup) {
+      academicsCard = `
+        <article class="about-card about-academics" data-motion="delay-4">
+          <h3>${escapeHtml(academics.heading || "Academics")}</h3>
+          ${factsMarkup}
+          ${interestsMarkup}
+          ${transcriptMarkup ? `<div class="about-academics-actions">${transcriptMarkup}</div>` : ""}
+        </article>
+      `;
+    }
   }
+
+  gridEl.innerHTML = `
+    ${profileCard}
+    ${mindsetCard}
+    ${quickHitsCard}
+    ${academicsCard}
+  `;
 }
 
 function renderResume(resume) {
@@ -322,12 +581,18 @@ function renderResume(resume) {
 
     // Split performance stats so any "Club Yardages" legacy string entry
     // can be parsed into the bulleted column instead of rendering as a stat.
+    // Also strip stats that are already shown in the hero snapshot row
+    // (Handicap, GPA) to avoid duplication between the top of the page and
+    // the Performance Snapshot card.
+    const HERO_DUPLICATE_LABEL = /^(handicap|gpa)$/i;
     const rawStats = Array.isArray(resume.performanceStats) ? resume.performanceStats : [];
     const inlineClubYardages = [];
     const regularStats = [];
     rawStats.forEach((stat) => {
       if (isClubYardagesStat(stat)) {
         inlineClubYardages.push(...parseClubYardagesString(stat?.value));
+      } else if (HERO_DUPLICATE_LABEL.test((stat?.label || "").trim())) {
+        // Already shown in the hero snapshot — skip to avoid duplication.
       } else {
         regularStats.push(stat);
       }
@@ -2309,6 +2574,74 @@ function shouldDisplayOnHome(entry) {
   }
 
   return true;
+}
+
+function partitionByEventDate(entries) {
+  const past = [];
+  const future = [];
+  if (!Array.isArray(entries)) {
+    return { past, future };
+  }
+
+  // Compare against the START of today (local) so events happening later
+  // today are still considered "upcoming" and not retroactively "past."
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  entries.forEach((entry) => {
+    if (!entry) return;
+    const endDate = parseDate(entry.endDate);
+    const startDate = parseDate(entry.eventDate);
+    // Use the latest known date so a multi-day event only moves to "past"
+    // once its final day is behind us.
+    const reference = endDate || startDate;
+    if (reference && reference.getTime() >= todayStart) {
+      future.push(entry);
+    } else {
+      past.push(entry);
+    }
+  });
+
+  return { past, future };
+}
+
+function mergeUpcomingTournaments(cmsUpcoming, rescuedHighlights) {
+  const seen = new Set();
+  const combined = [];
+
+  const pushUnique = (item) => {
+    if (!item) return;
+    const key = item._id || item.id || `${item.course || ""}|${item.eventDate || ""}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    combined.push(item);
+  };
+
+  cmsUpcoming.forEach(pushUnique);
+
+  // Re-shape highlight events into the upcoming-tournament card's expected
+  // shape. Highlight events use `course`/`title` and `eventDate`/`endDate`;
+  // upcoming cards expect the same keys plus `location` and `yardage`.
+  rescuedHighlights.forEach((highlight) => {
+    if (!highlight) return;
+    pushUnique({
+      _id: highlight._id,
+      course: highlight.course || highlight.title || highlight.headline || "",
+      location: highlight.location || highlight.city || "",
+      eventDate: highlight.eventDate,
+      endDate: highlight.endDate,
+      yardage: highlight.yardage || highlight.days?.[0]?.yardage || "",
+    });
+  });
+
+  // Sort upcoming soonest-first.
+  combined.sort((a, b) => {
+    const da = parseDate(a?.eventDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+    const db = parseDate(b?.eventDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+    return da - db;
+  });
+
+  return combined;
 }
 
 function setupMotionAnimations(prefersReducedMotion) {
