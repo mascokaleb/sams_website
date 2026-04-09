@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setupMotionAnimations(prefersReducedMotion);
+  setupCounterAnimations(prefersReducedMotion);
 });
 
 function setupNav() {
@@ -213,14 +214,19 @@ function renderHero(hero, site) {
     const snapshotItems = Array.isArray(hero.metrics)
       ? hero.metrics
           .filter((metric) => metric && (metric.label || metric.value))
-          .map(
-            (metric) => `
+          .map((metric) => {
+            const rawValue = metric.value || "";
+            const numericMatch = String(rawValue).trim().match(/^(-?\d+(?:\.\d+)?)(.*)$/);
+            const counterAttrs = numericMatch
+              ? ` data-counter="${escapeAttribute(numericMatch[1])}" data-counter-suffix="${escapeAttribute(numericMatch[2] || "")}"`
+              : "";
+            return `
               <li class="hero-snapshot-item">
-                <span class="hero-snapshot-value">${escapeHtml(metric.value || "")}</span>
+                <span class="hero-snapshot-value"${counterAttrs}>${escapeHtml(rawValue)}</span>
                 <span class="hero-snapshot-label">${escapeHtml(metric.label || "")}</span>
               </li>
-            `
-          )
+            `;
+          })
           .join("")
       : "";
     const snapshotMarkup = snapshotItems
@@ -752,14 +758,22 @@ function renderResume(resume) {
       : "";
 
     const statsMarkup = regularStats
-      .map(
-        (stat) => `
+      .map((stat) => {
+        const rawValue = stat.value || "";
+        // If the value is primarily numeric (e.g. "85.71", "82.3", "9.95"),
+        // surface it to the counter animator via data-counter so it tweens
+        // into view. Non-numeric values (e.g. "Class 3A") stay static.
+        const numericMatch = String(rawValue).trim().match(/^(-?\d+(?:\.\d+)?)(.*)$/);
+        const counterAttrs = numericMatch
+          ? ` data-counter="${escapeAttribute(numericMatch[1])}" data-counter-suffix="${escapeAttribute(numericMatch[2] || "")}"`
+          : "";
+        return `
           <div class="performance-stat">
             <span class="performance-stat-label">${escapeHtml(stat.label || "")}</span>
-            <span class="performance-stat-value">${escapeHtml(stat.value || "")}</span>
+            <span class="performance-stat-value"${counterAttrs}>${escapeHtml(rawValue)}</span>
           </div>
-        `
-      )
+        `;
+      })
       .join("");
 
     panelsEl.innerHTML = `
@@ -2944,6 +2958,115 @@ function setupMotionAnimations(prefersReducedMotion) {
   );
 
   document.querySelectorAll("[data-motion]").forEach((el) => observer.observe(el));
+}
+
+// Tween numeric stat values (e.g. handicap, scoring avg) from 0 to their
+// target when they scroll into view. Elements opt in by having both a
+// data-counter="<number>" and (optionally) data-counter-suffix="<string>"
+// attribute. Values with a decimal point stay rounded to the same number
+// of places. Under prefers-reduced-motion we skip straight to the final
+// number without animating.
+function setupCounterAnimations(prefersReducedMotion) {
+  const targets = Array.from(document.querySelectorAll("[data-counter]"));
+  if (!targets.length) return;
+
+  const applyFinal = (el) => {
+    const target = Number(el.getAttribute("data-counter"));
+    const suffix = el.getAttribute("data-counter-suffix") || "";
+    if (!Number.isFinite(target)) return;
+    const decimals = getDecimalPlaces(el.getAttribute("data-counter"));
+    el.textContent = formatCounterValue(target, decimals) + suffix;
+    el.dataset.counterDone = "true";
+  };
+
+  if (prefersReducedMotion) {
+    targets.forEach(applyFinal);
+    return;
+  }
+
+  // Start at 0 (formatted to match the target's decimal precision) so the
+  // tween is visible when the element enters the viewport.
+  targets.forEach((el) => {
+    const decimals = getDecimalPlaces(el.getAttribute("data-counter"));
+    el.textContent = formatCounterValue(0, decimals) + (el.getAttribute("data-counter-suffix") || "");
+  });
+
+  const animate = (el) => {
+    if (el.dataset.counterDone === "true") return;
+    el.dataset.counterDone = "true";
+    const target = Number(el.getAttribute("data-counter"));
+    const suffix = el.getAttribute("data-counter-suffix") || "";
+    if (!Number.isFinite(target)) {
+      applyFinal(el);
+      return;
+    }
+    const decimals = getDecimalPlaces(el.getAttribute("data-counter"));
+    const duration = 1200;
+    const start = Date.now();
+
+    // Drive the tween with setInterval so it still runs in environments where
+    // requestAnimationFrame is throttled (e.g. some preview runners). ~60fps
+    // is plenty for a scalar text tween.
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const t = Math.min(1, elapsed / duration);
+      // easeOutCubic — starts fast, decelerates into the target.
+      const eased = 1 - Math.pow(1 - t, 3);
+      const current = target * eased;
+      el.textContent = formatCounterValue(current, decimals) + suffix;
+      if (t >= 1) {
+        clearInterval(timer);
+        applyFinal(el);
+      }
+    }, 16);
+  };
+
+  const isInView = (el) => {
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    return rect.top < vh * 0.9 && rect.bottom > 0;
+  };
+
+  const checkAll = () => {
+    let remaining = 0;
+    targets.forEach((el) => {
+      if (el.dataset.counterDone === "true") return;
+      if (isInView(el)) {
+        animate(el);
+      } else {
+        remaining += 1;
+      }
+    });
+    return remaining;
+  };
+
+  // Fire immediately for anything already in view on load, then listen for
+  // scroll / resize so the rest of the counters trigger as they come into
+  // view. This is intentionally simple and doesn't rely on
+  // IntersectionObserver, which does not fire for initially-visible elements
+  // in some headless / preview environments.
+  checkAll();
+  const onScroll = () => {
+    if (checkAll() === 0) {
+      window.removeEventListener("scroll", onScroll, { passive: true });
+      window.removeEventListener("resize", onScroll);
+    }
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+}
+
+function getDecimalPlaces(str) {
+  if (typeof str !== "string") return 0;
+  const dot = str.indexOf(".");
+  return dot >= 0 ? str.length - dot - 1 : 0;
+}
+
+function formatCounterValue(value, decimals) {
+  if (decimals > 0) {
+    return value.toFixed(decimals);
+  }
+  return String(Math.round(value));
 }
 
 /* Existing interactive ball logic remains unchanged below */
