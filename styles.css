@@ -268,16 +268,28 @@ ul {
   position: relative;
 }
 
+/* The hero is split so the copy sits inside the normal max-width track on
+   the left, while the portrait column extends to the viewport edge on the
+   right. A negative right-margin paired with overflow: hidden on the
+   .site-header parent lets the photo bleed off the page without causing
+   a horizontal scrollbar. */
 .hero {
   position: relative;
   z-index: 2;
   display: grid;
-  align-items: center;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: clamp(2.5rem, 5vw, 5rem);
   max-width: var(--max-width);
   margin: clamp(2.5rem, 5vw, 4rem) auto clamp(2.5rem, 5vw, 4rem);
-  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  padding: 0 0 0 clamp(1.5rem, 3vw, 3rem);
+  /* Let the hero-photo edge bleed to the viewport edge */
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.hero-copy {
+  align-self: center;
 }
 
 @media (max-width: 860px) {
@@ -285,6 +297,7 @@ ul {
     grid-template-columns: 1fr;
     gap: 2.25rem;
     align-items: start;
+    padding-right: clamp(1.5rem, 3vw, 3rem);
   }
 }
 
@@ -387,24 +400,38 @@ ul {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: stretch;
   gap: 0;
   text-align: left;
   margin: 0;
+  min-height: 0;
+  /* Bleed off the right edge of the hero container */
+  margin-right: calc(-1 * clamp(1.5rem, 3vw, 3rem));
 }
 
 .hero-photo-frame {
   position: relative;
   width: 100%;
-  max-width: 560px;
-  aspect-ratio: 4 / 5;
+  height: 100%;
+  min-height: clamp(460px, 62vh, 640px);
+  max-width: none;
+  aspect-ratio: auto;
   border-radius: 0;
   padding: 0;
   background: var(--bg);
   box-shadow: none;
-  border: 1px solid var(--rule);
+  border: 0;
   overflow: hidden;
-  justify-self: end;
   margin-left: auto;
+}
+
+.hero-photo-frame::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(244, 240, 230, 0) 0%, rgba(244, 240, 230, 0.18) 100%);
+  pointer-events: none;
 }
 
 .hero-photo img {
@@ -413,7 +440,16 @@ ul {
   border-radius: 0;
   object-fit: cover;
   display: block;
-  filter: grayscale(8%) contrast(1.03);
+  filter: grayscale(6%) contrast(1.04);
+}
+
+@media (max-width: 860px) {
+  .hero-photo {
+    margin-right: 0;
+  }
+  .hero-photo-frame {
+    min-height: clamp(360px, 70vw, 520px);
+  }
 }
 
 .hero-photo-glow {
