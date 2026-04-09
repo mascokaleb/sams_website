@@ -401,11 +401,6 @@ ul {
   text-align: left;
   margin: 0;
   min-height: 0;
-  /* Bleed the photo's right edge all the way to the viewport edge.
-     The distance from the content area's right edge to the viewport right
-     edge is (the container's outer gap to the viewport) + (the hero's
-     right padding). max(0, ...) keeps narrow viewports from over-bleeding. */
-  margin-right: calc(-1 * (max(0px, (100vw - var(--max-width)) / 2) + clamp(1.5rem, 3vw, 3rem)));
 }
 
 .hero-photo-frame {
@@ -443,9 +438,6 @@ ul {
 }
 
 @media (max-width: 860px) {
-  .hero-photo {
-    margin-right: calc(-1 * clamp(1.5rem, 3vw, 3rem));
-  }
   .hero-photo-frame {
     min-height: clamp(360px, 70vw, 520px);
   }
