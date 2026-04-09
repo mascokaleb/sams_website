@@ -1230,15 +1230,18 @@ function renderGalleryCard(photo, index = 0) {
   const focalStyle = focalPoint ? ` style="object-position: ${escapeAttribute(focalPoint)};"` : "";
 
   return `
-    <article class="gallery-card" data-motion="delay-${(index % 3) + 1}">
+    <article class="gallery-card gallery-card--overlaid" data-motion="delay-${(index % 3) + 1}">
       <div class="gallery-card-media"${mediaAttributes ? ` ${mediaAttributes}` : ""}>
         ${dateOverlay}
         <img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy"${focalStyle} />
+        <div class="gallery-card-scrim" aria-hidden="true"></div>
+        <div class="gallery-card-overlay">
+          ${metaMarkup}
+          <h3 class="gallery-card-title">${escapeHtml(photo?.title || "Gallery highlight")}</h3>
+          ${tournamentBadge ? `<div class="card-chip-slot">${tournamentBadge}</div>` : ""}
+        </div>
       </div>
-      <div class="gallery-card-body">
-        ${metaMarkup}
-        <h3>${escapeHtml(photo?.title || "Gallery highlight")}</h3>
-        ${tournamentBadge ? `<div class="card-chip-slot">${tournamentBadge}</div>` : ""}
+      <div class="gallery-card-body gallery-card-body--hidden" aria-hidden="true">
         ${descriptionMarkup}
         ${renderGalleryTags(photo?.tags)}
         ${footerMarkup}
