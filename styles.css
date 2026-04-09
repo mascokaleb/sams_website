@@ -2850,7 +2850,7 @@ body.is-showing-highlight-overlay {
 
 @media (min-width: 720px) {
   .performance-panel--split .performance-content {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     align-items: start;
   }
 }
@@ -2926,21 +2926,23 @@ body.is-showing-highlight-overlay {
   color: var(--text);
 }
 
-/* Club yardages — grouped by category */
+/* Club yardages — categories laid out side-by-side */
 .club-yardage-groups {
   display: grid;
-  gap: 1.1rem;
+  gap: 1rem 1.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: start;
 }
 
 .club-yardage-group-title {
   font-family: "Space Grotesk", sans-serif;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.55rem;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--accent-secondary);
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid rgba(17, 104, 255, 0.18);
 }
 
@@ -2949,17 +2951,17 @@ body.is-showing-highlight-overlay {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.1rem;
+  gap: 0.12rem;
 }
 
 .panel .club-yardage-list li {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.32rem 0;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   border: 0;
 }
 
