@@ -320,7 +320,21 @@ function renderResume(resume) {
       return;
     }
 
-    const clubYardages = Array.isArray(resume.clubYardages) ? resume.clubYardages : [];
+    // Split performance stats so any "Club Yardages" legacy string entry
+    // can be parsed into the bulleted column instead of rendering as a stat.
+    const rawStats = Array.isArray(resume.performanceStats) ? resume.performanceStats : [];
+    const inlineClubYardages = [];
+    const regularStats = [];
+    rawStats.forEach((stat) => {
+      if (isClubYardagesStat(stat)) {
+        inlineClubYardages.push(...parseClubYardagesString(stat?.value));
+      } else {
+        regularStats.push(stat);
+      }
+    });
+
+    const structuredClubYardages = Array.isArray(resume.clubYardages) ? resume.clubYardages : [];
+    const clubYardages = structuredClubYardages.length ? structuredClubYardages : inlineClubYardages;
     const hasClubYardages = clubYardages.length > 0;
     const clubYardagesTitle = resume.clubYardagesTitle || "Club Yardages";
     const clubYardagesMarkup = hasClubYardages
@@ -349,7 +363,7 @@ function renderResume(resume) {
         <div class="performance-content">
           <div class="performance-column performance-column--stats">
             <dl>
-              ${(resume.performanceStats || [])
+              ${regularStats
                 .map(
                   (stat) => `
                     <div>
@@ -454,6 +468,41 @@ function formatYardageLabel(value) {
     return text;
   }
   return `${text} yds`;
+}
+
+function isClubYardagesStat(stat) {
+  if (!stat || typeof stat.label !== "string") {
+    return false;
+  }
+  return /club\s*yardage/i.test(stat.label);
+}
+
+function parseClubYardagesString(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+  return value
+    .split(/[,\n;]/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => {
+      const colonIndex = chunk.indexOf(":");
+      if (colonIndex > -1) {
+        return {
+          club: chunk.slice(0, colonIndex).trim(),
+          yardage: chunk.slice(colonIndex + 1).trim(),
+        };
+      }
+      const match = chunk.match(/^(.*?)\s+(\d[\d,]*)(\s*(?:yds?|yards?)?)\s*$/i);
+      if (match) {
+        return {
+          club: match[1].trim(),
+          yardage: `${match[2]}${match[3] ? match[3].trim() : ""}`,
+        };
+      }
+      return { club: chunk, yardage: "" };
+    })
+    .filter((entry) => entry.club);
 }
 
 function renderAcademics(academics) {
