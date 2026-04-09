@@ -1942,20 +1942,237 @@ button.tournament-chip {
   color: var(--text);
 }
 
+/* Footer reimagined as a closing "Let's Talk." moment — editorial headline
+   block on the left, player / explore / direct columns on the right, and a
+   thin base line with legal + year. Lives inside a dark full-bleed shell so
+   it echoes the accolades marquee and "The Work" interstitial. */
 .site-footer {
-  text-align: center;
-  padding: 3rem 1.5rem 4rem;
-  color: var(--text-muted);
+  position: relative;
+  padding: clamp(4rem, 8vw, 7rem) 0 2.5rem;
+  background: var(--text);
+  color: var(--bg);
   font-family: var(--font-body);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  border-top: 1px solid var(--rule);
-  margin-top: 0;
+  margin-top: clamp(3rem, 6vw, 5rem);
+  border-top: 1px solid var(--text);
 }
 
-.site-footer strong {
-  color: var(--text);
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(27, 41, 81, 0.32), transparent 55%),
+    radial-gradient(circle at 88% 80%, rgba(154, 116, 32, 0.12), transparent 55%);
+  pointer-events: none;
+}
+
+.site-footer-inner {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+  gap: clamp(2.5rem, 5vw, 4.5rem);
+  align-items: start;
+}
+
+.site-footer-primary {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.site-footer-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--accent-gold);
+  margin: 0;
+}
+
+.site-footer-headline {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 144;
+  font-size: clamp(4.5rem, 10vw, 9rem);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  margin: 0;
+  color: var(--bg);
+}
+
+.site-footer-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  align-self: flex-start;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--bg);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bg);
+  transition: color var(--transition), border-color var(--transition), gap var(--transition);
+}
+
+.site-footer-cta:hover,
+.site-footer-cta:focus-visible {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  gap: 1rem;
+}
+
+.site-footer-cta-arrow {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.site-footer-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.75rem, 3vw, 2.5rem);
+  padding-top: 0.5rem;
+}
+
+.site-footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.site-footer-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--accent-gold);
+  margin: 0 0 0.4rem;
+}
+
+.site-footer-value {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(244, 240, 230, 0.82);
+}
+
+.site-footer-value strong {
+  font-weight: 600;
+  color: var(--bg);
+}
+
+.site-footer-contact-placeholder {
+  color: rgba(244, 240, 230, 0.55);
+  font-style: italic;
+}
+
+.site-footer-direct-link {
+  color: var(--bg);
+  border-bottom: 1px solid rgba(244, 240, 230, 0.35);
+  padding-bottom: 1px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.site-footer-direct-link:hover,
+.site-footer-direct-link:focus-visible {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+.site-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer-links a {
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244, 240, 230, 0.82);
+  transition: color var(--transition);
+}
+
+.site-footer-links a:hover,
+.site-footer-links a:focus-visible {
+  color: var(--accent-gold);
+}
+
+.site-footer-rule {
+  position: relative;
+  max-width: var(--max-width);
+  margin: clamp(3rem, 5vw, 4rem) auto 1.5rem;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+}
+
+.site-footer-rule::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: rgba(244, 240, 230, 0.18);
+}
+
+.site-footer-base {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244, 240, 230, 0.5);
+}
+
+.site-footer-base p {
+  margin: 0;
+}
+
+.site-footer-base strong {
+  color: rgba(244, 240, 230, 0.78);
+  font-weight: 500;
+}
+
+@media (max-width: 820px) {
+  .site-footer-inner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .site-footer-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-footer-base {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .site-footer-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 body.content-page {

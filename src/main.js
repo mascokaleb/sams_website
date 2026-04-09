@@ -1336,6 +1336,66 @@ function renderContact(contact) {
       `
     )
     .join("");
+
+  hydrateFooterFromContact(contact);
+}
+
+// Promote the first email / phone / reference from the Contact section up into
+// the footer so the closing CTA has real reachable info instead of a static
+// "see above" placeholder. Runs after renderContact so the contact data is live.
+function hydrateFooterFromContact(contact) {
+  const footerContactEl = document.querySelector('[data-template="site-footer-contact"]');
+  const footerYearEl = document.querySelector('[data-template="site-footer-year"]');
+  const footerCtaEl = document.querySelector('[data-template="site-footer-cta"]');
+  if (footerYearEl) {
+    footerYearEl.textContent = String(new Date().getFullYear());
+  }
+
+  if (!footerContactEl) return;
+
+  // Only pull from the first card (the player/family "direct contact" card),
+  // never from coach references — the footer should surface Sam's reachable
+  // info, not a third party's email or phone.
+  const primaryCard = (contact?.cards || [])[0];
+  const primaryEntries = Array.isArray(primaryCard?.entries) ? primaryCard.entries : [];
+
+  const findEntry = (labelPattern, linkPattern) =>
+    primaryEntries.find((entry) => {
+      if (!entry) return false;
+      const label = typeof entry.label === "string" ? entry.label.toLowerCase() : "";
+      const link = typeof entry.link === "string" ? entry.link : "";
+      if (labelPattern && labelPattern.test(label)) return true;
+      if (linkPattern && linkPattern.test(link)) return true;
+      return false;
+    });
+
+  const emailEntry = findEntry(/email/, /^mailto:/i);
+  const phoneEntry = findEntry(/phone|cell|mobile/, /^tel:/i);
+
+  const lines = [];
+  if (emailEntry?.value) {
+    const href = emailEntry.link || `mailto:${emailEntry.value}`;
+    lines.push(`<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(emailEntry.value)}</a>`);
+  }
+  if (phoneEntry?.value) {
+    const href = phoneEntry.link || `tel:${phoneEntry.value.replace(/[^\d+]/g, "")}`;
+    lines.push(`<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(phoneEntry.value)}</a>`);
+  }
+
+  if (!lines.length) return;
+
+  footerContactEl.innerHTML = `
+    <p class="site-footer-label">Direct</p>
+    <p class="site-footer-value">
+      ${lines.join("<br />")}
+    </p>
+  `;
+
+  // Jump the "Get in touch" CTA straight to a mailto if we have one.
+  if (footerCtaEl && emailEntry?.value) {
+    const href = emailEntry.link || `mailto:${emailEntry.value}`;
+    footerCtaEl.setAttribute("href", href);
+  }
 }
 
 function renderContactEntry(entry) {
