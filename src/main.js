@@ -10,6 +10,7 @@ const SELECTORS = {
   heroCopy: '[data-template="hero-copy"]',
   heroPhoto: '[data-template="hero-photo"]',
   heroMetrics: '[data-template="hero-metrics"]',
+  accoladesMarquee: '[data-template="accolades-marquee"]',
   coachSnapshot: '[data-template="coach-snapshot"]',
   aboutHeading: '[data-template="about-heading"]',
   aboutGrid: '[data-template="about-grid"]',
@@ -101,6 +102,7 @@ async function hydratePage() {
 
   renderMeta(data.site);
   renderHero(data.hero, data.site);
+  renderAccoladesMarquee(data.resume, data.hero);
   renderCoachSnapshot(data.coachSnapshot, { hero: data.hero, about: data.about });
   renderAbout(data.about, { academics: data.academics });
   renderResume(data.resume);
@@ -244,6 +246,83 @@ function renderHero(hero, site) {
       </div>
     `;
   }
+}
+
+// Infinite horizontal ticker of accolades pulled from the CMS playing-experience
+// bullet list. Each bullet is trimmed down to a sharp callout (e.g.
+// "Rookie of the Year 2025") and duplicated once so the CSS animation can loop
+// seamlessly without jumping.
+function renderAccoladesMarquee(resume, hero) {
+  const sectionEl = select(SELECTORS.accoladesMarquee);
+  if (!sectionEl) return;
+
+  const raw = Array.isArray(resume?.experienceList) ? resume.experienceList : [];
+  const items = raw
+    .map(extractAccolade)
+    .filter(Boolean);
+
+  // Fall back to the hero tagline as a single item so the marquee never renders empty.
+  if (!items.length && hero?.tagline) {
+    items.push(hero.tagline);
+  }
+
+  if (!items.length) {
+    sectionEl.hidden = true;
+    sectionEl.innerHTML = "";
+    return;
+  }
+
+  sectionEl.hidden = false;
+
+  // Duplicate the list so the translateX loop can hand off cleanly.
+  const doubled = items.concat(items);
+  const trackItems = doubled
+    .map(
+      (text) => `
+        <li class="accolades-marquee-item">
+          <span class="accolades-marquee-text">${escapeHtml(text)}</span>
+          <span class="accolades-marquee-sep" aria-hidden="true">★</span>
+        </li>
+      `
+    )
+    .join("");
+
+  sectionEl.innerHTML = `
+    <div class="accolades-marquee-track" aria-hidden="false">
+      <ul class="accolades-marquee-list" role="list">
+        ${trackItems}
+      </ul>
+    </div>
+  `;
+}
+
+// Pulls a short, headline-worthy accolade out of a longer bullet point.
+// CMS bullets look like:
+//   'Evergreen High School - Varsity Golf 4th Seed - awarded "Rookie of the Year 2025"'
+//   'Summit Junior Tour - Player Boys Division 14-18 (2025) 2nd Place Finish'
+// We prefer the quoted fragment, then look for recognizable accolade keywords,
+// and finally fall back to a trimmed version of the first segment.
+function extractAccolade(bullet) {
+  if (typeof bullet !== "string") return null;
+  const text = bullet.trim();
+  if (!text) return null;
+
+  // 1. If the bullet has an "awarded" phrase in quotes, use that verbatim.
+  const quoted = text.match(/"([^"]{3,80})"/);
+  if (quoted) {
+    return quoted[1].trim();
+  }
+
+  // 2. Look for accolade-style keywords and return the surrounding fragment.
+  const KEYWORD = /(\d+(?:st|nd|rd|th)\s+Place[^.,;()]*|Top\s*\d+[^.,;()]*|Rookie[^.,;()]*|Most Improved[^.,;()]*|Invitee[^.,;()]*|First Team[^.,;()]*|Champion[^.,;()]*|Winner[^.,;()]*|Ranked\s+\d+\/\d+[^.,;()]*)/i;
+  const keywordMatch = text.match(KEYWORD);
+  if (keywordMatch) {
+    return keywordMatch[1].trim();
+  }
+
+  // 3. Fallback: use the first clause, truncated to keep the marquee punchy.
+  const firstClause = text.split(/[-–—•·]/)[0].trim();
+  return firstClause.length > 60 ? firstClause.slice(0, 57) + "…" : firstClause;
 }
 
 function renderCoachSnapshot(snapshot, context = {}) {
