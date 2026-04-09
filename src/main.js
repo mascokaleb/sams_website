@@ -11,6 +11,9 @@ const SELECTORS = {
   heroPhoto: '[data-template="hero-photo"]',
   heroMetrics: '[data-template="hero-metrics"]',
   accoladesMarquee: '[data-template="accolades-marquee"]',
+  workInterstitial: '[data-template="work-interstitial"]',
+  workInterstitialYears: '[data-template="work-years"]',
+  workInterstitialDays: '[data-template="work-days"]',
   coachSnapshot: '[data-template="coach-snapshot"]',
   aboutHeading: '[data-template="about-heading"]',
   aboutGrid: '[data-template="about-grid"]',
@@ -105,6 +108,7 @@ async function hydratePage() {
   renderAccoladesMarquee(data.resume, data.hero);
   renderCoachSnapshot(data.coachSnapshot, { hero: data.hero, about: data.about });
   renderAbout(data.about, { academics: data.academics });
+  renderWorkInterstitial(data.about);
   renderResume(data.resume);
   renderAcademics(data.academics);
 
@@ -323,6 +327,63 @@ function extractAccolade(bullet) {
   // 3. Fallback: use the first clause, truncated to keep the marquee punchy.
   const firstClause = text.split(/[-–—•·]/)[0].trim();
   return firstClause.length > 60 ? firstClause.slice(0, 57) + "…" : firstClause;
+}
+
+// The Work interstitial is a dark full-bleed strip between About and the Golf
+// Resume. It reprints two numbers already present in the Quick Hits card —
+// "Years Playing" and "Training" days/week — as huge serif display type, so
+// the reader hits a beat of visual contrast before the resume data starts.
+// If those quick-hits are absent from the CMS, the strip stays hidden.
+function renderWorkInterstitial(about) {
+  const sectionEl = select(SELECTORS.workInterstitial);
+  if (!sectionEl) return;
+
+  const hits = Array.isArray(about?.quickHits) ? about.quickHits : [];
+  const findHit = (pattern) =>
+    hits.find((hit) => typeof hit?.label === "string" && pattern.test(hit.label));
+
+  const yearsHit = findHit(/years?\s*playing/i);
+  const daysHit = findHit(/train(ing)?/i);
+
+  const yearsLabel = extractLeadingNumber(yearsHit?.value) || null;
+  const daysLabel = extractDaysPerWeek(daysHit?.value) || null;
+
+  // Only show the strip if we have at least one of the numbers to back it up.
+  if (!yearsLabel && !daysLabel) {
+    sectionEl.hidden = true;
+    return;
+  }
+
+  const yearsNode = select(SELECTORS.workInterstitialYears);
+  const daysNode = select(SELECTORS.workInterstitialDays);
+  if (yearsNode && yearsLabel) {
+    yearsNode.textContent = yearsLabel;
+  }
+  if (daysNode && daysLabel) {
+    daysNode.textContent = daysLabel;
+  }
+
+  sectionEl.hidden = false;
+}
+
+// Grab the first number (e.g. "9" from "9 years") or the whole value if it
+// already reads like a number. Returns null if nothing numeric is present.
+function extractLeadingNumber(value) {
+  if (typeof value !== "string") return null;
+  const match = value.match(/^\s*(\d+(?:\.\d+)?)/);
+  return match ? match[1] : null;
+}
+
+// Parse "5-6 days/week" → "5–6". Handles "5 days", "5/week", ranges with /, -, –, —.
+function extractDaysPerWeek(value) {
+  if (typeof value !== "string") return null;
+  const cleaned = value.trim();
+  const range = cleaned.match(/^\s*(\d+)\s*[-–—]\s*(\d+)/);
+  if (range) {
+    return `${range[1]}–${range[2]}`;
+  }
+  const single = cleaned.match(/^\s*(\d+)/);
+  return single ? single[1] : null;
 }
 
 function renderCoachSnapshot(snapshot, context = {}) {
