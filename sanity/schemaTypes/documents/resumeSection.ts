@@ -32,6 +32,19 @@ export const resumeSection = defineType({
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
+      name: 'clubYardagesTitle',
+      type: 'string',
+      title: 'Club Yardages Title',
+      initialValue: 'Club Yardages',
+    }),
+    defineField({
+      name: 'clubYardages',
+      type: 'array',
+      title: 'Club Yardages',
+      description: 'List of clubs with typical yardages, shown as bullet points in the Performance Snapshot panel.',
+      of: [{ type: 'clubYardage' }],
+    }),
+    defineField({
       name: 'trainingTitle',
       type: 'string',
       title: 'Training Panel Title',

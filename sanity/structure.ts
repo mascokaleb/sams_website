@@ -7,6 +7,11 @@ const singletonDocs = [
   { title: 'Golf Resume', type: 'resumeSection', id: 'resumeSection' },
   { title: 'Academics', type: 'academicsSection', id: 'academicsSection' },
   { title: 'Tournaments Section', type: 'highlightsSection', id: 'highlightsSection' },
+  {
+    title: 'Upcoming Tournaments Section',
+    type: 'upcomingTournamentsSection',
+    id: 'upcomingTournamentsSection',
+  },
   { title: 'Videos Section', type: 'videosSection', id: 'videosSection' },
   { title: 'Gallery Section', type: 'gallerySection', id: 'gallerySection' },
   { title: 'Dual-Sport', type: 'dualSportSection', id: 'dualSportSection' },
@@ -30,6 +35,14 @@ export const structure: StructureResolver = (S, context) =>
         .title('Tournament Highlights')
         .schemaType('highlightEvent')
         .child(S.documentTypeList('highlightEvent').title('Tournament Highlights')),
+      S.listItem()
+        .title('Upcoming Tournaments')
+        .schemaType('upcomingTournament')
+        .child(
+          S.documentTypeList('upcomingTournament')
+            .title('Upcoming Tournaments')
+            .defaultOrdering([{ field: 'eventDate', direction: 'asc' }])
+        ),
       S.listItem()
         .title('Video Highlights')
         .schemaType('videoHighlight')

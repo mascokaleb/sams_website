@@ -9,9 +9,12 @@ import { highlightEvent } from './documents/highlightEvent';
 import { highlightsSection } from './documents/highlightsSection';
 import { resumeSection } from './documents/resumeSection';
 import { siteSettings } from './documents/siteSettings';
+import { upcomingTournament } from './documents/upcomingTournament';
+import { upcomingTournamentsSection } from './documents/upcomingTournamentsSection';
 import { videoHighlight } from './documents/videoHighlight';
 import { videosSection } from './documents/videosSection';
 import { blockContent } from './objects/blockContent';
+import { clubYardage } from './objects/clubYardage';
 import { contactCard } from './objects/contactCard';
 import { contactEntry } from './objects/contactEntry';
 import { cta } from './objects/cta';
@@ -32,6 +35,8 @@ export const schemaTypes = [
   academicsSection,
   highlightsSection,
   highlightEvent,
+  upcomingTournamentsSection,
+  upcomingTournament,
   videosSection,
   gallerySection,
   videoHighlight,
@@ -46,6 +51,7 @@ export const schemaTypes = [
   profileFact,
   quickHit,
   statItem,
+  clubYardage,
   tournamentDay,
   dualCard,
   contactCard,

@@ -18,6 +18,8 @@ const SELECTORS = {
   academicsGrid: '[data-template="academics-grid"]',
   highlightsHeading: '[data-template="highlights-heading"]',
   highlightsTimeline: '[data-template="timeline"]',
+  upcomingHeading: '[data-template="upcoming-heading"]',
+  upcomingGrid: '[data-template="upcoming-grid"]',
   videosHeading: '[data-template="videos-heading"]',
   videoGrid: '[data-template="video-grid"]',
   videosActions: '[data-template="videos-actions"]',
@@ -111,6 +113,8 @@ async function hydratePage() {
   highlightsState.allItems = orderedHighlights;
   highlightsState.items = orderedHighlights.filter(shouldDisplayOnHome);
   renderHighlights();
+
+  renderUpcomingTournaments(data.upcomingTournamentsSection, data.upcomingTournaments || []);
 
   const orderedVideos = sortEntriesChronologically(data.videos || [], "eventDate");
   highlightsState.videos = orderedVideos;
@@ -316,21 +320,49 @@ function renderResume(resume) {
       return;
     }
 
+    const clubYardages = Array.isArray(resume.clubYardages) ? resume.clubYardages : [];
+    const hasClubYardages = clubYardages.length > 0;
+    const clubYardagesTitle = resume.clubYardagesTitle || "Club Yardages";
+    const clubYardagesMarkup = hasClubYardages
+      ? `
+          <div class="performance-column performance-column--clubs">
+            <h4 class="performance-column-title">${escapeHtml(clubYardagesTitle)}</h4>
+            <ul class="club-yardage-list">
+              ${clubYardages
+                .map(
+                  (club) => `
+                    <li>
+                      <span class="club-yardage-name">${escapeHtml(club?.club || "")}</span>
+                      <span class="club-yardage-value">${escapeHtml(club?.yardage || "")}</span>
+                    </li>
+                  `
+                )
+                .join("")}
+            </ul>
+          </div>
+        `
+      : "";
+
     panelsEl.innerHTML = `
-      <article class="panel" data-motion="delay-1">
+      <article class="panel performance-panel${hasClubYardages ? " performance-panel--split" : ""}" data-motion="delay-1">
         <h3>${escapeHtml(resume.performanceTitle || "Performance Snapshot")}</h3>
-        <dl>
-          ${(resume.performanceStats || [])
-            .map(
-              (stat) => `
-                <div>
-                  <dt>${escapeHtml(stat.label || "")}</dt>
-                  <dd>${escapeHtml(stat.value || "")}</dd>
-                </div>
-              `
-            )
-            .join("")}
-        </dl>
+        <div class="performance-content">
+          <div class="performance-column performance-column--stats">
+            <dl>
+              ${(resume.performanceStats || [])
+                .map(
+                  (stat) => `
+                    <div>
+                      <dt>${escapeHtml(stat.label || "")}</dt>
+                      <dd>${escapeHtml(stat.value || "")}</dd>
+                    </div>
+                  `
+                )
+                .join("")}
+            </dl>
+          </div>
+          ${clubYardagesMarkup}
+        </div>
       </article>
       <article class="panel" data-motion="delay-2">
         <h3>${escapeHtml(resume.trainingTitle || "Training Routine")}</h3>
@@ -346,6 +378,82 @@ function renderResume(resume) {
       </article>
     `;
   }
+}
+
+function renderUpcomingTournaments(sectionMeta, tournaments) {
+  const headingEl = select(SELECTORS.upcomingHeading);
+  const gridEl = select(SELECTORS.upcomingGrid);
+
+  if (headingEl) {
+    headingEl.innerHTML = sectionMeta
+      ? `
+          <h2>${escapeHtml(sectionMeta.heading || "Upcoming Tournaments")}</h2>
+          ${sectionMeta.subheading ? `<p>${escapeHtml(sectionMeta.subheading)}</p>` : ""}
+        `
+      : `
+          <h2>Upcoming Tournaments</h2>
+          <p>Next events on Samuel's competitive schedule.</p>
+        `;
+  }
+
+  if (!gridEl) {
+    return;
+  }
+
+  const items = Array.isArray(tournaments) ? tournaments : [];
+  if (!items.length) {
+    gridEl.innerHTML = renderPlaceholder("Upcoming tournaments coming soon.");
+    return;
+  }
+
+  const maxItems = Math.max(1, sectionMeta?.maxItems || items.length);
+  const limited = items.slice(0, maxItems);
+
+  gridEl.innerHTML = limited
+    .map((tournament, index) => renderUpcomingTournamentCard(tournament, index))
+    .join("");
+  gridEl
+    .querySelectorAll("[data-motion]")
+    .forEach((el) => el.classList.add("is-visible"));
+}
+
+function renderUpcomingTournamentCard(tournament, index = 0) {
+  if (!tournament) {
+    return "";
+  }
+
+  const course = tournament.course || "Course TBD";
+  const location = tournament.location || "";
+  const dateLabel = formatDateRangeDisplay(tournament.eventDate, tournament.endDate, {
+    month: "short",
+  });
+  const yardageValue = formatYardageLabel(tournament.yardage);
+  const delay = (index % 4) + 1;
+
+  return `
+    <article class="upcoming-card" data-motion="delay-${delay}">
+      <div class="upcoming-card-date">${dateLabel || "Date TBD"}</div>
+      <h3 class="upcoming-card-course">${escapeHtml(course)}</h3>
+      <div class="upcoming-card-meta">
+        ${location ? `<span class="upcoming-card-location">${escapeHtml(location)}</span>` : ""}
+        ${yardageValue ? `<span class="upcoming-card-yardage">${escapeHtml(yardageValue)}</span>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function formatYardageLabel(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  const text = String(value).trim();
+  if (!text) {
+    return "";
+  }
+  if (/yard|yd/i.test(text)) {
+    return text;
+  }
+  return `${text} yds`;
 }
 
 function renderAcademics(academics) {

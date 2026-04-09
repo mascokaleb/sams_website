@@ -58,6 +58,8 @@ const siteContentQuery = `{
     subheading,
     performanceTitle,
     performanceStats,
+    clubYardagesTitle,
+    clubYardages,
     trainingTitle,
     trainingBody,
     experienceTitle,
@@ -76,6 +78,16 @@ const siteContentQuery = `{
     interestsBody
   },
   "highlightsSection": *[_type == "highlightsSection"][0]{heading, subheading, maxItems},
+  "upcomingTournamentsSection": *[_type == "upcomingTournamentsSection"][0]{heading, subheading, maxItems},
+  "upcomingTournaments": *[_type == "upcomingTournament"]|order(eventDate asc, _createdAt asc){
+    _id,
+    course,
+    location,
+    eventDate,
+    endDate,
+    yardage,
+    _createdAt
+  },
   "highlightEvents": *[_type == "highlightEvent"]|order(eventDate desc, _createdAt desc){
     _id,
     title,
