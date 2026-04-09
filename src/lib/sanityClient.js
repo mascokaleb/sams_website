@@ -41,7 +41,8 @@ const siteContentQuery = `{
       focalPoint,
       hotspot
     },
-    "metrics": metrics[]{label, value}
+    "metrics": metrics[]{label, value},
+    accolades
   },
   "coachSnapshot": *[_type == "coachSnapshot"][0]{
     eyebrow,
@@ -77,7 +78,8 @@ const siteContentQuery = `{
     mindsetTitle,
     mindsetBody,
     quickHitsTitle,
-    quickHits
+    quickHits,
+    workInterstitial
   },
   "resume": *[_type == "resumeSection"][0]{
     heading,
@@ -119,6 +121,7 @@ const siteContentQuery = `{
     title,
     eventDate,
     endDate,
+    location,
     summary,
     days[]{
       label,
@@ -127,6 +130,13 @@ const siteContentQuery = `{
       rankingPosition,
       rankingOutOf,
       notes
+    },
+    "coverImage": coverImage{
+      alt,
+      "url": asset->url,
+      focalPoint,
+      hotspot,
+      crop
     },
     featured,
     showOnHomePage,
@@ -195,7 +205,21 @@ const siteContentQuery = `{
       }
     }
   },
-  "contact": *[_type == "contactSection"][0]{heading, subheading, cards}
+  "contact": *[_type == "contactSection"][0]{heading, subheading, cards},
+  "footer": *[_type == "footerSection"][0]{
+    kicker,
+    headline,
+    ctaLabel,
+    playerLabel,
+    playerName,
+    playerClassYear,
+    playerLocation,
+    exploreLabel,
+    exploreLinks[]{label, href},
+    directLabel,
+    baseLine,
+    copyrightName
+  }
 }`;
 
 export async function fetchSiteContent() {

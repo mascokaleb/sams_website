@@ -56,6 +56,13 @@ export const aboutSection = defineType({
       of: [{ type: 'quickHit' }],
       validation: (Rule) => Rule.required().min(1),
     }),
+    defineField({
+      name: 'workInterstitial',
+      type: 'workInterstitial',
+      title: 'The Work Interstitial',
+      description:
+        'Dark full-bleed strip between About and the Golf Resume. Leave empty to auto-derive years/days from Quick Hits.',
+    }),
   ],
   preview: {
     select: { title: 'heading', subtitle: 'subheading' },

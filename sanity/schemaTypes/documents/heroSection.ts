@@ -73,6 +73,19 @@ export const heroSection = defineType({
       of: [{ type: 'metric' }],
       validation: (Rule) => Rule.min(1),
     }),
+    defineField({
+      name: 'accolades',
+      type: 'array',
+      title: 'Accolades Marquee',
+      description:
+        'Short phrases that scroll across the dark ticker below the hero (e.g. "Rookie of the Year 2025"). Keep each item under ~40 characters. If left empty, the marquee auto-parses the Playing Experience list in the Resume section.',
+      of: [
+        {
+          type: 'string',
+          validation: (Rule) => Rule.max(80),
+        },
+      ],
+    }),
   ],
   preview: {
     select: {

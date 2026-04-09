@@ -12,8 +12,6 @@ const SELECTORS = {
   heroMetrics: '[data-template="hero-metrics"]',
   accoladesMarquee: '[data-template="accolades-marquee"]',
   workInterstitial: '[data-template="work-interstitial"]',
-  workInterstitialYears: '[data-template="work-years"]',
-  workInterstitialDays: '[data-template="work-days"]',
   coachSnapshot: '[data-template="coach-snapshot"]',
   aboutHeading: '[data-template="about-heading"]',
   aboutGrid: '[data-template="about-grid"]',
@@ -141,6 +139,7 @@ async function hydratePage() {
   renderGallery();
   renderDualSport(data.dualSport);
   renderContact(data.contact);
+  renderFooter(data.footer, data.contact);
 
   setGlobalLoadingState(false);
   setupVideoFrames();
@@ -258,20 +257,29 @@ function renderHero(hero, site) {
   }
 }
 
-// Infinite horizontal ticker of accolades pulled from the CMS playing-experience
-// bullet list. Each bullet is trimmed down to a sharp callout (e.g.
-// "Rookie of the Year 2025") and duplicated once so the CSS animation can loop
-// seamlessly without jumping.
+// Infinite horizontal ticker of accolades. Priority order:
+//  1. hero.accolades — an explicit array curated in the CMS (preferred).
+//  2. resume.experienceList — auto-parsed via extractAccolade to pull out
+//     quoted phrases and keyword fragments. Fragile, but keeps the marquee
+//     useful before Sam fills in the explicit field.
+//  3. hero.tagline — single-item fallback so the marquee never renders empty.
 function renderAccoladesMarquee(resume, hero) {
   const sectionEl = select(SELECTORS.accoladesMarquee);
   if (!sectionEl) return;
 
-  const raw = Array.isArray(resume?.experienceList) ? resume.experienceList : [];
-  const items = raw
-    .map(extractAccolade)
-    .filter(Boolean);
+  let items = [];
 
-  // Fall back to the hero tagline as a single item so the marquee never renders empty.
+  const explicit = Array.isArray(hero?.accolades) ? hero.accolades : [];
+  const cleanedExplicit = explicit
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter(Boolean);
+  if (cleanedExplicit.length) {
+    items = cleanedExplicit;
+  } else {
+    const raw = Array.isArray(resume?.experienceList) ? resume.experienceList : [];
+    items = raw.map(extractAccolade).filter(Boolean);
+  }
+
   if (!items.length && hero?.tagline) {
     items.push(hero.tagline);
   }
@@ -336,38 +344,61 @@ function extractAccolade(bullet) {
 }
 
 // The Work interstitial is a dark full-bleed strip between About and the Golf
-// Resume. It reprints two numbers already present in the Quick Hits card —
-// "Years Playing" and "Training" days/week — as huge serif display type, so
-// the reader hits a beat of visual contrast before the resume data starts.
-// If those quick-hits are absent from the CMS, the strip stays hidden.
+// Resume with three big-number + italic-unit rows. Priority:
+//   1. about.workInterstitial — explicit CMS object with kicker + line1-3.
+//   2. Auto-derive from Quick Hits ("Years Playing" → line 1, "Training" days
+//      → line 2, hardcoded "1 goal." → line 3).
+// Any row missing both a number and a unit is collapsed to empty. If the
+// whole interstitial would be empty, the section stays hidden.
 function renderWorkInterstitial(about) {
   const sectionEl = select(SELECTORS.workInterstitial);
   if (!sectionEl) return;
 
+  const explicit = about?.workInterstitial || null;
+
+  // Try to derive from Quick Hits as a fallback for any missing lines.
   const hits = Array.isArray(about?.quickHits) ? about.quickHits : [];
   const findHit = (pattern) =>
     hits.find((hit) => typeof hit?.label === "string" && pattern.test(hit.label));
-
   const yearsHit = findHit(/years?\s*playing/i);
   const daysHit = findHit(/train(ing)?/i);
+  const derivedYears = extractLeadingNumber(yearsHit?.value) || null;
+  const derivedDays = extractDaysPerWeek(daysHit?.value) || null;
 
-  const yearsLabel = extractLeadingNumber(yearsHit?.value) || null;
-  const daysLabel = extractDaysPerWeek(daysHit?.value) || null;
+  const kicker = (explicit?.kicker || "The Work").trim();
+  const lineOneNumber = (explicit?.lineOneNumber || derivedYears || "").trim();
+  const lineOneUnit = (explicit?.lineOneUnit || (derivedYears ? "years" : "")).trim();
+  const lineTwoNumber = (explicit?.lineTwoNumber || derivedDays || "").trim();
+  const lineTwoUnit = (explicit?.lineTwoUnit || (derivedDays ? "days a week" : "")).trim();
+  const lineThreeNumber = (explicit?.lineThreeNumber || (explicit ? "" : "1")).trim();
+  const lineThreeUnit = (explicit?.lineThreeUnit || (explicit ? "" : "goal.")).trim();
 
-  // Only show the strip if we have at least one of the numbers to back it up.
-  if (!yearsLabel && !daysLabel) {
+  const rows = [
+    { number: lineOneNumber, unit: lineOneUnit },
+    { number: lineTwoNumber, unit: lineTwoUnit },
+    { number: lineThreeNumber, unit: lineThreeUnit },
+  ].filter((row) => row.number || row.unit);
+
+  if (!rows.length) {
     sectionEl.hidden = true;
     return;
   }
 
-  const yearsNode = select(SELECTORS.workInterstitialYears);
-  const daysNode = select(SELECTORS.workInterstitialDays);
-  if (yearsNode && yearsLabel) {
-    yearsNode.textContent = yearsLabel;
-  }
-  if (daysNode && daysLabel) {
-    daysNode.textContent = daysLabel;
-  }
+  sectionEl.innerHTML = `
+    <div class="interstitial-inner">
+      <p class="interstitial-kicker">${escapeHtml(kicker)}</p>
+      ${rows
+        .map(
+          (row) => `
+            <p class="interstitial-line">
+              ${row.number ? `<span class="interstitial-number">${escapeHtml(row.number)}</span>` : ""}
+              ${row.unit ? `<span class="interstitial-unit">${escapeHtml(row.unit)}</span>` : ""}
+            </p>
+          `
+        )
+        .join("")}
+    </div>
+  `;
 
   sectionEl.hidden = false;
 }
@@ -1354,28 +1385,51 @@ function renderContact(contact) {
     )
     .join("");
 
-  hydrateFooterFromContact(contact);
 }
 
-// Promote the first email / phone / reference from the Contact section up into
-// the footer so the closing CTA has real reachable info instead of a static
-// "see above" placeholder. Runs after renderContact so the contact data is live.
-function hydrateFooterFromContact(contact) {
-  const footerContactEl = document.querySelector('[data-template="site-footer-contact"]');
-  const footerYearEl = document.querySelector('[data-template="site-footer-year"]');
-  const footerCtaEl = document.querySelector('[data-template="site-footer-cta"]');
-  if (footerYearEl) {
-    footerYearEl.textContent = String(new Date().getFullYear());
-  }
+// Render the closing "Let's Talk." footer. Reads the optional footerSection
+// singleton first (kicker, headline, column labels, explore links, static
+// copy), then hydrates the Direct column + CTA href from the primary contact
+// card. Every field has a sensible default so the footer survives an empty
+// footerSection document.
+function renderFooter(footer, contact) {
+  const footerEl = document.querySelector(".site-footer");
+  if (!footerEl) return;
 
-  if (!footerContactEl) return;
+  const defaults = {
+    kicker: "05 — Open For Recruiting",
+    headline: "Let\u2019s|Talk.",
+    ctaLabel: "Get in touch",
+    playerLabel: "Player",
+    playerName: "Samuel Masco",
+    playerClassYear: "Class of 2029",
+    playerLocation: "Evergreen, Colorado",
+    exploreLabel: "Explore",
+    exploreLinks: [
+      { label: "Resume", href: "#golf-resume" },
+      { label: "Highlights", href: "#highlights" },
+      { label: "Media", href: "#videos" },
+      { label: "About", href: "#about" },
+    ],
+    directLabel: "Direct",
+    baseLine: "Built with care for the recruiting journey of Samuel Masco · Class of 2029.",
+    copyrightName: "Samuel Masco",
+  };
 
-  // Only pull from the first card (the player/family "direct contact" card),
-  // never from coach references — the footer should surface Sam's reachable
-  // info, not a third party's email or phone.
+  const value = (key) => {
+    const raw = footer?.[key];
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+    return defaults[key];
+  };
+
+  const exploreLinks = Array.isArray(footer?.exploreLinks) && footer.exploreLinks.length
+    ? footer.exploreLinks
+    : defaults.exploreLinks;
+
+  // Pull reachable email / phone from the primary contact card only — never
+  // from Coach References, which is card index 1+.
   const primaryCard = (contact?.cards || [])[0];
   const primaryEntries = Array.isArray(primaryCard?.entries) ? primaryCard.entries : [];
-
   const findEntry = (labelPattern, linkPattern) =>
     primaryEntries.find((entry) => {
       if (!entry) return false;
@@ -1385,34 +1439,83 @@ function hydrateFooterFromContact(contact) {
       if (linkPattern && linkPattern.test(link)) return true;
       return false;
     });
-
   const emailEntry = findEntry(/email/, /^mailto:/i);
   const phoneEntry = findEntry(/phone|cell|mobile/, /^tel:/i);
 
-  const lines = [];
+  const directLines = [];
   if (emailEntry?.value) {
     const href = emailEntry.link || `mailto:${emailEntry.value}`;
-    lines.push(`<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(emailEntry.value)}</a>`);
+    directLines.push(
+      `<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(emailEntry.value)}</a>`
+    );
   }
   if (phoneEntry?.value) {
     const href = phoneEntry.link || `tel:${phoneEntry.value.replace(/[^\d+]/g, "")}`;
-    lines.push(`<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(phoneEntry.value)}</a>`);
+    directLines.push(
+      `<a class="site-footer-direct-link" href="${escapeAttribute(href)}">${escapeHtml(phoneEntry.value)}</a>`
+    );
   }
 
-  if (!lines.length) return;
+  const directBody = directLines.length
+    ? `<p class="site-footer-value">${directLines.join("<br />")}</p>`
+    : `<p class="site-footer-value site-footer-contact-placeholder">See the contact section above for email, phone, and coach references.</p>`;
 
-  footerContactEl.innerHTML = `
-    <p class="site-footer-label">Direct</p>
-    <p class="site-footer-value">
-      ${lines.join("<br />")}
-    </p>
+  // The headline supports an optional "|" to force a line break (so editors
+  // can stack "Let's" / "Talk." without needing HTML).
+  const headlineHtml = escapeHtml(value("headline")).replace(/\|/g, "<br />");
+
+  const ctaHref = emailEntry?.value
+    ? emailEntry.link || `mailto:${emailEntry.value}`
+    : "#contact";
+
+  const playerLines = [
+    value("playerName") ? `<strong>${escapeHtml(value("playerName"))}</strong>` : "",
+    value("playerClassYear") ? escapeHtml(value("playerClassYear")) : "",
+    value("playerLocation") ? escapeHtml(value("playerLocation")) : "",
+  ]
+    .filter(Boolean)
+    .join("<br />");
+
+  const exploreMarkup = exploreLinks
+    .filter((link) => link?.label && link?.href)
+    .map(
+      (link) => `
+        <li><a href="${escapeAttribute(link.href)}">${escapeHtml(link.label)}</a></li>
+      `
+    )
+    .join("");
+
+  footerEl.innerHTML = `
+    <div class="site-footer-inner">
+      <div class="site-footer-primary">
+        <p class="site-footer-kicker">${escapeHtml(value("kicker"))}</p>
+        <h2 class="site-footer-headline">${headlineHtml}</h2>
+        <a class="site-footer-cta" href="${escapeAttribute(ctaHref)}">
+          <span>${escapeHtml(value("ctaLabel"))}</span>
+          <span class="site-footer-cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+      <div class="site-footer-columns">
+        <div class="site-footer-column">
+          <p class="site-footer-label">${escapeHtml(value("playerLabel"))}</p>
+          <p class="site-footer-value">${playerLines}</p>
+        </div>
+        <div class="site-footer-column">
+          <p class="site-footer-label">${escapeHtml(value("exploreLabel"))}</p>
+          <ul class="site-footer-links">${exploreMarkup}</ul>
+        </div>
+        <div class="site-footer-column site-footer-contact">
+          <p class="site-footer-label">${escapeHtml(value("directLabel"))}</p>
+          ${directBody}
+        </div>
+      </div>
+    </div>
+    <div class="site-footer-rule"></div>
+    <div class="site-footer-base">
+      <p>&copy; ${new Date().getFullYear()} ${escapeHtml(value("copyrightName"))}. Recruiting portfolio.</p>
+      <p>${escapeHtml(value("baseLine"))}</p>
+    </div>
   `;
-
-  // Jump the "Get in touch" CTA straight to a mailto if we have one.
-  if (footerCtaEl && emailEntry?.value) {
-    const href = emailEntry.link || `mailto:${emailEntry.value}`;
-    footerCtaEl.setAttribute("href", href);
-  }
 }
 
 function renderContactEntry(entry) {
@@ -1452,13 +1555,22 @@ function renderHighlightCard(event, index) {
   const fallbackId = `home-highlight-${index}`;
   const eventId = event?._id || event?.title || fallbackId;
 
-  // Pick a hero photo for this tournament so the card reads like an editorial spread.
+  // Pick a hero photo for this tournament so the card reads like an editorial
+  // spread. Priority: (1) explicit coverImage set on the highlightEvent,
+  // (2) the first linked galleryPhoto, (3) navy monogram fallback.
+  const coverImage = event?.coverImage?.url ? event.coverImage : null;
   const eventPhotos = getPhotosForEvent(event);
-  const heroPhoto = eventPhotos[0];
-  const heroImageUrl = heroPhoto?.image?.url || "";
-  const heroImageAlt = heroPhoto?.image?.alt || event?.title || "Tournament photo";
-  const heroFocal = buildObjectPosition(heroPhoto?.image?.focalPoint || heroPhoto?.image?.hotspot);
-  const heroFocalStyle = heroFocal ? ` style="object-position: ${escapeAttribute(heroFocal)};"` : "";
+  const fallbackPhoto = eventPhotos[0]?.image;
+  const heroImage = coverImage || fallbackPhoto;
+  const heroImageUrl = heroImage?.url || "";
+  const heroImageAlt =
+    heroImage?.alt || event?.title || "Tournament photo";
+  const heroFocal = buildObjectPosition(
+    heroImage?.focalPoint || heroImage?.hotspot
+  );
+  const heroFocalStyle = heroFocal
+    ? ` style="object-position: ${escapeAttribute(heroFocal)};"`
+    : "";
 
   // Build the big headline score — best round across the event.
   const bestDay = pickHeadlineDay(days);

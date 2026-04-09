@@ -3,6 +3,7 @@ import { academicsSection } from './documents/academicsSection';
 import { coachSnapshot } from './documents/coachSnapshot';
 import { contactSection } from './documents/contactSection';
 import { dualSportSection } from './documents/dualSportSection';
+import { footerSection } from './documents/footerSection';
 import { galleryPhoto } from './documents/galleryPhoto';
 import { gallerySection } from './documents/gallerySection';
 import { heroSection } from './documents/heroSection';
@@ -26,6 +27,7 @@ import { profileFact } from './objects/profileFact';
 import { quickHit } from './objects/quickHit';
 import { statItem } from './objects/statItem';
 import { tournamentDay } from './objects/tournamentDay';
+import { workInterstitial } from './objects/workInterstitial';
 
 export const schemaTypes = [
   // documents
@@ -45,6 +47,7 @@ export const schemaTypes = [
   galleryPhoto,
   dualSportSection,
   contactSection,
+  footerSection,
   // objects
   blockContent,
   metric,
@@ -58,4 +61,5 @@ export const schemaTypes = [
   dualCard,
   contactCard,
   contactEntry,
+  workInterstitial,
 ];

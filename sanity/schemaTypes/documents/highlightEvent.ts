@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { SiteFocusImageInput } from '../components/SiteFocusImageInput';
 
 export const highlightEvent = defineType({
   name: 'highlightEvent',
@@ -40,6 +41,27 @@ export const highlightEvent = defineType({
       rows: 3,
       title: 'Summary',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'coverImage',
+      type: 'image',
+      title: 'Cover Image',
+      description:
+        'Hero photo for the tournament card on the homepage. Falls back to a linked gallery photo if left blank.',
+      components: {
+        input: SiteFocusImageInput,
+      },
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({ name: 'alt', type: 'string', title: 'Alt text' }),
+        defineField({
+          name: 'focalPoint',
+          type: 'focalPoint',
+          hidden: true,
+        }),
+      ],
     }),
     defineField({
       name: 'days',

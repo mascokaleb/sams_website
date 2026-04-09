@@ -17,6 +17,7 @@ const singletonDocs = [
   { title: 'Gallery Section', type: 'gallerySection', id: 'gallerySection' },
   { title: 'Dual-Sport', type: 'dualSportSection', id: 'dualSportSection' },
   { title: 'Contact', type: 'contactSection', id: 'contactSection' },
+  { title: 'Footer', type: 'footerSection', id: 'footerSection' },
 ];
 
 export const singletonTypeNames = singletonDocs.map((item) => item.type);
