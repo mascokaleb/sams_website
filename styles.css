@@ -28,6 +28,426 @@
   --font-display: "Fraunces", "Georgia", "Times New Roman", serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --panel-bg: var(--bg);
+  --panel-text: var(--text);
+  --panel-text-muted: var(--text-muted);
+  --panel-rule: var(--rule);
+}
+
+[data-theme="dark"] {
+  /* Full dark token set — desaturated cool blue-gray family.
+     Page bg #191c24 → Card surface #22252E → Divider #2E323D.
+     Text hierarchy: label slate, value muted cream, headings cream. */
+  --panel-bg: #191c24;
+  --panel-bg-deep: #101218;
+  --panel-surface: #22252E;
+  --panel-divider: #2E323D;
+  --panel-label: #6B7080;
+  --panel-value: #C8C2B4;
+  --panel-heading: #F2E8D5;
+  /* Legacy aliases — older rules reference these names. Map them onto
+     the new token system so everything stays in sync. */
+  --panel-text: var(--panel-heading);
+  --panel-text-muted: var(--panel-value);
+  --panel-text-dim: var(--panel-label);
+  --panel-rule: var(--panel-divider);
+  --panel-trace: var(--panel-divider);
+  --panel-card-bg: var(--panel-surface);
+}
+
+/* Full-screen panel system. Each panel is exactly one viewport tall with
+   its content vertically centered. Panels sit flush against each other;
+   the only space between adjacent panels is the panels' own vertical
+   padding, which gives a deliberate breather between sections without
+   sticky pinning or scroll-snap.
+
+   If a panel's content is taller than the viewport, the panel grows to
+   fit the content naturally — no clipping, no forced overflow. */
+.scroll-panel {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(6vh, 10vh, 12vh) clamp(1.5rem, 3vw, 3rem);
+}
+
+/* The existing .section padding is redundant inside a scroll-panel
+   (the panel owns vertical centering and breathing room). Cancel it. */
+.scroll-panel .section {
+  padding: 0;
+  border-top: 0;
+  margin-top: 0;
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* Marquee + interstitial should not break out past the panel's own
+   horizontal padding — cancel the full-bleed 50vw trick they use as
+   standalone strips. */
+.scroll-panel .accolades-marquee,
+.scroll-panel .interstitial {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Dark panels are TRANSPARENT — they let the body's dark bg show through.
+   This avoids visible seams between adjacent dark panels (each panel's own
+   background would create a hard edge). The body bg fades in/out via the
+   [data-theme] attribute toggle on body. */
+body[data-theme="dark"] {
+  color: var(--panel-text);
+}
+
+/* Retarget headings, copy, rules, and meta colors inside dark panels. */
+body[data-theme="dark"] .section-heading h2,
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] h4 {
+  color: var(--panel-text);
+}
+body[data-theme="dark"] .section-heading p,
+body[data-theme="dark"] p {
+  color: var(--panel-text-muted);
+}
+body[data-theme="dark"] .section-kicker {
+  color: var(--panel-text-dim);
+}
+
+/* Numbered kicker ("02 — Recent Results") — plain muted cream, no rule
+   and no accent color. Keep the uppercase mono styling inherited from
+   the base rule; just restyle the color on dark panels. */
+body[data-theme="dark"] .section-heading::before {
+  color: var(--panel-text-dim) !important;
+}
+
+/* The main display headline itself — slightly tighter line-height so the
+   serif reads more like a magazine masthead on the charcoal bg. */
+body[data-theme="dark"] .section-heading h2 {
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+
+/* Cards — lifted surface (#22252E) against the page bg (#191c24) with a
+   1px divider-toned border. Just enough lift to read as a distinct
+   surface without jumping. No shadows, no hover lift. */
+body[data-theme="dark"] .case-study-card,
+body[data-theme="dark"] .upcoming-card,
+body[data-theme="dark"] .video-gallery-card,
+body[data-theme="dark"] .gallery-card,
+body[data-theme="dark"] .panel {
+  background: var(--panel-surface);
+  border: 1px solid var(--panel-divider);
+  color: var(--panel-value);
+  box-shadow: none;
+}
+body[data-theme="dark"] .case-study-card:hover,
+body[data-theme="dark"] .upcoming-card:hover,
+body[data-theme="dark"] .video-gallery-card:hover,
+body[data-theme="dark"] .gallery-card:hover,
+body[data-theme="dark"] .panel:hover {
+  background: var(--panel-surface);
+  border-color: var(--panel-divider);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Case study cards (the BIG tournament highlight cards) — body area was
+   white with dark text. Flip body bg to transparent so the navy card bg
+   shows through, and re-color all the inner text to cream/gold. */
+body[data-theme="dark"] .case-study-body {
+  background: transparent;
+  color: var(--panel-text);
+}
+
+/* Case study media block — flat deeper charcoal for the photo frame
+   with a divider line separating it from the card body. */
+body[data-theme="dark"] .case-study-media {
+  background: var(--panel-bg-deep);
+  border-bottom: 1px solid var(--panel-divider);
+}
+body[data-theme="dark"] .case-study-media-placeholder {
+  background: var(--panel-bg-deep);
+  color: var(--panel-label);
+  text-shadow: none;
+}
+
+/* Featured badge ("FEATURED" pill) — card surface with a divider border
+   and label slate text. */
+body[data-theme="dark"] .case-study-badge {
+  background: var(--panel-surface);
+  color: var(--panel-label);
+  border-color: var(--panel-divider);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* Headings on case-study cards — the title h3 reads as cream heading. */
+body[data-theme="dark"] .case-study-card h3,
+body[data-theme="dark"] .case-study-card .case-study-title {
+  color: var(--panel-heading);
+}
+/* Meta row (index, separator, date, stat/chip labels) — label slate. */
+body[data-theme="dark"] .case-study-card .case-study-meta,
+body[data-theme="dark"] .case-study-card .case-study-date,
+body[data-theme="dark"] .case-study-card .case-study-index,
+body[data-theme="dark"] .case-study-card [class*="stat-label"],
+body[data-theme="dark"] .case-study-card [class*="chip-label"],
+body[data-theme="dark"] .case-study-card .case-study-score-label,
+body[data-theme="dark"] .case-study-card .case-study-chip-label {
+  color: var(--panel-label);
+}
+/* Display numerals (big score, chip values) — cream heading. */
+body[data-theme="dark"] .case-study-card .case-study-headline-score,
+body[data-theme="dark"] .case-study-card .case-study-score-value,
+body[data-theme="dark"] .case-study-card .case-study-chip-value {
+  color: var(--panel-heading);
+}
+body[data-theme="dark"] .case-study-card .case-study-headline-score {
+  border-bottom-color: var(--panel-rule);
+}
+body[data-theme="dark"] .case-study-card .case-study-meta .case-study-date::before,
+body[data-theme="dark"] .case-study-card .case-study-meta .case-study-location::before {
+  color: var(--panel-text-dim);
+}
+body[data-theme="dark"] .case-study-card p,
+body[data-theme="dark"] .case-study-card [class*="description"] {
+  color: var(--panel-text-muted);
+}
+body[data-theme="dark"] .case-study-card a,
+body[data-theme="dark"] .case-study-card button {
+  color: var(--panel-text);
+}
+/* CTA link "READ THE ROUND →" — cream underline, no hover color change. */
+body[data-theme="dark"] .case-study-card .case-study-cta {
+  color: var(--panel-text);
+  border-bottom-color: var(--panel-text);
+}
+body[data-theme="dark"] .case-study-card .case-study-cta:hover,
+body[data-theme="dark"] .case-study-card .case-study-cta:focus-visible {
+  color: var(--panel-text);
+  border-bottom-color: var(--panel-text);
+}
+body[data-theme="dark"] .case-study-card hr,
+body[data-theme="dark"] .case-study-card [class*="rule"],
+body[data-theme="dark"] .case-study-card [class*="divider"] {
+  border-color: var(--panel-rule);
+  background-color: var(--panel-rule);
+}
+
+/* Upcoming Tournaments section heading — plain muted cream label. */
+body[data-theme="dark"] .section.upcoming-tournaments .section-heading h2 {
+  color: var(--panel-text-dim);
+}
+body[data-theme="dark"] .section.upcoming-tournaments .section-heading p {
+  color: var(--panel-text-muted);
+  font-size: 0.98rem;
+}
+
+/* Upcoming tournament cards — the shared card border rule above already
+   adds the 1px cream trace. Override the 3px light-theme left stripe. */
+body[data-theme="dark"] .upcoming-card {
+  border-left: 1px solid var(--panel-trace);
+}
+body[data-theme="dark"] .upcoming-card:hover {
+  border-left: 1px solid var(--panel-trace);
+}
+body[data-theme="dark"] .upcoming-card-course {
+  color: var(--panel-text);
+}
+body[data-theme="dark"] .upcoming-card-date {
+  color: var(--panel-text-dim);
+}
+body[data-theme="dark"] .upcoming-card-meta,
+body[data-theme="dark"] .upcoming-card-location,
+body[data-theme="dark"] .upcoming-card-yardage {
+  color: var(--panel-text-muted);
+}
+
+/* Video cards (videos panel) */
+body[data-theme="dark"] .video-gallery-card h3,
+body[data-theme="dark"] .video-gallery-card h4 {
+  color: var(--panel-text);
+}
+body[data-theme="dark"] .video-gallery-card p,
+body[data-theme="dark"] .video-gallery-card [class*="meta"],
+body[data-theme="dark"] .video-gallery-card [class*="label"],
+body[data-theme="dark"] .video-gallery-card [class*="description"] {
+  color: var(--panel-text-muted);
+}
+/* Video card CTA link (e.g. "Open video") — cream. */
+body[data-theme="dark"] .video-gallery-card .video-card-link {
+  color: var(--panel-text);
+}
+body[data-theme="dark"] .video-gallery-card .video-card-link:hover {
+  color: var(--panel-text);
+}
+
+/* Video date overlay — card surface plate with divider border. Month
+   and year read as labels, the big day number reads as a heading. */
+body[data-theme="dark"] .video-date-overlay {
+  background: var(--panel-surface);
+  color: var(--panel-value);
+  border-color: var(--panel-divider);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body[data-theme="dark"] .video-date-overlay .month,
+body[data-theme="dark"] .video-date-overlay .year {
+  color: var(--panel-label);
+}
+body[data-theme="dark"] .video-date-overlay strong {
+  color: var(--panel-heading);
+}
+
+/* Gallery mosaic cards — the overlay text is rendered on top of the photo,
+   should already be light, but make sure it stays cream. */
+body[data-theme="dark"] .gallery-card-title,
+body[data-theme="dark"] .gallery-card-overlay,
+body[data-theme="dark"] .gallery-card-body h3,
+body[data-theme="dark"] .gallery-card-body h4 {
+  color: var(--panel-text);
+}
+body[data-theme="dark"] .gallery-card-meta,
+body[data-theme="dark"] .gallery-card-meta--secondary,
+body[data-theme="dark"] .gallery-card-description {
+  color: var(--panel-text-muted);
+}
+body[data-theme="dark"] .gallery-tag {
+  color: var(--panel-text-muted);
+  border-color: var(--panel-card-border);
+}
+
+/* Tournament chip on dark cards — cream text on a cream hairline. */
+body[data-theme="dark"] .tournament-chip,
+body[data-theme="dark"] .tournament-chip-name {
+  color: var(--panel-text);
+  border-bottom-color: var(--panel-text);
+}
+body[data-theme="dark"] .tournament-chip:hover,
+body[data-theme="dark"] .tournament-chip:focus-visible {
+  color: var(--panel-text);
+  border-bottom-color: var(--panel-text);
+}
+
+/* Gallery tag (photo category label) — plain cream text. */
+body[data-theme="dark"] .gallery-tag {
+  color: var(--panel-text-muted);
+  border-color: transparent;
+  background: transparent;
+}
+
+/* Gallery card scrim — plain charcoal scrim for photo overlay text
+   legibility. */
+body[data-theme="dark"] .gallery-card-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 18, 24, 0) 0%,
+    rgba(16, 18, 24, 0.4) 45%,
+    rgba(16, 18, 24, 0.88) 100%
+  );
+}
+
+/* Section action buttons (See All / See More / Explore the full gallery etc.)
+   — cream text on a divider-toned border, no hover fill. Covers both
+   .btn.subtle and .btn.ghost variants used across the site. */
+body[data-theme="dark"] .btn.subtle,
+body[data-theme="dark"] .btn.ghost {
+  color: var(--panel-value);
+  border-color: var(--panel-divider);
+  background: transparent;
+}
+body[data-theme="dark"] .btn.subtle:hover,
+body[data-theme="dark"] .btn.ghost:hover {
+  color: var(--panel-heading);
+  background: transparent;
+  border-color: var(--panel-value);
+}
+
+/* Tighten spacing when Highlights and Upcoming share one panel. */
+.scroll-panel[data-panel="highlights"] .section.upcoming-tournaments {
+  margin-top: clamp(2rem, 4vh, 3rem);
+}
+.scroll-panel[data-panel="highlights"] .section.upcoming-tournaments .section-heading {
+  margin-bottom: 1rem;
+}
+
+/* Combined media panel — videos on top, gallery below, both inside one
+   dark viewport. Tighten the section spacing so the two flow together. */
+.scroll-panel[data-panel="media"] .section.gallery {
+  margin-top: clamp(2.5rem, 5vh, 4rem);
+}
+.scroll-panel[data-panel="media"] .section.gallery .section-heading {
+  margin-bottom: clamp(1rem, 2vh, 1.5rem);
+}
+.scroll-panel[data-panel="media"] .section.videos .section-heading {
+  margin-bottom: clamp(1rem, 2vh, 1.5rem);
+}
+
+/* Connect panel: just the contact cards plus a thin copyright strip.
+   The site-footer's "Let's Talk" headline, CTA, and Player/Explore/Direct
+   columns are all redundant with the contact cards above and have been
+   eradicated. Only the base copyright lines remain as a small bottom strip. */
+.scroll-panel[data-panel="connect"] .site-footer {
+  position: static;
+  background: transparent;
+  color: var(--text-dim);
+  padding: 0;
+  margin-top: clamp(3rem, 6vh, 4rem);
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+}
+.scroll-panel[data-panel="connect"] .site-footer::before {
+  display: none;
+}
+/* Hide the entire decorative footer (headline, CTA, columns, rule). */
+.scroll-panel[data-panel="connect"] .site-footer-inner,
+.scroll-panel[data-panel="connect"] .site-footer-rule {
+  display: none;
+}
+.scroll-panel[data-panel="connect"] .site-footer-base {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.scroll-panel[data-panel="connect"] .site-footer-base p {
+  margin: 0;
+}
+.scroll-panel[data-panel="connect"] .site-footer-base strong {
+  color: var(--text-muted);
+}
+
+/* Hero panel overrides: nav at top, hero in the middle, marquee at the
+   bottom — edge-to-edge viewport. */
+.scroll-panel[data-panel="hero"] {
+  padding: 0;
+  justify-content: space-between;
+}
+.scroll-panel[data-panel="hero"] .site-header {
+  padding-bottom: 0;
+  background: transparent;
+  overflow: visible;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.scroll-panel[data-panel="hero"] .nav {
+  max-width: none;
+  padding: 1.6rem clamp(2rem, 4vw, 4rem);
+}
+.scroll-panel[data-panel="hero"] .hero {
+  flex: 1;
+  align-items: center;
+  padding-left: clamp(2rem, 4vw, 4rem);
+  padding-right: clamp(2rem, 4vw, 4rem);
+  margin: 0 auto;
 }
 
 *,
@@ -43,8 +463,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--panel-bg);
+  color: var(--panel-text);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
@@ -52,6 +472,14 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow-x: hidden;
+  /* Fast body-level theme fade — the IO fires the flip at the exact
+     viewport midpoint, so the transition should feel like a crisp snap,
+     not a slow cross-dissolve. */
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
 }
 
 h1,
@@ -597,33 +1025,21 @@ ul {
   }
 }
 
-/* Full-bleed dark interstitial — "The Work" stat beat between About and Resume */
+/* "The Work" stat beat — light themed inside the Work panel */
 .interstitial {
   position: relative;
   padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 3vw, 3rem);
-  background: var(--text);
-  color: var(--bg);
+  background: transparent;
+  color: var(--text);
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   width: 100vw;
   max-width: 100vw;
   overflow: hidden;
-  border-top: 1px solid var(--text);
-  border-bottom: 1px solid var(--text);
 }
 
 .interstitial[hidden] {
   display: none;
-}
-
-.interstitial::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 85% 20%, rgba(154, 116, 32, 0.14), transparent 55%),
-    radial-gradient(circle at 10% 80%, rgba(27, 41, 81, 0.22), transparent 55%);
-  pointer-events: none;
 }
 
 .interstitial-inner {
@@ -650,7 +1066,7 @@ ul {
   align-items: baseline;
   gap: clamp(0.8rem, 2vw, 1.6rem);
   margin: 0;
-  color: var(--bg);
+  color: var(--text);
 }
 
 .interstitial-number {
@@ -661,7 +1077,7 @@ ul {
   font-weight: 500;
   letter-spacing: -0.045em;
   line-height: 0.88;
-  color: var(--bg);
+  color: var(--text);
   min-width: clamp(6rem, 13vw, 12rem);
   display: inline-block;
 }
@@ -673,7 +1089,7 @@ ul {
   font-weight: 400;
   font-style: italic;
   letter-spacing: -0.01em;
-  color: rgba(244, 240, 230, 0.72);
+  color: var(--text-muted);
   line-height: 1;
 }
 
@@ -4556,3 +4972,71 @@ body.is-showing-highlight-overlay {
 .coach-snapshot-contact-divider {
   color: var(--text-dim);
 }
+
+/* Work panel layout: mindset paragraph on the LEFT, big numbers on the RIGHT.
+   The PANEL ITSELF becomes a 2-column grid so .interstitial and .work-mindset
+   (its direct children) auto-place into the grid. */
+.scroll-panel[data-panel="work"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(3rem, 6vw, 6rem);
+  padding: clamp(6vh, 10vh, 12vh) clamp(3rem, 6vw, 6rem);
+}
+.scroll-panel[data-panel="work"] .work-mindset {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  margin-top: 0;
+  max-width: 36rem;
+  justify-self: end;
+}
+.scroll-panel[data-panel="work"] .interstitial {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  align-self: center;
+}
+.scroll-panel[data-panel="work"] .interstitial-inner {
+  margin: 0;
+  max-width: none;
+}
+@media (max-width: 900px) {
+  .scroll-panel[data-panel="work"] {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .scroll-panel[data-panel="work"] .work-mindset,
+  .scroll-panel[data-panel="work"] .interstitial {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: stretch;
+  }
+}
+
+/* Mindset & Goals slot content sizing — larger display for the work panel. */
+.work-mindset[hidden] { display: none; }
+.work-mindset {
+  text-align: left;
+}
+.work-mindset-title {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72;
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  margin-bottom: 1.25rem;
+  color: var(--text);
+}
+.work-mindset-body p {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 1.25vw, 1.2rem);
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0 0 1rem;
+}
+.work-mindset-body p:last-child { margin-bottom: 0; }

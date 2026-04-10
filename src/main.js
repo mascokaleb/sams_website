@@ -12,6 +12,7 @@ const SELECTORS = {
   heroMetrics: '[data-template="hero-metrics"]',
   accoladesMarquee: '[data-template="accolades-marquee"]',
   workInterstitial: '[data-template="work-interstitial"]',
+  workMindset: '[data-template="work-mindset"]',
   coachSnapshot: '[data-template="coach-snapshot"]',
   aboutHeading: '[data-template="about-heading"]',
   aboutGrid: '[data-template="about-grid"]',
@@ -68,6 +69,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setupMotionAnimations(prefersReducedMotion);
   setupCounterAnimations(prefersReducedMotion);
+  setupPanelTheme();
+  setupBoundaryFades();
 });
 
 function setupNav() {
@@ -107,7 +110,7 @@ async function hydratePage() {
   renderAccoladesMarquee(data.resume, data.hero);
   renderCoachSnapshot(data.coachSnapshot, { hero: data.hero, about: data.about });
   renderAbout(data.about, { academics: data.academics });
-  renderWorkInterstitial(data.about);
+  renderWorkPanel(data.about);
   renderResume(data.resume);
   renderAcademics(data.academics);
 
@@ -403,6 +406,24 @@ function renderWorkInterstitial(about) {
   sectionEl.hidden = false;
 }
 
+// Renders the full Work panel: the numbers interstitial plus the Mindset
+// & Goals paragraph (which used to live as a card inside About). The two
+// share one full-screen panel in the new layout.
+function renderWorkPanel(about) {
+  renderWorkInterstitial(about);
+  const slot = select(SELECTORS.workMindset);
+  if (!slot) return;
+  if (!about?.mindsetBody) {
+    slot.hidden = true;
+    return;
+  }
+  slot.hidden = false;
+  slot.innerHTML = `
+    <h3 class="work-mindset-title">${escapeHtml(about.mindsetTitle || "Mindset & Goals")}</h3>
+    <div class="work-mindset-body">${renderPortableText(about.mindsetBody)}</div>
+  `;
+}
+
 // Grab the first number (e.g. "9" from "9 years") or the whole value if it
 // already reads like a number. Returns null if nothing numeric is present.
 function extractLeadingNumber(value) {
@@ -662,13 +683,6 @@ function renderAbout(about, context = {}) {
     </article>
   `;
 
-  const mindsetCard = `
-    <article class="about-card about-story" data-motion="delay-2">
-      <h3>${escapeHtml(about.mindsetTitle || "Mindset & Goals")}</h3>
-      ${renderPortableText(about.mindsetBody)}
-    </article>
-  `;
-
   const quickHitsCard = `
     <article class="about-card about-highlight" data-motion="delay-3">
       <h3>${escapeHtml(about.quickHitsTitle || "Quick Hits")}</h3>
@@ -739,7 +753,6 @@ function renderAbout(about, context = {}) {
 
   gridEl.innerHTML = `
     ${profileCard}
-    ${mindsetCard}
     ${quickHitsCard}
     ${academicsCard}
   `;
@@ -3083,6 +3096,103 @@ function setupMotionAnimations(prefersReducedMotion) {
   );
 
   document.querySelectorAll("[data-motion]").forEach((el) => observer.observe(el));
+}
+
+// Toggle body[data-theme="dark"] when any panel marked data-theme="dark"
+// is crossing the vertical midpoint of the viewport. CSS handles the
+// actual fade via background-color/color transitions on body. A reference
+// counter avoids flicker when adjacent dark panels overlap during scroll.
+function setupPanelTheme() {
+  const darkPanels = document.querySelectorAll('.scroll-panel[data-theme="dark"]');
+  if (!darkPanels.length || !("IntersectionObserver" in window)) {
+    return;
+  }
+
+  let activeDarkCount = 0;
+  const apply = () => {
+    if (activeDarkCount > 0) {
+      document.body.dataset.theme = "dark";
+    } else {
+      delete document.body.dataset.theme;
+    }
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeDarkCount += 1;
+        } else {
+          activeDarkCount = Math.max(0, activeDarkCount - 1);
+        }
+      });
+      apply();
+    },
+    // Root margin collapses to a thin horizontal line at the viewport
+    // midpoint — the theme flips the instant a dark panel's boundary
+    // crosses that line, not when it merely enters the viewport.
+    { rootMargin: "-49% 0px -49% 0px", threshold: 0 }
+  );
+
+  darkPanels.forEach((el) => observer.observe(el));
+}
+
+// Fade the two panels that sit right before a theme boundary (Resume
+// before the dark cluster, Media before the light cluster) as the user
+// scrolls past them. By the time the body theme flips, these panels are
+// at opacity 0, so their now-wrong-theme content is never visible.
+//
+// The fade maps 1-to-0 against the last viewport of scroll before each
+// panel's bottom edge leaves the top of the viewport. A 60vh margin-bottom
+// on these panels (set in styles.css) ensures there's pure body-background
+// space between the faded-out panel and the next panel's content.
+function setupBoundaryFades() {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) return;
+
+  const panels = Array.from(
+    document.querySelectorAll('[data-panel="resume"], [data-panel="media"]')
+  );
+  if (!panels.length) return;
+
+  let ticking = false;
+  const update = () => {
+    const vh = window.innerHeight;
+    const scrollY = window.scrollY;
+    panels.forEach((panel) => {
+      const panelBottom = panel.offsetTop + panel.offsetHeight;
+      // Auto-sync with whatever CSS margin-bottom the panel currently has.
+      const marginPx = parseFloat(getComputedStyle(panel).marginBottom) || 0;
+      // distance = where the panel's bottom edge sits, measured from the
+      // top of the viewport. Positive = panel bottom is below the top;
+      // 0 = panel bottom is at the top of the viewport; negative = above.
+      const distance = panelBottom - scrollY;
+      // Theme flips (via setupPanelTheme IO with rootMargin -49%) when
+      // the incoming panel's top crosses the viewport midpoint — which
+      // happens at distance = vh/2 - margin for this outgoing panel.
+      // Fade must reach opacity 0 at or before that exact moment so the
+      // outgoing panel is fully invisible by the time the theme flips.
+      const fadeEnd = vh * 0.5 - marginPx;
+      const fadeStart = vh;
+      const fadeRange = Math.max(1, fadeStart - fadeEnd);
+      let opacity = (distance - fadeEnd) / fadeRange;
+      if (opacity > 1) opacity = 1;
+      else if (opacity < 0) opacity = 0;
+      panel.style.opacity = String(opacity);
+    });
+    ticking = false;
+  };
+
+  const onScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  update();
 }
 
 // Tween numeric stat values (e.g. handicap, scoring avg) from 0 to their
