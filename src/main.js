@@ -647,15 +647,18 @@ function renderAbout(about, context = {}) {
   const profileCard = `
     <article class="about-card" data-motion="delay-1">
       <h3>${escapeHtml(about.profileCardTitle || "Profile")}</h3>
-      <ul>
+      <div class="about-facts">
         ${(about.profileFacts || [])
           .map(
             (fact) => `
-              <li><strong>${escapeHtml(fact.label || "")}: </strong>${escapeHtml(fact.value || "")}</li>
+              <div class="about-fact">
+                <span class="about-fact-label">${escapeHtml(fact.label || "")}</span>
+                <span class="about-fact-value">${escapeHtml(fact.value || "")}</span>
+              </div>
             `
           )
           .join("")}
-      </ul>
+      </div>
     </article>
   `;
 
@@ -669,16 +672,18 @@ function renderAbout(about, context = {}) {
   const quickHitsCard = `
     <article class="about-card about-highlight" data-motion="delay-3">
       <h3>${escapeHtml(about.quickHitsTitle || "Quick Hits")}</h3>
-      ${(about.quickHits || [])
-        .map(
-          (hit) => `
-            <div class="highlight-row">
-              <span>${escapeHtml(hit.label || "")}</span>
-              <span>${escapeHtml(hit.value || "")}</span>
-            </div>
-          `
-        )
-        .join("")}
+      <div class="about-facts">
+        ${(about.quickHits || [])
+          .map(
+            (hit) => `
+              <div class="about-fact">
+                <span class="about-fact-label">${escapeHtml(hit.label || "")}</span>
+                <span class="about-fact-value">${escapeHtml(hit.value || "")}</span>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
     </article>
   `;
 
@@ -696,15 +701,18 @@ function renderAbout(about, context = {}) {
 
     const factsMarkup = academicsFacts.length
       ? `
-          <ul class="about-facts-list">
+          <div class="about-facts">
             ${academicsFacts
               .map(
                 (fact) => `
-                  <li><strong>${escapeHtml(fact.label)}: </strong>${escapeHtml(fact.value)}</li>
+                  <div class="about-fact">
+                    <span class="about-fact-label">${escapeHtml(fact.label)}</span>
+                    <span class="about-fact-value">${escapeHtml(fact.value)}</span>
+                  </div>
                 `
               )
               .join("")}
-          </ul>
+          </div>
         `
       : "";
 
@@ -1336,11 +1344,13 @@ function renderDualSport(dual) {
         return `
           <article class="dual-card" data-motion="delay-${index + 1}">
             ${imageMarkup}
-            <h3>${escapeHtml(card.title || "")}</h3>
-            ${card.body ? `<p>${escapeHtml(card.body)}</p>` : ""}
-            ${Array.isArray(card.bulletPoints) && card.bulletPoints.length
-              ? `<ul>${card.bulletPoints.map((point) => `<li>${escapeHtml(point || "")}</li>`).join("")}</ul>`
-              : ""}
+            <div class="dual-card-content">
+              <h3>${escapeHtml(card.title || "")}</h3>
+              ${card.body ? `<p>${escapeHtml(card.body)}</p>` : ""}
+              ${Array.isArray(card.bulletPoints) && card.bulletPoints.length
+                ? `<ul>${card.bulletPoints.map((point) => `<li>${escapeHtml(point || "")}</li>`).join("")}</ul>`
+                : ""}
+            </div>
           </article>
         `;
       })
