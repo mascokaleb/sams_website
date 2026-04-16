@@ -705,7 +705,7 @@ ul {
   position: relative;
   z-index: 2;
   display: grid;
-  align-items: stretch;
+  align-items: center;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: clamp(2.5rem, 5vw, 5rem);
   max-width: var(--max-width);
@@ -714,8 +714,7 @@ ul {
 }
 
 .hero-copy {
-  align-self: start;
-  padding-top: clamp(1rem, 3vw, 2.5rem);
+  align-self: center;
 }
 
 @media (max-width: 860px) {
