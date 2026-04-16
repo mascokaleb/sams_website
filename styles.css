@@ -443,10 +443,12 @@ body[data-theme="dark"] .btn.ghost:hover {
   padding: 1.6rem clamp(2rem, 4vw, 4rem);
 }
 .scroll-panel[data-panel="hero"] .hero {
-  align-items: start;
+  flex: 1;
+  align-items: stretch;
+  align-content: center;
   padding-left: clamp(2rem, 4vw, 4rem);
   padding-right: clamp(2rem, 4vw, 4rem);
-  margin: auto;
+  margin: 0 auto;
 }
 
 *,
@@ -713,7 +715,9 @@ ul {
 }
 
 .hero-copy {
-  align-self: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 @media (max-width: 860px) {
