@@ -713,7 +713,7 @@ ul {
 }
 
 .hero-copy {
-  align-self: center;
+  align-self: start;
 }
 
 @media (max-width: 860px) {
