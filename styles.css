@@ -813,6 +813,28 @@ ul {
   color: var(--text-muted);
 }
 
+/* When the snapshot wraps to 2 rows on mobile, the flex layout creates
+   misaligned columns, a missing horizontal divider, and an asymmetric
+   right border.  Switch to a proper 2-col grid with cell borders. */
+@media (max-width: 620px) {
+  .hero-snapshot {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border-bottom: 0;
+    border-left: 1px solid var(--rule);
+  }
+
+  .hero-snapshot-item,
+  .hero-snapshot-item:first-child,
+  .hero-snapshot-item:last-child,
+  .hero-snapshot-item + .hero-snapshot-item {
+    padding: 0.95rem 1.1rem;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    min-width: 0;
+  }
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1774,6 +1796,7 @@ ul {
 @media (max-width: 620px) {
   .section.gallery .gallery-grid {
     grid-template-columns: 1fr;
+    grid-auto-rows: minmax(260px, auto);
   }
   .section.gallery .gallery-card--overlaid,
   .section.gallery .gallery-card--overlaid:first-child,
