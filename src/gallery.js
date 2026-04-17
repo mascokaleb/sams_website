@@ -468,21 +468,17 @@ function renderFilters() {
     ...years.map((y) => ({ v: String(y), l: String(y) })),
     ...(hasUndated ? [{ v: "undated", l: "Undated" }] : []),
   ];
-  renderChipGroup("year-chips", yearOpts, state.year, (v, l) => {
+  renderChipGroup("year-chips", yearOpts, state.year, (v) => {
     state.year = v;
-    document.getElementById("year-value").textContent = l;
-    document.getElementById("fg-year").classList.toggle("has-active", v !== "all");
-    closeAllFilterGroups();
+    updateFilterCount();
     applyFilters();
   });
 
   const tags = Array.from(new Set(photos.flatMap((p) => p.tags))).sort((a, b) => a.localeCompare(b));
   const tagOpts = [{ v: "all", l: "All" }, ...tags.map((t) => ({ v: t, l: t }))];
-  renderChipGroup("tag-chips", tagOpts, state.tag, (v, l) => {
+  renderChipGroup("tag-chips", tagOpts, state.tag, (v) => {
     state.tag = v;
-    document.getElementById("tag-value").textContent = l;
-    document.getElementById("fg-tag").classList.toggle("has-active", v !== "all");
-    closeAllFilterGroups();
+    updateFilterCount();
     applyFilters();
   });
 
@@ -494,14 +490,50 @@ function renderFilters() {
     }
   });
   const ts = Array.from(tournamentsMap.values()).sort((a, b) => a.title.localeCompare(b.title));
-  const tourOpts = [{ v: "all", l: "All" }, ...ts.map((t) => ({ v: t.id, l: shortTourney(t.title) }))];
-  renderChipGroup("tournament-chips", tourOpts, state.tournament, (v, l) => {
+  const tourOpts = [{ v: "all", l: "All" }, ...ts.map((t) => ({ v: t.id, l: t.title }))];
+  renderChipGroup("tournament-chips", tourOpts, state.tournament, (v) => {
     state.tournament = v;
-    document.getElementById("tournament-value").textContent = l;
-    document.getElementById("fg-tournament").classList.toggle("has-active", v !== "all");
-    closeAllFilterGroups();
+    updateFilterCount();
     applyFilters();
   });
+
+  updateFilterCount();
+
+  // Clear-all button inside the unified popover
+  const resetBtn = document.getElementById("filter-reset");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.year = "all";
+      state.tag = "all";
+      state.tournament = "all";
+      ["year-chips", "tag-chips", "tournament-chips"].forEach((id) => {
+        const host = document.getElementById(id);
+        if (!host) return;
+        host.querySelectorAll(".chip").forEach((c) => c.classList.remove("is-active"));
+        const defaultChip = host.querySelector('.chip[data-value="all"]');
+        if (defaultChip) defaultChip.classList.add("is-active");
+      });
+      updateFilterCount();
+      applyFilters();
+    });
+  }
+}
+
+function updateFilterCount() {
+  let count = 0;
+  if (state.year !== "all") count++;
+  if (state.tag !== "all") count++;
+  if (state.tournament !== "all") count++;
+  const badge = document.getElementById("filter-count");
+  if (badge) {
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+  }
+  const group = document.getElementById("fg-all");
+  if (group) group.classList.toggle("has-active", count > 0);
+  const reset = document.getElementById("filter-reset");
+  if (reset) reset.hidden = count === 0;
 }
 
 function bindFilterInteractions() {
