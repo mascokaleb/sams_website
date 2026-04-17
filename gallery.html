@@ -593,6 +593,18 @@ img { display: block; user-select: none; -webkit-user-drag: none; }
   color: var(--ink-dim);
   margin-bottom: 0.5rem;
 }
+.lightbox-tournament-link {
+  color: var(--ink-muted);
+  border-bottom: 1px solid rgba(196, 188, 169, 0.25);
+  padding-bottom: 1px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.lightbox-tournament-link:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
 .lightbox-meta h2 {
   font-family: var(--font-display);
   font-size: clamp(1.3rem, 2.5vw, 1.9rem);

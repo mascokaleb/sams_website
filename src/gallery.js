@@ -683,7 +683,18 @@ function openLightbox(idx, skipMorph = false) {
     };
     loader.src = hiresSrc;
   }
-  document.getElementById("lightbox-eyebrow").textContent = photo.tournament?.title || "";
+  const eyebrowEl = document.getElementById("lightbox-eyebrow");
+  if (photo.tournament?.title) {
+    const tid = photo.tournament.id || photo.tournament.title;
+    const params = new URLSearchParams();
+    params.set("tournament", tid);
+    params.set("origin", "gallery");
+    eyebrowEl.innerHTML = `<a class="lightbox-tournament-link" href="${escapeAttr(
+      `tournament-highlights.html?${params.toString()}`
+    )}" data-highlight-modal="${escapeAttr(tid)}">${escapeHtml(photo.tournament.title)}</a>`;
+  } else {
+    eyebrowEl.textContent = "";
+  }
   document.getElementById("lightbox-title").textContent = photo.title;
   document.getElementById("lightbox-desc").textContent = photo.description;
   document.getElementById("lightbox-tags").innerHTML = photo.tags
