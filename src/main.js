@@ -70,7 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupMotionAnimations(prefersReducedMotion);
   setupCounterAnimations(prefersReducedMotion);
   setupPanelTheme();
-  setupBoundaryFades();
 });
 
 function setupNav() {
@@ -3098,101 +3097,127 @@ function setupMotionAnimations(prefersReducedMotion) {
   document.querySelectorAll("[data-motion]").forEach((el) => observer.observe(el));
 }
 
-// Toggle body[data-theme="dark"] when any panel marked data-theme="dark"
-// is crossing the vertical midpoint of the viewport. CSS handles the
-// actual fade via background-color/color transitions on body. A reference
-// counter avoids flicker when adjacent dark panels overlap during scroll.
-function setupPanelTheme() {
-  const darkPanels = document.querySelectorAll('.scroll-panel[data-theme="dark"]');
-  if (!darkPanels.length || !("IntersectionObserver" in window)) {
-    return;
-  }
-
-  let activeDarkCount = 0;
-  const apply = () => {
-    if (activeDarkCount > 0) {
-      document.body.dataset.theme = "dark";
-    } else {
-      delete document.body.dataset.theme;
-    }
-  };
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          activeDarkCount += 1;
-        } else {
-          activeDarkCount = Math.max(0, activeDarkCount - 1);
-        }
-      });
-      apply();
-    },
-    // Root margin collapses to a thin horizontal line at the viewport
-    // midpoint — the theme flips the instant a dark panel's boundary
-    // crosses that line, not when it merely enters the viewport.
-    { rootMargin: "-49% 0px -49% 0px", threshold: 0 }
-  );
-
-  darkPanels.forEach((el) => observer.observe(el));
-}
-
-// Fade the two panels that sit right before a theme boundary (Resume
-// before the dark cluster, Media before the light cluster) as the user
-// scrolls past them. By the time the body theme flips, these panels are
-// at opacity 0, so their now-wrong-theme content is never visible.
+// Scroll-linked theme transition + symmetric boundary crossfade.
 //
-// The fade maps 1-to-0 against the last viewport of scroll before each
-// panel's bottom edge leaves the top of the viewport. A 60vh margin-bottom
-// on these panels (set in styles.css) ensures there's pure body-background
-// space between the faded-out panel and the next panel's content.
-function setupBoundaryFades() {
+// Colors are tied to scroll position, not a threshold flip:
+//   - `--theme-t` is written to body on every scroll frame, 0 (light)
+//     through 1 (dark). CSS uses it inside color-mix() on --panel-bg
+//     so the body bg interpolates continuously in step with scroll.
+//   - The `[data-theme="dark"]` attribute still flips (at the midpoint
+//     of each zone) so the detailed dark-mode styling — card bg,
+//     overlays, borders — applies as a whole. The flip is hidden by
+//     the panel opacity crossfade below.
+//
+// Panel opacity is a symmetric fade-out/fade-in on all four boundary
+// panels (Resume ↔ Highlights, Media ↔ Dual). Outgoing fades out over
+// the first third of each zone, incoming fades in over the last third,
+// so both sit at opacity 0 during the middle third — there's nothing
+// visible to "snap" when the attribute flips, and the body bg itself
+// is the dominant visible color in that window. The effect is
+// symmetric with scroll direction: scrolling up reverses the same
+// crossfade, so the element leaving the bottom of the viewport fades
+// out just like it does on the way down.
+function setupPanelTheme() {
+  const resume = document.querySelector('[data-panel="resume"]');
+  const highlights = document.querySelector('[data-panel="highlights"]');
+  const media = document.querySelector('[data-panel="media"]');
+  const dual = document.querySelector('[data-panel="dual"]');
+  if (!resume || !highlights || !media || !dual) return;
+
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (prefersReducedMotion) return;
+  const body = document.body;
+  // --theme-t must be set on the <html> element, not body. The color-mix
+  // expression for --panel-bg is declared on :root and substitutes
+  // var(--theme-t) at the computation site. When body INHERITS --panel-bg
+  // from :root, it inherits the already-computed value (with :root's
+  // --theme-t baked in). Setting --theme-t on body therefore does not
+  // propagate back into --panel-bg. Writing --theme-t on :root itself
+  // re-triggers --panel-bg's computation, which flows down to body.
+  const root = document.documentElement;
 
-  const panels = Array.from(
-    document.querySelectorAll('[data-panel="resume"], [data-panel="media"]')
-  );
-  if (!panels.length) return;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // Crossfade curves, 3× steeper than linear so each panel reaches 0
+  // by p = 1/3 (outgoing) and doesn't start rising until p = 2/3
+  // (incoming). The middle third of each zone is a pure body-bg
+  // window where the color interpolation dominates and the attribute
+  // flip happens — with no visible content to snap.
+  const fadeOut = (p) => clamp(1 - 3 * p, 0, 1);
+  const fadeIn = (p) => clamp(3 * p - 2, 0, 1);
 
-  let ticking = false;
+  // Track the last scrollY we computed for so we can skip the rAF tick
+  // when nothing moved. Start at a sentinel that guarantees the first
+  // frame computes.
+  let lastScrollY = -1;
+  let lastVh = -1;
   const update = () => {
     const vh = window.innerHeight;
-    const scrollY = window.scrollY;
-    panels.forEach((panel) => {
-      const panelBottom = panel.offsetTop + panel.offsetHeight;
-      // Auto-sync with whatever CSS margin-bottom the panel currently has.
-      const marginPx = parseFloat(getComputedStyle(panel).marginBottom) || 0;
-      // distance = where the panel's bottom edge sits, measured from the
-      // top of the viewport. Positive = panel bottom is below the top;
-      // 0 = panel bottom is at the top of the viewport; negative = above.
-      const distance = panelBottom - scrollY;
-      // Theme flips (via setupPanelTheme IO with rootMargin -49%) when
-      // the incoming panel's top crosses the viewport midpoint — which
-      // happens at distance = vh/2 - margin for this outgoing panel.
-      // Fade must reach opacity 0 at or before that exact moment so the
-      // outgoing panel is fully invisible by the time the theme flips.
-      const fadeEnd = vh * 0.5 - marginPx;
-      const fadeStart = vh;
-      const fadeRange = Math.max(1, fadeStart - fadeEnd);
-      let opacity = (distance - fadeEnd) / fadeRange;
-      if (opacity > 1) opacity = 1;
-      else if (opacity < 0) opacity = 0;
-      panel.style.opacity = String(opacity);
-    });
-    ticking = false;
-  };
+    const rResume = resume.getBoundingClientRect();
+    const rHighlights = highlights.getBoundingClientRect();
+    const rMedia = media.getBoundingClientRect();
+    const rDual = dual.getBoundingClientRect();
 
-  const onScroll = () => {
-    if (!ticking) {
-      requestAnimationFrame(update);
-      ticking = true;
+    // Each zone's progress runs 0 → 1 from (outgoing panel's bottom
+    // at viewport bottom) to (incoming panel's top at viewport top).
+    // The zone's scroll length is (vh + gap) where gap is any body-bg
+    // space between the two panels — typically 0 since panels sit
+    // flush. Because rect.bottom - rect.top between neighboring panels
+    // is a layout constant, we can parameterize progress purely from
+    // the outgoing rect's bottom.
+    const gap1 = rHighlights.top - rResume.bottom;
+    const gap2 = rDual.top - rMedia.bottom;
+    const p1 = clamp((vh - rResume.bottom) / Math.max(1, vh + gap1), 0, 1);
+    const p2 = clamp((vh - rMedia.bottom) / Math.max(1, vh + gap2), 0, 1);
+
+    // Darkness: 0 before zone 1, ramps to 1 across zone 1, stays 1
+    // between the zones, ramps back to 0 across zone 2. The closed
+    // form p1 * (1 - p2) covers every region without a branch.
+    const darkness = p1 * (1 - p2);
+
+    // Body bg interpolation. Set on <html> so :root's --panel-bg
+    // color-mix() recomputes (see comment above). Under reduced motion,
+    // snap to 0 or 1 so no cross-dissolve is visible.
+    root.style.setProperty(
+      "--theme-t",
+      prefersReducedMotion ? (darkness >= 0.5 ? "1" : "0") : darkness.toFixed(4)
+    );
+
+    // Attribute flip at the midpoint for detailed dark styling.
+    if (darkness >= 0.5) {
+      if (body.dataset.theme !== "dark") body.dataset.theme = "dark";
+    } else if (body.dataset.theme === "dark") {
+      delete body.dataset.theme;
+    }
+
+    if (!prefersReducedMotion) {
+      resume.style.opacity = String(fadeOut(p1));
+      highlights.style.opacity = String(fadeIn(p1));
+      media.style.opacity = String(fadeOut(p2));
+      dual.style.opacity = String(fadeIn(p2));
     }
   };
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll, { passive: true });
+  // Drive updates from a persistent rAF loop rather than scroll events.
+  // Two reasons: (a) scroll events can be coalesced, throttled, or (in
+  // some browser-automation contexts) not dispatched at all for
+  // programmatic scrolls, which would leave the theme stuck; (b) rAF
+  // naturally lines up with paint, so color interpolation stays smooth.
+  // The `lastScrollY`/`lastVh` short-circuit means we do near-zero
+  // work on idle frames — just a window read and two comparisons.
+  const tick = () => {
+    const currentY = window.scrollY;
+    const currentVh = window.innerHeight;
+    if (currentY !== lastScrollY || currentVh !== lastVh) {
+      lastScrollY = currentY;
+      lastVh = currentVh;
+      update();
+    }
+    requestAnimationFrame(tick);
+  };
+
+  // Kick off: run one update synchronously so the initial state is set
+  // before paint, then start the loop.
   update();
+  requestAnimationFrame(tick);
 }
 
 // Tween numeric stat values (e.g. handicap, scoring avg) from 0 to their

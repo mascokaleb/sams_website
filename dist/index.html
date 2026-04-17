@@ -11,141 +11,204 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/main-D6spvrHJ.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/sanityClient-BnXfXiWO.js">
-    <link rel="stylesheet" crossorigin href="./assets/sanityClient-DRQGcEc5.css">
+    <script type="module" crossorigin src="./assets/main-BHbE9yED.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/sanityClient-CY0C8Q-b.js">
+    <link rel="stylesheet" crossorigin href="./assets/sanityClient-D8Z1eWWd.css">
   </head>
   <body id="top">
     <div class="noise-overlay" aria-hidden="true"></div>
-    <header class="site-header" data-motion>
-      <nav class="nav">
-        <a class="brand" href="#top">
-          <span class="brand-mark">SM</span>
-          <span class="brand-text">Samuel Masco</span>
-        </a>
-        <button class="nav-toggle" aria-expanded="false" aria-controls="menu">
-          <span class="nav-toggle-line"></span>
-          <span class="sr-only">Toggle navigation</span>
-        </button>
-        <ul class="nav-links" id="menu">
-          <li><a href="#about">About</a></li>
-          <li><a href="#golf-resume">Golf Resume</a></li>
-          <li><a href="#academics">Academics</a></li>
-          <li><a href="#highlights">Highlights</a></li>
-          <li><a href="#upcoming-tournaments">Upcoming</a></li>
-          <li><a href="#videos">Videos</a></li>
-          <li><a href="#gallery">Gallery</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav>
-      <div class="hero">
-        <div class="hero-copy" data-motion="delay-1" data-template="hero-copy">
-          <p class="placeholder-text">Loading hero...</p>
-        </div>
-        <figure class="hero-photo" data-motion="delay-2" data-template="hero-photo">
-          <div class="hero-photo-frame">
-            <img
-              src="images/samuel-placeholder.svg"
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-            />
-            <div class="hero-photo-glow" aria-hidden="true"></div>
+
+    <section class="scroll-panel" data-panel="hero">
+      <header class="site-header" data-motion>
+        <nav class="nav">
+          <a class="brand" href="#top">
+            <span class="brand-mark">SM</span>
+            <span class="brand-text">Samuel Masco</span>
+          </a>
+          <button class="nav-toggle" aria-expanded="false" aria-controls="menu">
+            <span class="nav-toggle-line"></span>
+            <span class="sr-only">Toggle navigation</span>
+          </button>
+          <ul class="nav-links" id="menu">
+            <li><a href="#golf-resume">Resume</a></li>
+            <li><a href="#highlights">Highlights</a></li>
+            <li><a href="#videos">Media</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+        <div class="hero">
+          <div class="hero-copy" data-motion="delay-1" data-template="hero-copy">
+            <p class="placeholder-text">Loading hero...</p>
           </div>
-        </figure>
-        <div class="hero-metrics" data-motion="delay-3" data-template="hero-metrics"></div>
-      </div>
-      <div class="hero-scroll" aria-hidden="true">
-        <span>Scroll</span>
-        <span class="scroll-indicator"></span>
-      </div>
-      <div class="hero-hole" data-golf-hole aria-hidden="true"></div>
-      <div class="golf-scoreboard" data-golf-scoreboard aria-hidden="true">
-        <span class="score-label">Strokes</span>
-        <span class="score-value" data-golf-score-value>0</span>
-      </div>
-      <div class="hero-gradient"></div>
-    </header>
+          <figure class="hero-photo" data-motion="delay-2" data-template="hero-photo">
+            <div class="hero-photo-frame">
+              <img
+                src="images/samuel-placeholder.svg"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+              />
+            </div>
+          </figure>
+        </div>
+      </header>
+
+      <section class="accolades-marquee" aria-label="Accolades" data-template="accolades-marquee" hidden></section>
+    </section>
 
     <main>
-      <section class="section about" id="about">
-        <div class="section-heading" data-motion data-template="about-heading">
-          <p class="placeholder-text">Loading about section...</p>
-        </div>
-        <div class="about-grid" data-template="about-grid"></div>
+      <section class="section coach-snapshot" id="coach-snapshot" data-template="coach-snapshot" hidden></section>
+
+      <section class="scroll-panel" data-panel="about">
+        <section class="section about" id="about">
+          <div class="section-heading" data-motion data-template="about-heading">
+            <p class="placeholder-text">Loading about section...</p>
+          </div>
+          <div class="about-grid" data-template="about-grid"></div>
+        </section>
       </section>
 
-      <section class="section golf-resume" id="golf-resume">
-        <div class="section-heading" data-motion data-template="resume-heading">
-          <p class="placeholder-text">Loading golf resume...</p>
-        </div>
-        <div class="resume-panels" data-template="resume-panels"></div>
+      <section class="scroll-panel" data-panel="work">
+        <section class="interstitial" aria-label="The work" data-motion data-template="work-interstitial" hidden>
+          <div class="interstitial-inner">
+            <p class="interstitial-kicker">The Work</p>
+            <p class="interstitial-line">
+              <span class="interstitial-number" data-template="work-years">9</span>
+              <span class="interstitial-unit">years</span>
+            </p>
+            <p class="interstitial-line">
+              <span class="interstitial-number" data-template="work-days">5–6</span>
+              <span class="interstitial-unit">days a week</span>
+            </p>
+            <p class="interstitial-line">
+              <span class="interstitial-number">1</span>
+              <span class="interstitial-unit">goal.</span>
+            </p>
+          </div>
+        </section>
+        <div class="work-mindset" data-template="work-mindset" hidden></div>
       </section>
 
-      <section class="section academics" id="academics">
+      <section class="scroll-panel" data-panel="resume">
+        <section class="section golf-resume" id="golf-resume">
+          <div class="section-heading" data-motion data-template="resume-heading" data-kicker="01 — Resume">
+            <p class="placeholder-text">Loading golf resume...</p>
+          </div>
+          <div class="resume-panels" data-template="resume-panels"></div>
+        </section>
+      </section>
+
+      <section class="section academics" id="academics" hidden>
         <div class="section-heading" data-motion data-template="academics-heading">
           <p class="placeholder-text">Loading academics...</p>
         </div>
         <div class="academics-grid" data-template="academics-grid"></div>
       </section>
 
-      <section class="section highlights" id="highlights">
-        <div class="section-heading" data-motion data-template="highlights-heading">
-          <p class="placeholder-text">Loading highlights...</p>
-        </div>
-        <div class="timeline" data-template="timeline"></div>
-        <div class="section-actions" data-template="highlights-actions"></div>
+      <section class="scroll-panel" data-panel="highlights" data-theme="dark">
+        <section class="section highlights" id="highlights">
+          <div class="section-heading" data-motion data-template="highlights-heading" data-kicker="02 — Recent Results">
+            <p class="placeholder-text">Loading highlights...</p>
+          </div>
+          <div class="timeline" data-template="timeline"></div>
+          <div class="section-actions" data-template="highlights-actions"></div>
+        </section>
+
+        <section class="section upcoming-tournaments" id="upcoming-tournaments">
+          <div class="section-heading" data-motion data-template="upcoming-heading">
+            <p class="placeholder-text">Loading upcoming tournaments...</p>
+          </div>
+          <div class="upcoming-grid" data-template="upcoming-grid"></div>
+        </section>
       </section>
 
-      <section class="section upcoming-tournaments" id="upcoming-tournaments">
-        <div class="section-heading" data-motion data-template="upcoming-heading">
-          <p class="placeholder-text">Loading upcoming tournaments...</p>
-        </div>
-        <div class="upcoming-grid" data-template="upcoming-grid"></div>
+      <section class="scroll-panel" data-panel="media" data-theme="dark">
+        <section class="section videos" id="videos">
+          <div class="section-heading" data-motion data-template="videos-heading" data-kicker="03 — Film Room">
+            <p class="placeholder-text">Loading videos...</p>
+          </div>
+          <div class="video-grid" data-template="video-grid"></div>
+          <div class="section-actions" data-template="videos-actions"></div>
+        </section>
+
+        <section class="section gallery" id="gallery">
+          <div class="section-heading" data-motion data-template="gallery-heading">
+            <p class="placeholder-text">Loading gallery...</p>
+          </div>
+          <div class="gallery-grid" data-template="gallery-grid">
+            <p class="placeholder-text">Loading gallery cards...</p>
+          </div>
+          <div class="section-actions" data-template="gallery-actions"></div>
+        </section>
       </section>
 
-      <section class="section videos" id="videos">
-        <div class="section-heading" data-motion data-template="videos-heading">
-          <p class="placeholder-text">Loading videos...</p>
-        </div>
-        <div class="video-grid" data-template="video-grid"></div>
-        <div class="section-actions" data-template="videos-actions"></div>
+      <section class="scroll-panel" data-panel="dual">
+        <section class="section dual-sport">
+          <div class="section-heading" data-motion data-template="dual-heading">
+            <p class="placeholder-text">Loading dual-sport content...</p>
+          </div>
+          <div class="dual-grid" data-template="dual-grid"></div>
+        </section>
       </section>
 
-      <section class="section gallery" id="gallery">
-        <div class="section-heading" data-motion data-template="gallery-heading">
-          <p class="placeholder-text">Loading gallery...</p>
-        </div>
-        <div class="gallery-grid" data-template="gallery-grid">
-          <p class="placeholder-text">Loading gallery cards...</p>
-        </div>
-        <div class="section-actions" data-template="gallery-actions"></div>
-      </section>
+      <section class="scroll-panel" data-panel="connect">
+        <section class="section contact" id="contact">
+          <div class="section-heading" data-motion data-template="contact-heading" data-kicker="04 — Get In Touch">
+            <p class="placeholder-text">Loading contact info...</p>
+          </div>
+          <div class="contact-grid" data-template="contact-grid"></div>
+        </section>
 
-      <section class="section dual-sport">
-        <div class="section-heading" data-motion data-template="dual-heading">
-          <p class="placeholder-text">Loading dual-sport content...</p>
-        </div>
-        <div class="dual-grid" data-template="dual-grid"></div>
-      </section>
-
-      <section class="section contact" id="contact">
-        <div class="section-heading" data-motion data-template="contact-heading">
-          <p class="placeholder-text">Loading contact info...</p>
-        </div>
-        <div class="contact-grid" data-template="contact-grid"></div>
+        <footer class="site-footer" data-template="site-footer">
+          <div class="site-footer-inner">
+            <div class="site-footer-primary">
+              <p class="site-footer-kicker">05 — Open For Recruiting</p>
+              <h2 class="site-footer-headline">
+                Let&rsquo;s<br />Talk.
+              </h2>
+              <a class="site-footer-cta" href="#contact" data-template="site-footer-cta">
+                <span>Get in touch</span>
+                <span class="site-footer-cta-arrow" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div class="site-footer-columns">
+              <div class="site-footer-column">
+                <p class="site-footer-label">Player</p>
+                <p class="site-footer-value">
+                  <strong>Samuel Masco</strong><br />
+                  Class of 2029<br />
+                  Evergreen, Colorado
+                </p>
+              </div>
+              <div class="site-footer-column">
+                <p class="site-footer-label">Explore</p>
+                <ul class="site-footer-links">
+                  <li><a href="#golf-resume">Resume</a></li>
+                  <li><a href="#highlights">Highlights</a></li>
+                  <li><a href="#videos">Media</a></li>
+                  <li><a href="#about">About</a></li>
+                </ul>
+              </div>
+              <div class="site-footer-column site-footer-contact" data-template="site-footer-contact">
+                <p class="site-footer-label">Direct</p>
+                <p class="site-footer-value site-footer-contact-placeholder">
+                  See the contact section above for email, phone, and coach references.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="site-footer-rule"></div>
+          <div class="site-footer-base">
+            <p>&copy; <span data-template="site-footer-year">2026</span> Samuel Masco. Recruiting portfolio.</p>
+            <p>Built with care for the recruiting journey of <strong>Samuel Masco · Class of 2029</strong>.</p>
+          </div>
+        </footer>
       </section>
     </main>
-
-    <footer class="site-footer">
-      <p>
-        Built for the recruiting journey of
-        <strong>Samuel Masco · Class of 2029</strong>.
-      </p>
-    </footer>
 
   </body>
 </html>

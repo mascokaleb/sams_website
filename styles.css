@@ -28,7 +28,16 @@
   --font-display: "Fraunces", "Georgia", "Times New Roman", serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --panel-bg: var(--bg);
+  /* Scroll-linked theme interpolation. JS writes --theme-t from 0
+     (fully light) to 1 (fully dark) based on the user's scroll position
+     through each light↔dark boundary, so the body background cross-
+     fades continuously with scroll — not a 160ms snap at a threshold.
+     The --panel-bg-light / --panel-bg-dark pair are the endpoints
+     color-mix() interpolates between. */
+  --theme-t: 0;
+  --panel-bg-light: var(--bg);
+  --panel-bg-dark: #191c24;
+  --panel-bg: color-mix(in oklab, var(--panel-bg-light), var(--panel-bg-dark) calc(var(--theme-t) * 100%));
   --panel-text: var(--text);
   --panel-text-muted: var(--text-muted);
   --panel-rule: var(--rule);
@@ -37,8 +46,14 @@
 [data-theme="dark"] {
   /* Full dark token set — desaturated cool blue-gray family.
      Page bg #191c24 → Card surface #22252E → Divider #2E323D.
-     Text hierarchy: label slate, value muted cream, headings cream. */
-  --panel-bg: #191c24;
+     Text hierarchy: label slate, value muted cream, headings cream.
+
+     --panel-bg is intentionally NOT overridden here — it's driven by
+     the scroll-linked --theme-t in :root so the body crossfades in
+     lockstep with scroll. The rest of these tokens still snap when
+     the attribute flips at the transition midpoint, but the boundary
+     panels are at opacity 0 at that moment (see setupPanelTheme in
+     src/main.js) so the snap is invisible to the user. */
   --panel-bg-deep: #101218;
   --panel-surface: #22252E;
   --panel-divider: #2E323D;
@@ -473,10 +488,13 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow-x: hidden;
-  /* Fast body-level theme fade — the IO fires the flip at the exact
-     viewport midpoint, so the transition should feel like a crisp snap,
-     not a slow cross-dissolve. */
-  transition: background-color 160ms ease, color 160ms ease;
+  /* Background is driven by --theme-t via color-mix() in :root and
+     updates every scroll frame, so a CSS transition on background-color
+     would lag behind scroll. Only `color` keeps a transition — it still
+     snaps at the midpoint via the [data-theme="dark"] attribute toggle,
+     and the 160ms ease makes that snap feel soft for any body-level
+     text that happens to be visible. */
+  transition: color 160ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

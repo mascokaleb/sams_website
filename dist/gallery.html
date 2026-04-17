@@ -11,12 +11,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/gallery-ClrdY_Wf.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/sanityClient-BnXfXiWO.js">
-    <link rel="stylesheet" crossorigin href="./assets/sanityClient-DRQGcEc5.css">
+    <script type="module" crossorigin src="./assets/gallery-eLM2XmmW.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/sanityClient-CY0C8Q-b.js">
+    <link rel="stylesheet" crossorigin href="./assets/sanityClient-D8Z1eWWd.css">
   </head>
   <body class="content-page gallery-page">
     <div class="noise-overlay" aria-hidden="true"></div>
@@ -47,30 +47,48 @@
 
     <main>
       <section class="section gallery-browser">
-        <div class="browser-layout">
-          <aside class="browser-panel">
-            <div class="photo-intro-card">
+        <div class="browser-shell">
+          <header class="browser-toolbar">
+            <div class="browser-toolbar-intro">
               <p class="summary-eyebrow">Photo library</p>
               <h2 data-photo-count>Loading photos...</h2>
               <p>
-                Search by keyword, focus on a specific season, or zero in on a type of shot to find the perfect moment.
+                Search by keyword, focus on a specific season, or zero in on a shot type to find the perfect moment.
               </p>
-              <label class="video-search" for="photo-search-input">
-                <span>Search</span>
-                <input id="photo-search-input" type="search" placeholder="Search" data-photo-search />
+            </div>
+            <div class="browser-toolbar-controls">
+              <label class="browser-search" for="photo-search-input">
+                <span>Search photos</span>
+                <input
+                  id="photo-search-input"
+                  type="search"
+                  placeholder="Search by keyword, tournament, or shot type"
+                  data-photo-search
+                />
               </label>
-              <div class="video-filters" data-photo-year-filters>
-                <p class="placeholder-text">Loading filters...</p>
-              </div>
-              <div class="video-filters" data-photo-tag-filters>
-                <p class="placeholder-text">Loading shot types...</p>
-              </div>
-              <div class="video-filters" data-photo-tournament-filters>
-                <p class="placeholder-text">Loading tournaments...</p>
+              <div class="browser-toolbar-filters">
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Season</span>
+                  <div class="video-filters" data-photo-year-filters>
+                    <p class="placeholder-text">Loading filters...</p>
+                  </div>
+                </div>
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Shot type</span>
+                  <div class="video-filters" data-photo-tag-filters>
+                    <p class="placeholder-text">Loading shot types...</p>
+                  </div>
+                </div>
+                <div class="browser-filter-group">
+                  <span class="browser-filter-group-label">Tournament</span>
+                  <div class="video-filters" data-photo-tournament-filters>
+                    <p class="placeholder-text">Loading tournaments...</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </aside>
-          <div class="browser-results">
+          </header>
+          <div class="browser-results-wide">
             <div class="page-message" data-gallery-message></div>
             <div class="photo-gallery-grid" data-photo-grid>
               <p class="placeholder-text">Loading the gallery...</p>
