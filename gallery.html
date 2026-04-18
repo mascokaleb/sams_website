@@ -896,7 +896,8 @@ img { display: block; user-select: none; -webkit-user-drag: none; }
     flex: 1 1 auto;
     width: auto;
     min-width: 0;
-    font-size: 0.8rem;
+    /* iOS Safari zooms focused inputs < 16px. Hold at 16px to suppress it. */
+    font-size: 16px;
     padding: 0.25rem 0;
   }
   .filter-divider {
