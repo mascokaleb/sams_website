@@ -821,8 +821,12 @@ img { display: block; user-select: none; -webkit-user-drag: none; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
-  /* Raise above .chrome--filters so the dropdown menu isn't occluded */
-  .chrome--top { top: 12px; left: 12px; right: 12px; gap: 0.6rem; z-index: 260; }
+  /* Raise above .chrome--filters so the dropdown menu isn't occluded.
+     Let clicks pass through the header's empty space so the search/filter
+     bar wedged beneath it stays interactive; re-enable on its children. */
+  .chrome--top { top: 12px; left: 12px; right: 12px; gap: 0.6rem; z-index: 260; pointer-events: none; }
+  .chrome--top .brand,
+  .chrome--top .chrome-nav-toggle { pointer-events: auto; }
   .brand-text { display: none; }
   .chrome--counter { display: none; }
 
