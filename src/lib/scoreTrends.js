@@ -14,18 +14,37 @@ import { parseDate } from "./dateUtils.js";
 // Events flagged `excludeFromTrends` in Studio (match-play / team formats)
 // are left out of both charts.
 
-const INK = "#1a1a1a";
-const MUTED = "#57514a";
-const GRID = "#e9e4d6";
-const AXIS = "#a8a28d";
-// Chart marks use a mid-lightness step of the brand navy (the raw brand navy
-// is too dark/desaturated to read as a data color) plus the brand gold.
-// Pair validated for CVD separation and surface contrast on white.
-const NAVY = "#33548f";
-const NAVY_RANGE = "#c7d2e8";
-const NAVY_RANGE_HOVER = "#afc0de";
-const GOLD = "#9a7420";
-const SURFACE = "#ffffff";
+// Chart colors come from the --chart-* tokens in styles.css so the charts
+// follow the page theme (the tournament page is dark; both palettes are
+// validated for CVD separation and contrast against their surface). These
+// are the light-mode fallbacks; refreshChartColors() re-reads the tokens at
+// render time.
+let INK = "#1a1a1a";
+let MUTED = "#57514a";
+let GRID = "#e9e4d6";
+let AXIS = "#a8a28d";
+let NAVY = "#33548f";
+let NAVY_RANGE = "#c7d2e8";
+let NAVY_RANGE_HOVER = "#afc0de";
+let GOLD = "#9a7420";
+let SURFACE = "#ffffff";
+
+function refreshChartColors() {
+  const styles = window.getComputedStyle(document.body);
+  const read = (name, fallback) => {
+    const value = styles.getPropertyValue(name).trim();
+    return value || fallback;
+  };
+  INK = read("--chart-ink", INK);
+  MUTED = read("--chart-muted", MUTED);
+  GRID = read("--chart-grid", GRID);
+  AXIS = read("--chart-axis", AXIS);
+  NAVY = read("--chart-mark", NAVY);
+  NAVY_RANGE = read("--chart-range", NAVY_RANGE);
+  NAVY_RANGE_HOVER = read("--chart-range-hover", NAVY_RANGE_HOVER);
+  GOLD = read("--chart-accent", GOLD);
+  SURFACE = read("--chart-surface", SURFACE);
+}
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -750,6 +769,7 @@ export function renderScoreTrends(data) {
   if (!section) {
     return;
   }
+  refreshChartColors();
 
   const twoDayContainer = section.querySelector("[data-trend-two-day]");
   const seasonContainer = section.querySelector("[data-trend-seasons]");

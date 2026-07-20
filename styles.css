@@ -2218,14 +2218,24 @@ button.tournament-chip {
   border-color: transparent;
 }
 
+/* Fixed colors, not theme tokens: the disc sits on photo thumbnails, so it
+   needs the same contrast in every theme. Charcoal scrim + cream ring reads
+   on light and dark footage alike; hover flips to the gold accent. */
 .play-button .play-icon {
   width: 3.6rem;
   height: 3.6rem;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(17, 20, 26, 0.78);
+  border: 1px solid rgba(242, 232, 213, 0.45);
   display: grid;
   place-items: center;
-  transition: background var(--transition);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.play-button:hover .play-icon,
+.play-button:focus-visible .play-icon {
+  background: #d4a24a;
+  border-color: #d4a24a;
 }
 
 .play-icon {
@@ -2242,13 +2252,13 @@ button.tournament-chip {
   content: "";
   border-style: solid;
   border-width: 9px 0 9px 12px;
-  border-color: transparent transparent transparent var(--text);
+  border-color: transparent transparent transparent #f2e8d5;
   margin-left: 2px;
 }
 
 .play-button:hover .play-icon::after,
 .play-button:focus-visible .play-icon::after {
-  border-color: transparent transparent transparent #ffffff;
+  border-color: transparent transparent transparent #191c24;
 }
 
 .video-frame.is-playing .play-button {
@@ -5452,4 +5462,120 @@ body[data-theme="dark"] .volunteer-hours-label {
 
 body[data-theme="dark"] .volunteer-hours-value {
   color: var(--panel-heading);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark content pages — Tournament & Video highlight pages
+   The home page's tournament/video/gallery sections are dark panels and the
+   gallery page is a charcoal canvas; these token remaps carry the same dark
+   family onto the two remaining sub-pages so the handoff is seamless.
+   Every content-page component styles itself via these tokens, so the remap
+   repaints the whole page.
+   --------------------------------------------------------------------------- */
+body[data-theme="dark"].content-page {
+  --panel-bg: #191c24;
+  --panel-text: #f2e8d5;
+  --panel-text-muted: #c8c2b4;
+  --panel-rule: #2e323d;
+  --bg: #191c24;
+  --bg-alt: #14171d;
+  --surface: #22252e;
+  --surface-solid: #22252e;
+  --surface-warm: #262932;
+  --border: #2e323d;
+  --border-strong: #3a4050;
+  --rule: #2e323d;
+  --accent-primary: #d4a24a;
+  --accent-secondary: #d4a24a;
+  --accent-strong: #e0b25f;
+  --accent-gold: #d4a24a;
+  --text: #f2e8d5;
+  --text-muted: #c8c2b4;
+  --text-dim: #6b7080;
+  --shadow: none;
+  --shadow-lift: none;
+  color-scheme: dark;
+}
+
+/* Primary CTA flips to the gallery's gold-on-charcoal accent language —
+   the base rule pairs the navy token with white text, which dies on dark. */
+/* The footer inverts tokens (ink background, paper text) — under the dark
+   remap "ink" becomes cream, so re-ground it in the dark family instead. */
+body[data-theme="dark"].content-page .site-footer {
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+body[data-theme="dark"].content-page .site-footer::before {
+  display: none;
+}
+
+body[data-theme="dark"].content-page .btn.primary {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #191c24;
+}
+
+body[data-theme="dark"].content-page .btn.primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #191c24;
+}
+
+/* ---------------------------------------------------------------------------
+   Tournament detail overlay is ALWAYS dark. It only ever opens from dark
+   contexts (the home highlights panel and the dark tournament page), so a
+   light dialog reads as a jarring theme break. Scoping the tokens here
+   repaints the dialog and everything inside it.
+   --------------------------------------------------------------------------- */
+.highlight-overlay {
+  --bg: #191c24;
+  --bg-alt: #14171d;
+  --surface: #22252e;
+  --surface-solid: #22252e;
+  --surface-warm: #262932;
+  --border: #2e323d;
+  --border-strong: #3a4050;
+  --rule: #2e323d;
+  --accent-primary: #d4a24a;
+  --accent-secondary: #d4a24a;
+  --accent-strong: #e0b25f;
+  --accent-gold: #d4a24a;
+  --text: #f2e8d5;
+  --text-muted: #c8c2b4;
+  --text-dim: #6b7080;
+  --shadow: none;
+  --shadow-lift: none;
+  color: var(--text);
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Chart color tokens — read at render time by src/lib/scoreTrends.js so the
+   score trend charts follow the page theme. Dark values validated for CVD
+   separation and contrast against the dark card surface.
+   --------------------------------------------------------------------------- */
+:root {
+  --chart-ink: #1a1a1a;
+  --chart-muted: #57514a;
+  --chart-grid: #e9e4d6;
+  --chart-axis: #a8a28d;
+  --chart-mark: #33548f;
+  --chart-range: #c7d2e8;
+  --chart-range-hover: #afc0de;
+  --chart-accent: #9a7420;
+  --chart-surface: #ffffff;
+}
+
+body[data-theme="dark"].content-page {
+  --chart-ink: #f2e8d5;
+  --chart-muted: #c8c2b4;
+  --chart-grid: #2e323d;
+  --chart-axis: #6b7080;
+  --chart-mark: #6b93dc;
+  --chart-range: #3a4a6e;
+  --chart-range-hover: #465a82;
+  --chart-accent: #bd8a2b;
+  --chart-surface: #22252e;
 }
