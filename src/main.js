@@ -3161,21 +3161,36 @@ function setupMotionAnimations(prefersReducedMotion) {
 //     overlays, borders — applies as a whole. The flip is hidden by
 //     the panel opacity crossfade below.
 //
-// Panel opacity is a symmetric fade-out/fade-in on all four boundary
-// panels (Resume ↔ Highlights, Media ↔ Dual). Outgoing fades out over
-// the first third of each zone, incoming fades in over the last third,
+// Panel opacity is a symmetric fade-out/fade-in on the four boundary
+// panels — the light panels on either side of the contiguous dark block
+// and the dark panels they hand off to. Outgoing fades out over the
+// first third of each zone, incoming fades in over the last third,
 // so both sit at opacity 0 during the middle third — there's nothing
 // visible to "snap" when the attribute flips, and the body bg itself
 // is the dominant visible color in that window. The effect is
 // symmetric with scroll direction: scrolling up reverses the same
 // crossfade, so the element leaving the bottom of the viewport fades
 // out just like it does on the way down.
+//
+// The boundary panels are derived from DOM order (the panels flanking
+// the data-theme="dark" block), NOT hardcoded names, so sections can be
+// reordered freely without breaking the effect.
 function setupPanelTheme() {
-  const resume = document.querySelector('[data-panel="resume"]');
-  const highlights = document.querySelector('[data-panel="highlights"]');
-  const media = document.querySelector('[data-panel="media"]');
-  const dual = document.querySelector('[data-panel="dual"]');
-  if (!resume || !highlights || !media || !dual) return;
+  const panels = Array.from(document.querySelectorAll(".scroll-panel"));
+  const firstDarkIndex = panels.findIndex((panel) => panel.dataset.theme === "dark");
+  if (firstDarkIndex <= 0) return;
+  let lastDarkIndex = firstDarkIndex;
+  while (
+    lastDarkIndex + 1 < panels.length &&
+    panels[lastDarkIndex + 1].dataset.theme === "dark"
+  ) {
+    lastDarkIndex += 1;
+  }
+  const lightBefore = panels[firstDarkIndex - 1];
+  const firstDark = panels[firstDarkIndex];
+  const lastDark = panels[lastDarkIndex];
+  const lightAfter = panels[lastDarkIndex + 1];
+  if (!lightBefore || !lightAfter) return;
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const body = document.body;
@@ -3204,10 +3219,10 @@ function setupPanelTheme() {
   let lastVh = -1;
   const update = () => {
     const vh = window.innerHeight;
-    const rResume = resume.getBoundingClientRect();
-    const rHighlights = highlights.getBoundingClientRect();
-    const rMedia = media.getBoundingClientRect();
-    const rDual = dual.getBoundingClientRect();
+    const rBefore = lightBefore.getBoundingClientRect();
+    const rFirstDark = firstDark.getBoundingClientRect();
+    const rLastDark = lastDark.getBoundingClientRect();
+    const rAfter = lightAfter.getBoundingClientRect();
 
     // Each zone's progress runs 0 → 1 from (outgoing panel's bottom
     // at viewport bottom) to (incoming panel's top at viewport top).
@@ -3216,10 +3231,10 @@ function setupPanelTheme() {
     // flush. Because rect.bottom - rect.top between neighboring panels
     // is a layout constant, we can parameterize progress purely from
     // the outgoing rect's bottom.
-    const gap1 = rHighlights.top - rResume.bottom;
-    const gap2 = rDual.top - rMedia.bottom;
-    const p1 = clamp((vh - rResume.bottom) / Math.max(1, vh + gap1), 0, 1);
-    const p2 = clamp((vh - rMedia.bottom) / Math.max(1, vh + gap2), 0, 1);
+    const gap1 = rFirstDark.top - rBefore.bottom;
+    const gap2 = rAfter.top - rLastDark.bottom;
+    const p1 = clamp((vh - rBefore.bottom) / Math.max(1, vh + gap1), 0, 1);
+    const p2 = clamp((vh - rLastDark.bottom) / Math.max(1, vh + gap2), 0, 1);
 
     // Darkness: 0 before zone 1, ramps to 1 across zone 1, stays 1
     // between the zones, ramps back to 0 across zone 2. The closed
@@ -3242,10 +3257,16 @@ function setupPanelTheme() {
     }
 
     if (!prefersReducedMotion) {
-      resume.style.opacity = String(fadeOut(p1));
-      highlights.style.opacity = String(fadeIn(p1));
-      media.style.opacity = String(fadeOut(p2));
-      dual.style.opacity = String(fadeIn(p2));
+      lightBefore.style.opacity = String(fadeOut(p1));
+      lightAfter.style.opacity = String(fadeIn(p2));
+      if (firstDark === lastDark) {
+        // Single dark panel: it is both the incoming panel of zone 1 and
+        // the outgoing panel of zone 2 — take the more faded of the two.
+        firstDark.style.opacity = String(Math.min(fadeIn(p1), fadeOut(p2)));
+      } else {
+        firstDark.style.opacity = String(fadeIn(p1));
+        lastDark.style.opacity = String(fadeOut(p2));
+      }
     }
   };
 
