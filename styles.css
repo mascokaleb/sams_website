@@ -5673,3 +5673,25 @@ body[data-theme="dark"] .case-study-card .case-study-cta:focus-visible {
   color: #d4a24a;
   border-bottom-color: #d4a24a;
 }
+
+/* ---------------------------------------------------------------------------
+   Sub-page footer (tournament & video pages)
+   The home page's .site-footer is a large multi-column block whose content
+   lives in an inner container; the sub-pages reuse the class with a bare
+   <p>, which sat flush against the viewport edge, under 100px of dead top
+   padding, with the page background poking out below the band. Align the
+   line with the page container and let the band close the page.
+   --------------------------------------------------------------------------- */
+body.content-page {
+  padding-bottom: 0;
+}
+
+body.content-page .site-footer {
+  padding: 2.4rem 0 2.6rem;
+}
+
+body.content-page .site-footer p {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+}

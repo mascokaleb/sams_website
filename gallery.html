@@ -969,6 +969,20 @@ img { display: block; user-select: none; -webkit-user-drag: none; }
   white-space: nowrap;
   border: 0;
 }
+
+/* Site footer — matches the one-line band on the tournament & video pages,
+   aligned to the stage's horizontal padding. */
+.site-footer {
+  border-top: 1px solid var(--rule);
+  padding: 34px clamp(24px, 4vw, 80px) 38px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.site-footer strong {
+  color: var(--ink-muted);
+  font-weight: 600;
+}
 </style>
   </head>
   <body>
@@ -1033,6 +1047,13 @@ img { display: block; user-select: none; -webkit-user-drag: none; }
       <div class="stage-message" id="stage-message">Loading the gallery…</div>
       <div class="stage-vignette" aria-hidden="true"></div>
     </main>
+
+    <footer class="site-footer">
+      <p>
+        Built for the recruiting journey of
+        <strong>Samuel Masco · Class of 2029</strong>.
+      </p>
+    </footer>
 
     <div class="lightbox" id="lightbox" aria-hidden="true">
       <div class="lightbox-backdrop" data-lightbox-close></div>
