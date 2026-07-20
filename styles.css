@@ -2586,11 +2586,12 @@ button.tournament-chip {
 
 .dual-card {
   display: grid;
-  grid-template-columns: minmax(0, clamp(260px, 30%, 360px)) minmax(0, 1fr);
-  gap: clamp(1.5rem, 3vw, 2.5rem);
+  /* Full section width (matching the Golf Resume above) with a larger photo
+     column; the intro paragraph is line-length capped separately below. */
+  grid-template-columns: minmax(0, clamp(280px, 34%, 460px)) minmax(0, 1fr);
+  gap: clamp(1.8rem, 3.5vw, 3.2rem);
   align-items: start;
   width: 100%;
-  max-width: 1100px;
 }
 
 .dual-card-media {
@@ -2619,6 +2620,12 @@ button.tournament-chip {
 
 .dual-card-content > h3 {
   margin-top: 0;
+}
+
+/* Keep the intro readable at full card width — the history list below can
+   use the whole column, but body copy shouldn't run 100+ characters. */
+.dual-card-content > p {
+  max-width: 62ch;
 }
 
 @media (max-width: 720px) {
@@ -5694,4 +5701,103 @@ body.content-page .site-footer p {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 clamp(1.5rem, 3vw, 3rem);
+}
+
+/* ---------------------------------------------------------------------------
+   Dual-sport card — structured content
+   Free-text bullets are parsed into a fact chip row and a ruled "Team
+   History" list (team + role left, seasons in mono right) so the card scans
+   like a record instead of a wall of bullets.
+   --------------------------------------------------------------------------- */
+.dual-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+  align-self: flex-start;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-warm);
+}
+
+.dual-fact {
+  font-family: var(--font-body);
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.dual-fact-dot {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.dual-history {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.3rem;
+}
+
+.dual-history-label {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent-primary);
+  margin: 0 0 0.4rem;
+}
+
+.dual-history-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.dual-history-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dual-history-team {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.dual-history-role {
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  color: var(--text-muted);
+}
+
+.dual-history-season {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  text-align: right;
+  flex: none;
+  max-width: 40%;
+}
+
+@media (max-width: 560px) {
+  .dual-history-entry {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .dual-history-season {
+    text-align: left;
+    max-width: none;
+  }
 }

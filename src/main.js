@@ -1412,15 +1412,83 @@ function renderDualSport(dual) {
             <div class="dual-card-content">
               <h3>${escapeHtml(card.title || "")}</h3>
               ${card.body ? `<p>${escapeHtml(card.body)}</p>` : ""}
-              ${Array.isArray(card.bulletPoints) && card.bulletPoints.length
-                ? `<ul>${card.bulletPoints.map((point) => `<li>${escapeHtml(point || "")}</li>`).join("")}</ul>`
-                : ""}
+              ${renderDualBullets(card.bulletPoints)}
             </div>
           </article>
         `;
       })
       .join("");
   }
+}
+
+// Dual-sport bullets arrive as free-text strings from Studio. Recognize the
+// two shapes editors actually write — "10 years experience: 5 years
+// competitive play" (a fact line) and "Team - Role - Seasons" (a history
+// entry) — and render each as structured markup instead of a wall of
+// bullets. Anything unrecognized falls back to a plain list line, so new
+// content can never break the card.
+function renderDualBullets(points) {
+  if (!Array.isArray(points) || !points.length) {
+    return "";
+  }
+
+  const facts = [];
+  const entries = [];
+  const plain = [];
+
+  points.forEach((raw) => {
+    const text = (raw || "").trim();
+    if (!text) {
+      return;
+    }
+    const parts = text.split(/\s+-\s+/);
+    if (parts.length >= 2) {
+      entries.push({
+        team: parts[0],
+        role: parts[1] || "",
+        seasons: parts.slice(2).join(" - "),
+      });
+      return;
+    }
+    if (text.includes(":")) {
+      facts.push(...text.split(":").map((segment) => segment.trim()).filter(Boolean));
+      return;
+    }
+    plain.push(text);
+  });
+
+  const factsMarkup = facts.length
+    ? `<div class="dual-facts">${facts
+        .map((fact) => `<span class="dual-fact">${escapeHtml(fact)}</span>`)
+        .join('<span class="dual-fact-dot" aria-hidden="true">·</span>')}</div>`
+    : "";
+
+  const entriesMarkup = entries.length
+    ? `
+        <div class="dual-history">
+          <p class="dual-history-label">Team History</p>
+          ${entries
+            .map(
+              (entry) => `
+                <div class="dual-history-entry">
+                  <div class="dual-history-main">
+                    <span class="dual-history-team">${escapeHtml(entry.team)}</span>
+                    ${entry.role ? `<span class="dual-history-role">${escapeHtml(entry.role)}</span>` : ""}
+                  </div>
+                  ${entry.seasons ? `<span class="dual-history-season">${escapeHtml(entry.seasons)}</span>` : ""}
+                </div>
+              `
+            )
+            .join("")}
+        </div>
+      `
+    : "";
+
+  const plainMarkup = plain.length
+    ? `<ul>${plain.map((point) => `<li>${escapeHtml(point)}</li>`).join("")}</ul>`
+    : "";
+
+  return factsMarkup + entriesMarkup + plainMarkup;
 }
 
 function renderContact(contact) {
