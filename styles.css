@@ -1094,7 +1094,7 @@ ul {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.5rem, 1.2vw, 0.9rem);
+  gap: 0;
 }
 
 .interstitial-kicker {
@@ -1107,52 +1107,48 @@ ul {
   margin: 0 0 clamp(1rem, 2vw, 1.6rem);
 }
 
+/* Quiet editorial stat list: modest serif number + small uppercase label per
+   row, separated by hairline rules — reads as substance, not spectacle. */
 .interstitial-line {
   display: flex;
   align-items: baseline;
-  gap: clamp(0.8rem, 2vw, 1.6rem);
+  gap: clamp(0.9rem, 1.6vw, 1.3rem);
   margin: 0;
+  padding: clamp(0.85rem, 1.5vw, 1.15rem) 0;
+  border-top: 1px solid var(--border-strong);
   color: var(--text);
+}
+
+.interstitial-line:last-of-type {
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .interstitial-number {
   font-family: var(--font-display);
-  font-variation-settings: "opsz" 144;
+  font-variation-settings: "opsz" 40;
   font-feature-settings: "tnum", "lnum";
-  font-size: clamp(5rem, 12vw, 11rem);
+  font-size: clamp(1.9rem, 2.6vw, 2.5rem);
   font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 0.88;
+  letter-spacing: -0.02em;
+  line-height: 1;
   color: var(--text);
-  min-width: clamp(6rem, 13vw, 12rem);
+  min-width: clamp(3.4rem, 4.5vw, 4.4rem);
   display: inline-block;
 }
 
 .interstitial-unit {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 72;
-  font-size: clamp(1.6rem, 3vw, 2.6rem);
-  font-weight: 400;
-  font-style: italic;
-  letter-spacing: -0.01em;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
   color: var(--text-muted);
-  line-height: 1;
+  line-height: 1.4;
 }
 
 .interstitial-line:last-of-type .interstitial-unit {
   color: var(--accent-gold);
-}
-
-@media (max-width: 720px) {
-  .interstitial-line {
-    flex-direction: column;
-    gap: 0.25rem;
-    align-items: flex-start;
-  }
-
-  .interstitial-number {
-    min-width: 0;
-  }
 }
 
 /* Accolades marquee — infinite horizontal ticker between hero and about */
@@ -5025,7 +5021,7 @@ body.is-showing-highlight-overlay {
    (its direct children) auto-place into the grid. */
 .scroll-panel[data-panel="work"] {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: center;
   gap: clamp(3rem, 6vw, 6rem);
   padding: clamp(6vh, 10vh, 12vh) clamp(3rem, 6vw, 6rem);
@@ -5044,7 +5040,8 @@ body.is-showing-highlight-overlay {
   padding: 0;
   margin: 0;
   width: 100%;
-  max-width: none;
+  max-width: 24rem;
+  justify-self: start;
   align-self: center;
 }
 .scroll-panel[data-panel="work"] .interstitial-inner {
@@ -5059,8 +5056,14 @@ body.is-showing-highlight-overlay {
   .scroll-panel[data-panel="work"] .work-mindset,
   .scroll-panel[data-panel="work"] .interstitial {
     grid-column: 1;
-    grid-row: auto;
     justify-self: stretch;
+  }
+  /* Copy leads on mobile; the stat list follows it. */
+  .scroll-panel[data-panel="work"] .work-mindset {
+    grid-row: 1;
+  }
+  .scroll-panel[data-panel="work"] .interstitial {
+    grid-row: 2;
   }
 }
 
@@ -5087,3 +5090,366 @@ body.is-showing-highlight-overlay {
   margin: 0 0 1rem;
 }
 .work-mindset-body p:last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------------------
+   Score trends — Tournament Highlights page
+   Two live charts computed from the tournament library.
+   --------------------------------------------------------------------------- */
+.score-trends {
+  border-top: none;
+  padding-top: 0;
+}
+
+.trends-heading {
+  margin-bottom: clamp(1.4rem, 3vw, 2rem);
+}
+
+.trends-heading h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  color: var(--text);
+}
+
+.trends-heading p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 40rem;
+  margin: 0;
+}
+
+.trends-grid {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.2rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  align-items: start;
+}
+
+.trend-card {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: clamp(1.4rem, 2.6vw, 2rem);
+  transition: border-color var(--transition);
+}
+
+.trend-card:hover {
+  border-color: var(--text);
+}
+
+.trend-card-header {
+  margin-bottom: 1rem;
+}
+
+.trend-card-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-primary);
+  margin: 0 0 0.45rem;
+}
+
+.trend-card-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem;
+  color: var(--text);
+}
+
+.trend-card-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.trend-chart-wrap {
+  position: relative;
+}
+
+.trend-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.trend-svg [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.trend-axis-text {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0;
+}
+
+.trend-axis-text.is-season {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.trend-direct-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.trend-minor-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.trend-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.trend-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.trend-legend-swatch.is-line {
+  height: 4px;
+  width: 18px;
+  border-radius: 2px;
+}
+
+.trend-tooltip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 0.6rem 0.75rem;
+  min-width: 158px;
+  max-width: 240px;
+}
+
+.trend-tooltip-title {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.1rem;
+}
+
+.trend-tooltip-date {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin: 0 0 0.45rem;
+}
+
+.trend-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+}
+
+.trend-tooltip-key {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.trend-tooltip-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.trend-tooltip-value {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.trend-tooltip-value.is-strong {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.trend-table {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.trend-table summary {
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.trend-table summary:hover {
+  color: var(--text);
+}
+
+.trend-table table {
+  width: 100%;
+  margin-top: 0.7rem;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.trend-table th,
+.trend-table td {
+  text-align: left;
+  padding: 0.35rem 0.6rem 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.trend-table thead th {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.trend-table .is-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-footnote {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  margin: 0.9rem 0 0;
+}
+
+.trend-footnote + .trend-footnote {
+  margin-top: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Volunteering panel — Golf Resume section
+   --------------------------------------------------------------------------- */
+.volunteer-entry + .volunteer-entry {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.volunteer-role {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--text);
+  margin: 0 0 0.2rem;
+}
+
+.volunteer-org {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  margin: 0 0 0.3rem;
+}
+
+.volunteer-meta {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 0.55rem;
+}
+
+.volunteer-desc {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 0.6rem;
+}
+
+.volunteer-hours {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-warm);
+}
+
+.volunteer-hours-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.volunteer-hours-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--accent-primary);
+}
+
+body[data-theme="dark"] .volunteer-role {
+  color: var(--panel-heading);
+}
+
+body[data-theme="dark"] .volunteer-org,
+body[data-theme="dark"] .volunteer-desc {
+  color: var(--panel-value);
+}
+
+body[data-theme="dark"] .volunteer-meta {
+  color: var(--panel-label);
+}
+
+body[data-theme="dark"] .volunteer-hours {
+  background: transparent;
+  border-color: var(--panel-divider);
+}
+
+body[data-theme="dark"] .volunteer-hours-label {
+  color: var(--panel-label);
+}
+
+body[data-theme="dark"] .volunteer-hours-value {
+  color: var(--panel-heading);
+}

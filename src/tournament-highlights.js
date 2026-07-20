@@ -1,5 +1,6 @@
 import { parseDate } from "./lib/dateUtils.js";
 import { fetchSiteContent } from "./lib/sanityClient.js";
+import { renderScoreTrends } from "./lib/scoreTrends.js";
 
 const SELECTORS = {
   heading: "[data-page-heading]",
@@ -49,6 +50,7 @@ async function loadTournamentHighlights() {
   renderYearFilters(highlightState.events);
   setupHighlightSearch();
   renderHighlightGroups();
+  renderScoreTrends(data);
   setPageMessage("");
   openTournamentFromUrl();
 }

@@ -38,6 +38,14 @@ export const structure: StructureResolver = (S, context) =>
         .schemaType('highlightEvent')
         .child(S.documentTypeList('highlightEvent').title('Tournament Highlights')),
       S.listItem()
+        .title('Season Score Trends')
+        .schemaType('seasonTrend')
+        .child(
+          S.documentTypeList('seasonTrend')
+            .title('Season Score Trends')
+            .defaultOrdering([{ field: 'year', direction: 'asc' }])
+        ),
+      S.listItem()
         .title('Upcoming Tournaments')
         .schemaType('upcomingTournament')
         .child(

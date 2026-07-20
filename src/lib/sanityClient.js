@@ -91,7 +91,17 @@ const siteContentQuery = `{
     trainingTitle,
     trainingBody,
     experienceTitle,
-    experienceList
+    experienceList,
+    volunteeringTitle,
+    volunteering[]{
+      role,
+      organization,
+      location,
+      timeframe,
+      program,
+      description,
+      hours
+    }
   },
   "academics": *[_type == "academicsSection"][0]{
     heading,
@@ -141,7 +151,15 @@ const siteContentQuery = `{
     featured,
     showOnHomePage,
     pinToTop,
+    excludeFromTrends,
     _createdAt
+  },
+  "seasonTrends": *[_type == "seasonTrend"]|order(year asc){
+    year,
+    highScore,
+    lowScore,
+    averageScore,
+    note
   },
   "videosSection": *[_type == "videosSection"][0]{heading, subheading, maxItems},
   "videos": *[_type == "videoHighlight"]|order(eventDate desc, _createdAt desc){

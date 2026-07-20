@@ -1,11 +1,12 @@
 import { defineField, defineType } from 'sanity';
 
-// The "The Work" interstitial is the dark full-bleed band between the About
-// cards and the Golf Resume. Three rows, each with a big display number and a
-// short italic unit ("9 / years", "5-6 / days a week", "1 / goal."). Any row
-// left blank is hidden in the renderer; if the whole object is empty the
-// interstitial falls back to deriving years/days from the Quick Hits list,
-// and if neither is present the strip stays hidden entirely.
+// The "The Work" stat list sits beside Mindset & Goals: three quiet rows,
+// each a number plus a short uppercase label ("10 / years playing",
+// "5-6 / days a week training", "34 / tournaments since 2025"). Any row left
+// blank is hidden in the renderer; if the whole object is empty the list
+// derives real numbers automatically — years/days from the Quick Hits list
+// and the tournament count from the tournament library — and if nothing is
+// derivable the strip stays hidden entirely.
 export const workInterstitial = defineType({
   name: 'workInterstitial',
   title: 'The Work Interstitial',
@@ -28,7 +29,7 @@ export const workInterstitial = defineType({
       name: 'lineOneUnit',
       type: 'string',
       title: 'Line 1 — Unit',
-      description: 'Italic unit beside the first number (e.g. "years").',
+      description: 'Label beside the first number (e.g. "years playing").',
     }),
     defineField({
       name: 'lineTwoNumber',
@@ -40,19 +41,20 @@ export const workInterstitial = defineType({
       name: 'lineTwoUnit',
       type: 'string',
       title: 'Line 2 — Unit',
-      description: 'Italic unit beside the second number (e.g. "days a week").',
+      description: 'Label beside the second number (e.g. "days a week training").',
     }),
     defineField({
       name: 'lineThreeNumber',
       type: 'string',
       title: 'Line 3 — Number',
-      description: 'Big display number for the third row (e.g. "1").',
+      description:
+        'Number for the third row. Leave blank (with the whole section blank) to show the live tournament count automatically.',
     }),
     defineField({
       name: 'lineThreeUnit',
       type: 'string',
       title: 'Line 3 — Unit',
-      description: 'Italic unit beside the third number (e.g. "goal.").',
+      description: 'Label beside the third number (e.g. "tournaments since 2025").',
     }),
   ],
   preview: {

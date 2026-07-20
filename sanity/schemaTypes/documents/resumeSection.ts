@@ -69,5 +69,19 @@ export const resumeSection = defineType({
       of: [{ type: 'string' }],
       validation: (Rule) => Rule.required().min(1),
     }),
+    defineField({
+      name: 'volunteeringTitle',
+      type: 'string',
+      title: 'Volunteering Panel Title',
+      initialValue: 'Volunteering & Leadership',
+    }),
+    defineField({
+      name: 'volunteering',
+      type: 'array',
+      title: 'Volunteering',
+      description:
+        'Volunteer and service roles, shown as their own panel in the Golf Resume section. Leave empty to hide the panel.',
+      of: [{ type: 'volunteerRole' }],
+    }),
   ],
 });

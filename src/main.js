@@ -109,7 +109,7 @@ async function hydratePage() {
   renderAccoladesMarquee(data.resume, data.hero);
   renderCoachSnapshot(data.coachSnapshot, { hero: data.hero, about: data.about });
   renderAbout(data.about, { academics: data.academics });
-  renderWorkPanel(data.about);
+  renderWorkPanel(data.about, data.highlightEvents);
   renderResume(data.resume);
   renderAcademics(data.academics);
 
@@ -345,14 +345,15 @@ function extractAccolade(bullet) {
   return firstClause.length > 60 ? firstClause.slice(0, 57) + "…" : firstClause;
 }
 
-// The Work interstitial is a dark full-bleed strip between About and the Golf
-// Resume with three big-number + italic-unit rows. Priority:
+// The Work interstitial sits beside Mindset & Goals with three quiet
+// number + label rows. Priority:
 //   1. about.workInterstitial — explicit CMS object with kicker + line1-3.
-//   2. Auto-derive from Quick Hits ("Years Playing" → line 1, "Training" days
-//      → line 2, hardcoded "1 goal." → line 3).
+//   2. Auto-derive from live data: Quick Hits ("Years Playing" → line 1,
+//      "Training" days → line 2) and the tournament library count → line 3 —
+//      real numbers only, no slogans.
 // Any row missing both a number and a unit is collapsed to empty. If the
 // whole interstitial would be empty, the section stays hidden.
-function renderWorkInterstitial(about) {
+function renderWorkInterstitial(about, highlightEvents) {
   const sectionEl = select(SELECTORS.workInterstitial);
   if (!sectionEl) return;
 
@@ -367,13 +368,24 @@ function renderWorkInterstitial(about) {
   const derivedYears = extractLeadingNumber(yearsHit?.value) || null;
   const derivedDays = extractDaysPerWeek(daysHit?.value) || null;
 
+  // Line 3 counts verified tournaments from the library, so it stays current
+  // as results are added. "since YYYY" comes from the earliest event year.
+  const events = Array.isArray(highlightEvents) ? highlightEvents : [];
+  const eventYears = events
+    .map((event) => parseDate(event?.eventDate)?.getFullYear())
+    .filter((year) => Number.isFinite(year));
+  const derivedTournaments = events.length ? String(events.length) : null;
+  const derivedTournamentsUnit = eventYears.length
+    ? `tournaments since ${Math.min(...eventYears)}`
+    : "tournaments";
+
   const kicker = (explicit?.kicker || "The Work").trim();
   const lineOneNumber = (explicit?.lineOneNumber || derivedYears || "").trim();
-  const lineOneUnit = (explicit?.lineOneUnit || (derivedYears ? "years" : "")).trim();
+  const lineOneUnit = (explicit?.lineOneUnit || (derivedYears ? "years playing" : "")).trim();
   const lineTwoNumber = (explicit?.lineTwoNumber || derivedDays || "").trim();
-  const lineTwoUnit = (explicit?.lineTwoUnit || (derivedDays ? "days a week" : "")).trim();
-  const lineThreeNumber = (explicit?.lineThreeNumber || (explicit ? "" : "1")).trim();
-  const lineThreeUnit = (explicit?.lineThreeUnit || (explicit ? "" : "goal.")).trim();
+  const lineTwoUnit = (explicit?.lineTwoUnit || (derivedDays ? "days a week training" : "")).trim();
+  const lineThreeNumber = (explicit?.lineThreeNumber || (explicit ? "" : derivedTournaments || "")).trim();
+  const lineThreeUnit = (explicit?.lineThreeUnit || (explicit || !derivedTournaments ? "" : derivedTournamentsUnit)).trim();
 
   const rows = [
     { number: lineOneNumber, unit: lineOneUnit },
@@ -408,8 +420,8 @@ function renderWorkInterstitial(about) {
 // Renders the full Work panel: the numbers interstitial plus the Mindset
 // & Goals paragraph (which used to live as a card inside About). The two
 // share one full-screen panel in the new layout.
-function renderWorkPanel(about) {
-  renderWorkInterstitial(about);
+function renderWorkPanel(about, highlightEvents) {
+  renderWorkInterstitial(about, highlightEvents);
   const slot = select(SELECTORS.workMindset);
   if (!slot) return;
   if (!about?.mindsetBody) {
@@ -849,8 +861,49 @@ function renderResume(resume) {
             .join("")}
         </ul>
       </article>
+      ${renderVolunteeringPanel(resume)}
     `;
   }
+}
+
+// Volunteering renders as its own resume panel (rather than under Academics
+// or a standalone page) because Sam's service work is golf coaching — it
+// belongs in the golf story coaches scan. The panel hides itself until the
+// first role is added in Studio.
+function renderVolunteeringPanel(resume) {
+  const roles = (Array.isArray(resume.volunteering) ? resume.volunteering : []).filter(
+    (entry) => entry && entry.role
+  );
+  if (!roles.length) {
+    return "";
+  }
+
+  const entriesMarkup = roles
+    .map((entry) => {
+      const orgLine = [entry.organization, entry.location].filter(Boolean).join(" · ");
+      const metaLine = [entry.timeframe, entry.program].filter(Boolean).join(" · ");
+      return `
+        <div class="volunteer-entry">
+          <p class="volunteer-role">${escapeHtml(entry.role)}</p>
+          ${orgLine ? `<p class="volunteer-org">${escapeHtml(orgLine)}</p>` : ""}
+          ${metaLine ? `<p class="volunteer-meta">${escapeHtml(metaLine)}</p>` : ""}
+          ${entry.description ? `<p class="volunteer-desc">${escapeHtml(entry.description)}</p>` : ""}
+          ${
+            entry.hours
+              ? `<p class="volunteer-hours"><span class="volunteer-hours-label">Hours completed</span><span class="volunteer-hours-value">${escapeHtml(entry.hours)}</span></p>`
+              : ""
+          }
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <article class="panel volunteer-panel" data-motion="delay-4">
+      <h3>${escapeHtml(resume.volunteeringTitle || "Volunteering & Leadership")}</h3>
+      ${entriesMarkup}
+    </article>
+  `;
 }
 
 function renderUpcomingTournaments(sectionMeta, tournaments) {

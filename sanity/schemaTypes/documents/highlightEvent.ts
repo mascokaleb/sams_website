@@ -85,6 +85,14 @@ export const highlightEvent = defineType({
       initialValue: false,
     }),
     defineField({
+      name: 'excludeFromTrends',
+      type: 'boolean',
+      title: 'Exclude from score trend charts',
+      description:
+        'Turn on for match-play or team-format events (e.g. the Summit Cup) whose scores should not be charted alongside stroke-play rounds.',
+      initialValue: false,
+    }),
+    defineField({
       name: 'featured',
       type: 'boolean',
       hidden: true,

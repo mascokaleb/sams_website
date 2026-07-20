@@ -10,6 +10,7 @@ import { heroSection } from './documents/heroSection';
 import { highlightEvent } from './documents/highlightEvent';
 import { highlightsSection } from './documents/highlightsSection';
 import { resumeSection } from './documents/resumeSection';
+import { seasonTrend } from './documents/seasonTrend';
 import { siteSettings } from './documents/siteSettings';
 import { upcomingTournament } from './documents/upcomingTournament';
 import { upcomingTournamentsSection } from './documents/upcomingTournamentsSection';
@@ -27,6 +28,7 @@ import { profileFact } from './objects/profileFact';
 import { quickHit } from './objects/quickHit';
 import { statItem } from './objects/statItem';
 import { tournamentDay } from './objects/tournamentDay';
+import { volunteerRole } from './objects/volunteerRole';
 import { workInterstitial } from './objects/workInterstitial';
 
 export const schemaTypes = [
@@ -39,6 +41,7 @@ export const schemaTypes = [
   academicsSection,
   highlightsSection,
   highlightEvent,
+  seasonTrend,
   upcomingTournamentsSection,
   upcomingTournament,
   videosSection,
@@ -58,6 +61,7 @@ export const schemaTypes = [
   statItem,
   clubYardage,
   tournamentDay,
+  volunteerRole,
   dualCard,
   contactCard,
   contactEntry,
