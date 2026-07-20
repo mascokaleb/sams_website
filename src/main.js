@@ -1650,8 +1650,17 @@ function renderHighlightCard(event, index) {
   // Build the big headline score — best round across the event.
   const bestDay = pickHeadlineDay(days);
   const bestScore = bestDay?.score != null ? String(bestDay.score) : "";
-  const bestRank = bestDay?.rank != null && bestDay?.rank !== "" ? String(bestDay.rank) : "";
-  const bestField = bestDay?.fieldSize != null && bestDay?.fieldSize !== "" ? String(bestDay.fieldSize) : "";
+  // Final placement comes from the last day carrying a ranking — the schema
+  // stores it as rankingPosition / rankingOutOf (or a free-text rankingLabel
+  // when the finish isn't numeric, e.g. match-play results).
+  const finishDay = [...days]
+    .reverse()
+    .find((day) => day?.rankingPosition != null || (day?.rankingLabel || "").trim() !== "");
+  const finishValue = finishDay
+    ? finishDay.rankingPosition != null
+      ? `${finishDay.rankingPosition}${finishDay.rankingOutOf != null ? ` / ${finishDay.rankingOutOf}` : ""}`
+      : finishDay.rankingLabel.trim()
+    : "";
   const yardage = bestDay?.yardage != null && bestDay?.yardage !== "" ? String(bestDay.yardage) : "";
   const location = event?.location ? String(event.location) : "";
   const isFeatured = Boolean(event?.pinToTop || event?.featured);
@@ -1665,9 +1674,8 @@ function renderHighlightCard(event, index) {
 
   // Secondary stats row — only render rank / field / yardage when we have them.
   const statChips = [];
-  if (bestRank) {
-    const fieldFragment = bestField ? ` / ${escapeHtml(bestField)}` : "";
-    statChips.push(`<div class="case-study-chip"><span class="case-study-chip-label">Finish</span><span class="case-study-chip-value">${escapeHtml(bestRank)}${fieldFragment}</span></div>`);
+  if (finishValue) {
+    statChips.push(`<div class="case-study-chip case-study-chip--finish"><span class="case-study-chip-label">Finish</span><span class="case-study-chip-value">${escapeHtml(finishValue)}</span></div>`);
   }
   if (yardage) {
     statChips.push(`<div class="case-study-chip"><span class="case-study-chip-label">Yardage</span><span class="case-study-chip-value">${escapeHtml(yardage)}</span></div>`);
@@ -1688,7 +1696,7 @@ function renderHighlightCard(event, index) {
           ${heroFocalStyle}
         />
       `
-    : `<div class="case-study-media-placeholder" aria-hidden="true"><span>${escapeHtml((event?.title || "TOUR").slice(0, 2).toUpperCase())}</span></div>`;
+    : renderCardCoverPlate(event);
 
   const indexLabel = String(index + 1).padStart(2, "0");
 
@@ -1721,6 +1729,31 @@ function renderHighlightCard(event, index) {
         ${actionButton}
       </div>
     </article>
+  `;
+}
+
+// Typographic cover for tournaments with no photo: the series, venue, and
+// city set in type inside a hairline frame, so a photo-less card reads as
+// designed rather than as a missing image. Venue is whatever follows "@" in
+// the event title; the city is parsed from the "... in City, ST" summary
+// convention and simply omitted when absent.
+function renderCardCoverPlate(event) {
+  const title = (event?.title || "").trim();
+  const atIndex = title.indexOf("@");
+  const series = atIndex > 0 ? title.slice(0, atIndex).trim().replace(/[:\-–]\s*$/, "") : "";
+  const venue = atIndex >= 0 ? title.slice(atIndex + 1).trim() : title;
+  const extractCity = (text) => {
+    const match = (text || "").match(/\bin\s+([A-Za-z .'-]+,\s*[A-Za-z]{2})\s*$/);
+    return match ? match[1].replace(/\s+/g, " ") : "";
+  };
+  const city = extractCity(event?.location) || extractCity(event?.summary);
+  return `
+    <div class="case-study-media-placeholder is-plate" aria-hidden="true">
+      ${series ? `<span class="cover-plate-series">${escapeHtml(series)}</span>` : ""}
+      <span class="cover-plate-venue">${escapeHtml(venue || "Tournament")}</span>
+      <span class="cover-plate-rule"></span>
+      ${city ? `<span class="cover-plate-city">${escapeHtml(city)}</span>` : ""}
+    </div>
   `;
 }
 

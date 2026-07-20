@@ -5579,3 +5579,97 @@ body[data-theme="dark"].content-page {
   --chart-accent: #bd8a2b;
   --chart-surface: #22252e;
 }
+
+/* ---------------------------------------------------------------------------
+   Typographic cover plate — tournament cards without a photo
+   Series / venue / city set in type inside a hairline frame on the navy
+   field, so the media area reads as designed rather than missing.
+   --------------------------------------------------------------------------- */
+.case-study-media-placeholder.is-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 2rem 1.6rem;
+  text-align: center;
+  font-size: 1rem;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.case-study-media-placeholder.is-plate::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border: 1px solid rgba(242, 232, 213, 0.16);
+  pointer-events: none;
+}
+
+.cover-plate-series {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: rgba(242, 232, 213, 0.55);
+  max-width: 85%;
+}
+
+.cover-plate-venue {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+  color: #f2e8d5;
+  max-width: 88%;
+}
+
+.cover-plate-rule {
+  width: 36px;
+  height: 2px;
+  background: #d4a24a;
+}
+
+.cover-plate-city {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(242, 232, 213, 0.45);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark tournament-card text hierarchy
+   Four distinct tones instead of wall-to-wall cream: gold accents mark the
+   index, the finish, the Featured badge, and the CTA arrow; the brightest
+   cream is reserved for the title and headline score; secondary chip values
+   sit a step down; labels stay slate.
+   --------------------------------------------------------------------------- */
+body[data-theme="dark"] .case-study-card .case-study-index {
+  color: #d4a24a;
+}
+
+body[data-theme="dark"] .case-study-card .case-study-chip-value {
+  color: var(--panel-value);
+}
+
+body[data-theme="dark"] .case-study-card .case-study-chip--finish .case-study-chip-value {
+  color: #d4a24a;
+}
+
+body[data-theme="dark"] .case-study-card .case-study-badge {
+  color: #d4a24a;
+}
+
+body[data-theme="dark"] .case-study-card .case-study-cta-arrow {
+  color: #d4a24a;
+}
+
+body[data-theme="dark"] .case-study-card .case-study-cta:hover,
+body[data-theme="dark"] .case-study-card .case-study-cta:focus-visible {
+  color: #d4a24a;
+  border-bottom-color: #d4a24a;
+}

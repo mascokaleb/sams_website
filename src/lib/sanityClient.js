@@ -139,6 +139,7 @@ const siteContentQuery = `{
       yardage,
       rankingPosition,
       rankingOutOf,
+      rankingLabel,
       notes
     },
     "coverImage": coverImage{
