@@ -1215,8 +1215,13 @@ ul {
 .accolades-marquee-item {
   display: inline-flex;
   align-items: center;
+  /* Uniform star rhythm: text [gap] ★ [right padding] text … — the gap and
+     the one-sided padding are the same size, so every star sits centered
+     between its neighbors. (Side padding on BOTH sides doubled the space
+     after each star.) Spacing stays inside the item so the doubled-list
+     translateX(-50%) loop hands off cleanly. */
   gap: clamp(1.6rem, 3vw, 2.6rem);
-  padding: 0 clamp(1.6rem, 3vw, 2.6rem);
+  padding: 0 clamp(1.6rem, 3vw, 2.6rem) 0 0;
   white-space: nowrap;
 }
 
