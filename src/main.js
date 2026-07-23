@@ -1540,7 +1540,7 @@ function renderFooter(footer, contact) {
   if (!footerEl) return;
 
   const defaults = {
-    kicker: "05 — Open For Recruiting",
+    kicker: "05 - Open For Recruiting",
     headline: "Let\u2019s|Talk.",
     ctaLabel: "Get in touch",
     playerLabel: "Player",
@@ -2434,7 +2434,7 @@ function buildDayMetricData(day) {
     createMetricEntry({
       key: "score",
       label: "Score",
-      display: typeof scoreValue === "number" ? String(scoreValue) : "—",
+      display: typeof scoreValue === "number" ? String(scoreValue) : "-",
       progress: computeScoreRingProgress(scoreValue),
     })
   );
@@ -2443,7 +2443,7 @@ function buildDayMetricData(day) {
     createMetricEntry({
       key: "yards",
       label: "Yardage",
-      display: typeof yardageValue === "number" ? yardageValue.toLocaleString() : "—",
+      display: typeof yardageValue === "number" ? yardageValue.toLocaleString() : "-",
       secondary: "",
       progress: computePositiveProgress(yardageValue, resolveYardageTarget(day, yardageValue)),
     })
@@ -2464,7 +2464,7 @@ function buildDayMetricData(day) {
 }
 
 function createMetricEntry({ key, label, display, secondary, progress }) {
-  const safeDisplay = display != null && display !== "" ? String(display) : "—";
+  const safeDisplay = display != null && display !== "" ? String(display) : "-";
   const safeSecondary = secondary ? String(secondary) : "";
   const numericProgress = typeof progress === "number" && !Number.isNaN(progress) ? progress : 0;
 
@@ -2550,7 +2550,7 @@ function resolveRankingMetrics(day) {
   }
 
   return {
-    display: "—",
+    display: "-",
     secondary: "",
     progress: 0,
   };

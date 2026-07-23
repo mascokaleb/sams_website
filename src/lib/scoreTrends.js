@@ -316,7 +316,7 @@ function renderTwoDayChart(container, points, width) {
   const { wrap, tooltip } = buildCard(container, {
     eyebrow: "Multi-day events",
     title: "2-Day Tournament Totals",
-    subtitle: "Combined 36-hole score for every two-day tournament — lower is better.",
+    subtitle: "Combined 36-hole score for every two-day tournament. Lower is better.",
   });
 
   // The viewBox matches the rendered pixel width so SVG text renders at true
@@ -539,7 +539,7 @@ function renderSeasonChart(container, seasons, width) {
   const { wrap, tooltip } = buildCard(container, {
     eyebrow: "Season by season",
     title: "Tournament Score Trends",
-    subtitle: "18-hole tournament rounds per season — lower is better.",
+    subtitle: "18-hole tournament rounds per season. Lower is better.",
   });
 
   // Legend (two entities: the range bar and the average marker).
@@ -698,7 +698,7 @@ function renderSeasonChart(container, seasons, width) {
 
     if (isCurrentPartial && season.latestDate) {
       footnotes.push(
-        `*${season.year} season in progress — through ${MONTH_SHORT[season.latestDate.getMonth()]} ${season.latestDate.getDate()}.`
+        `*${season.year} season in progress, through ${MONTH_SHORT[season.latestDate.getMonth()]} ${season.latestDate.getDate()}.`
       );
     }
     if (!season.computed && season.note) {
@@ -742,7 +742,7 @@ function renderSeasonChart(container, seasons, width) {
       String(season.low),
       String(season.avg),
       String(season.high),
-      season.rounds ? String(season.rounds) : "—",
+      season.rounds ? String(season.rounds) : "-",
     ])
   );
 
