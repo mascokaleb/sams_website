@@ -1979,12 +1979,12 @@ ul {
 }
 
 .gallery-card-meta .meta-dot {
-  color: rgba(15, 29, 51, 0.3);
+  color: var(--text-dim);
 }
 
 .gallery-card-meta--secondary {
   font-size: 0.8rem;
-  color: rgba(15, 29, 51, 0.55);
+  color: var(--text-dim);
 }
 
 .gallery-card-footer {
@@ -3080,13 +3080,15 @@ body.content-page {
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(15, 29, 51, 0.5);
+  /* Token, not a hardcoded navy alpha: these labels render on the dark
+     tournament page and overlay, where a translucent navy disappears. */
+  color: var(--text-dim);
 }
 
 .day-metric-secondary {
   font-size: 0.6rem;
   letter-spacing: 0.05em;
-  color: rgba(15, 29, 51, 0.4);
+  color: var(--text-dim);
   text-transform: uppercase;
 }
 
